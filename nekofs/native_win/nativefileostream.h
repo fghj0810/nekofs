@@ -1,0 +1,31 @@
+﻿#pragma once
+
+#include "../common/typedef.h"
+#include "../common/noncopyable.h"
+#include "../common/nonmovable.h"
+
+#include <Windows.h>
+#include <cstdint>
+#include <memory>
+
+namespace nekofs {
+	class NativeFile;
+
+	class NativeOStream final : public OStream, private noncopyable, private nonmovable, public std::enable_shared_from_this<NativeOStream>
+	{
+	public:
+		NativeOStream(std::shared_ptr<NativeFile> file);
+		void open();
+		void close();
+
+	public:
+		int32_t write(void* buf, int32_t size) override;
+		int64_t seek(int64_t offset, const SeekOrigin& origin) override;
+		int64_t getPosition() const override;
+		int64_t getLength() const override;
+
+	private:
+		std::shared_ptr<NativeFile> file_;
+		HANDLE fd_ = INVALID_HANDLE_VALUE;
+	};
+}

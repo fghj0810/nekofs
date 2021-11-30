@@ -1,0 +1,92 @@
+﻿@startuml 类图
+
+enum FileSystemType {
+    Layer
+    Native
+    Asset
+    Nekodata
+}
+
+interface IStream {
+    +read(buf:void*, size:int32) -> int32
+    +seek(pos:int64, origin) -> bool
+    +getPosition() -> int64
+    +getLength() -> int64
+}
+
+interface OStream {
+    +write(buf:void*, size:int32) -> int32
+    +seek(pos:int64, origin) -> bool
+    +getPosition() -> int64
+    +getLength() -> int64
+}
+
+interface FileSystem {
+    +getCurrentPath() -> str
+    +getAllFiles(dirpath:str) -> list<str>
+    +retainFile(filepath:str)
+    +releaseFile(filepath:str)
+    +openIStream(filepath:str) -> IStream
+    +closeIStream(is:IStream)
+    +exist(path:str) -> bool
+    +getSize(filepath:str) -> int64
+    +getFSType() -> FileSystemType
+}
+
+class NativeFileIStream
+class NativeFileOStream
+class NativeFileSystem {
+    +createDirectory(dirpath:str) -> bool
+    +removeDirectory(dirpath:str) -> bool
+    +removeEmptyDirectory(dirpath:str) -> bool
+    +moveDirectory(srcpath:str, destpath:str) -> bool
+    +removeFile(path:str) -> bool
+    +moveFile(path:str) -> bool
+    +openOStream() -> OStream
+    +closeIStream(os:OStream)
+}
+
+class NekoDataFileIStream
+class NekoDataFileIRawStream
+class NekoDataFileSystem {
+    {static} +create(fs:FileSystem, path)
+    +openIRawStream(filepath:str) -> IStream
+}
+
+class NekoDataMaker {
+    {static} +create(fs:FileSystem, path:str) -> NekoDataMaker
+    +addFile(srcpath:str, filepath:str)
+    +addStream(fs:IStream, filepath:str)
+    +exec()
+    +exec(threadCount:int32)
+}
+
+class AssetFileIStream
+class AssetFileSystem
+
+class LayerFileSystem {
+    {static} +create(fs:LayerFileSystem, path)
+    {static} +create(fs:NativeFileSystem, path)
+    {static} +create(fs:NekoDataFileSystem, path)
+    {static} +create(fs:AssetFileSystem, path)
+    -fs:FileSystem
+}
+
+FileSystem <|-- LayerFileSystem
+FileSystem <|-- NativeFileSystem
+FileSystem <|-- NekoDataFileSystem
+FileSystem <|-- AssetFileSystem
+
+IStream <|-- NativeFileIStream
+OStream <|-- NativeFileOStream
+IStream <|-- NekoDataFileIStream
+IStream <|-- NekoDataFileIRawStream
+IStream <|-- AssetFileIStream
+
+NativeFileSystem -- NativeFileIStream : <
+NativeFileSystem -- NativeFileOStream : <
+NekoDataFileSystem -- NekoDataFileIStream : <
+NekoDataFileSystem -- NekoDataFileIRawStream : <
+AssetFileSystem -- AssetFileIStream : <
+
+@enduml
