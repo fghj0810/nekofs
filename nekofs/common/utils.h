@@ -6,7 +6,7 @@
 namespace nekofs {
 	void logprint(const LogType& level, const fschar* message);
 	void logprint(const LogType& level, const fsstring& message);
-	SeekOrigin Int2SeekOrigin(const int32_t& value);
+	SeekOrigin Int2SeekOrigin(const NekoFSOrigin& value);
 
 	//class FSID final : private noncopyable, private nonmovable
 	//{
@@ -18,4 +18,7 @@ namespace nekofs {
 	//private:
 	//	int32_t id_ = 0;
 	//};
+
+	int32_t istream_read(std::shared_ptr<IStream>& is, void* buf, const int32_t& size);
+	int32_t ostream_write(std::shared_ptr<OStream>& os, void* buf, const int32_t& size);
 }

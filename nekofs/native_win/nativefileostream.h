@@ -14,9 +14,7 @@ namespace nekofs {
 	class NativeOStream final : public OStream, private noncopyable, private nonmovable, public std::enable_shared_from_this<NativeOStream>
 	{
 	public:
-		NativeOStream(std::shared_ptr<NativeFile> file);
-		void open();
-		void close();
+		NativeOStream(std::shared_ptr<NativeFile> file, HANDLE fd);
 
 	public:
 		int32_t write(void* buf, int32_t size) override;

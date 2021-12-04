@@ -23,7 +23,6 @@ namespace nekofs {
 		int64_t getLength() const override;
 
 	private:
-		int32_t readInternal(void* buf, int32_t size);
 		std::shared_ptr<NativeFileBlock> prepareBlock();
 
 	private:

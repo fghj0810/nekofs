@@ -5,56 +5,23 @@
 #include <sstream>
 
 namespace nekofs {
-	NativeOStream::NativeOStream(std::shared_ptr<NativeFile> file)
+	NativeOStream::NativeOStream(std::shared_ptr<NativeFile> file, HANDLE fd)
 	{
 		file_ = file;
-	}
-	void NativeOStream::open()
-	{
-		file_->createParentDirectory();
-		fd_ = CreateFile(file_->getFilePath().c_str(), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-		if (INVALID_HANDLE_VALUE == fd_)
-		{
-			DWORD err = GetLastError();
-			LPWSTR msgBuffer = NULL;
-			if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-			{
-				std::wstringstream ss;
-				ss << L"NativeOStream::open CreateFile error ! filepath = ";
-				ss << file_->getFilePath();
-				ss << L", err = ";
-				ss << msgBuffer;
-				LocalFree(msgBuffer);
-				logprint(LogType::Error, ss.str());
-			}
-		}
-	}
-	void NativeOStream::close()
-	{
-		if (INVALID_HANDLE_VALUE != fd_)
-		{
-			if (FALSE == CloseHandle(fd_))
-			{
-				DWORD err = GetLastError();
-				LPWSTR msgBuffer = NULL;
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-				{
-					std::wstringstream ss;
-					ss << L"NativeOStream::open CloseHandle error ! filepath = ";
-					ss << file_->getFilePath();
-					ss << L", err = ";
-					ss << msgBuffer;
-					LocalFree(msgBuffer);
-					logprint(LogType::Error, ss.str());
-				};
-			}
-			fd_ = INVALID_HANDLE_VALUE;
-		}
+		fd_ = fd;
 	}
 
 
 	int32_t NativeOStream::write(void* buf, int32_t size)
 	{
+		if (size < 0)
+		{
+			return -1;
+		}
+		if (size == 0)
+		{
+			return 0;
+		}
 		if (INVALID_HANDLE_VALUE != fd_)
 		{
 			DWORD ret = 0;
@@ -88,13 +55,13 @@ namespace nekofs {
 		switch (origin)
 		{
 		case SeekOrigin::Begin:
-			success = (FALSE == SetFilePointerEx(fd_, distanceToMove, &position, FILE_BEGIN));
+			success = (TRUE == SetFilePointerEx(fd_, distanceToMove, &position, FILE_BEGIN));
 			break;
 		case SeekOrigin::Current:
-			success = (FALSE == SetFilePointerEx(fd_, distanceToMove, &position, FILE_CURRENT));
+			success = (TRUE == SetFilePointerEx(fd_, distanceToMove, &position, FILE_CURRENT));
 			break;
 		case SeekOrigin::End:
-			success = (FALSE == SetFilePointerEx(fd_, distanceToMove, &position, FILE_END));
+			success = (TRUE == SetFilePointerEx(fd_, distanceToMove, &position, FILE_END));
 			break;
 		}
 		if (!success)

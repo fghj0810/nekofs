@@ -15,19 +15,20 @@ namespace nekofs {
 		{
 			return -1;
 		}
-		int32_t size_tmp = size;
-		uint8_t* buffer = static_cast<uint8_t*>(buf);
-		int32_t actulRead = 0;
-		do
+		if (size == 0)
 		{
-			actulRead = readInternal(buffer, size_tmp);
-			if (actulRead > 0)
-			{
-				size_tmp -= actulRead;
-				buffer += actulRead;
-			}
-		} while (actulRead > 0 && size_tmp > 0);
-		return size - size_tmp;
+			return 0;
+		}
+		if (position_ == fileSize_)
+		{
+			return 0;
+		}
+		int32_t actulRead = prepareBlock()->read(position_, buf, size);
+		if (actulRead > 0)
+		{
+			position_ += actulRead;
+		}
+		return actulRead;
 	}
 	int64_t NativeIStream::seek(int64_t offset, const SeekOrigin& origin)
 	{
@@ -75,23 +76,6 @@ namespace nekofs {
 	int64_t NativeIStream::getLength() const
 	{
 		return fileSize_;
-	}
-	int32_t NativeIStream::readInternal(void* buf, int32_t size)
-	{
-		if (size == 0)
-		{
-			return 0;
-		}
-		if (position_ == fileSize_)
-		{
-			return 0;
-		}
-		int32_t actulRead = prepareBlock()->read(position_, buf, size);
-		if (actulRead > 0)
-		{
-			position_ += actulRead;
-		}
-		return actulRead;
 	}
 	std::shared_ptr<NativeFileBlock> NativeIStream::prepareBlock()
 	{

@@ -31,14 +31,18 @@ namespace nekofs {
 		static void weakReadDeleteCallback(std::weak_ptr<NativeFile> file, NativeIStream* istream);
 		static void weakBlockDeleteCallback(std::weak_ptr<NativeFile> file, NativeFileBlock* block);
 		void closeBlockInternal(int64_t offset);
+		void openReadFdInternal();
+		void closeReadFdInternal();
+		void openWriteFdInternal();
+		void closeWriteFdInternal();
 
 	private:
 		fsstring filepath_;
 		HANDLE readFd_ = INVALID_HANDLE_VALUE;
 		int64_t readFileSize_ = 0;
 		HANDLE readMapFd_ = NULL;
+		HANDLE writeFd_ = INVALID_HANDLE_VALUE;
 		int32_t readStreamCount_ = 0;
-		int32_t writeStreamCount_ = 0;
 		std::vector<NativeFileBlock*> blockPtrs_;
 		std::vector<std::weak_ptr<NativeFileBlock>> blocks_;
 		std::recursive_mutex mtx_;

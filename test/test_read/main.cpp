@@ -31,6 +31,8 @@ int32_t read_nekofs(FILE* f, void* buf, const int32_t& size)
 int main()
 {
 	nekofs_SetLogDelegate(log111);
+	auto handle2 = nekofs_native_OpenOStream(L"D:/test/testfile");
+	auto handle3 = nekofs_native_OpenIStream(L"D:/test/testfile");
 	auto handle = nekofs_native_OpenIStream(L"D:/test/testfile");
 	auto cfile = fopen("D:/test/testfile", "rb");
 	const size_t testSize = 991;

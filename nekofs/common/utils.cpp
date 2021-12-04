@@ -29,7 +29,7 @@ namespace nekofs {
 		logprint(level, message.c_str());
 	}
 
-	SeekOrigin Int2SeekOrigin(const int32_t& value)
+	SeekOrigin Int2SeekOrigin(const NekoFSOrigin& value)
 	{
 		switch (value)
 		{
@@ -41,6 +41,64 @@ namespace nekofs {
 			return SeekOrigin::End;
 		}
 		return SeekOrigin::Unknown;
+	}
+
+	int32_t istream_read(std::shared_ptr<IStream>& is, void* buf, const int32_t& size)
+	{
+		if (size < 0)
+		{
+			return -1;
+		}
+		if (size == 0)
+		{
+			return 0;
+		}
+		int32_t size_tmp = size;
+		uint8_t* buffer = static_cast<uint8_t*>(buf);
+		int32_t actulRead = 0;
+		do
+		{
+			actulRead = is->read(buffer, size_tmp);
+			if (actulRead > 0)
+			{
+				size_tmp -= actulRead;
+				buffer += actulRead;
+			}
+		} while (actulRead > 0 && size_tmp > 0);
+		if (actulRead < 0 && size == size_tmp)
+		{
+			return actulRead;
+		}
+		return size - size_tmp;
+	}
+
+	int32_t ostream_write(std::shared_ptr<OStream>& os, void* buf, const int32_t& size)
+	{
+		if (size < 0)
+		{
+			return -1;
+		}
+		if (size == 0)
+		{
+			return 0;
+		}
+		int32_t size_tmp = size;
+		uint8_t* buffer = static_cast<uint8_t*>(buf);
+		int32_t actulWrite = 0;
+		do
+		{
+			actulWrite = os->write(buffer, size_tmp);
+			if (actulWrite > 0)
+			{
+				size_tmp -= actulWrite;
+				buffer += actulWrite;
+			}
+		} while (actulWrite > 0 && size_tmp > 0);
+		if (actulWrite < 0 && size == size_tmp)
+		{
+			return actulWrite;
+		}
+		return size - size_tmp;
 	}
 }
 
