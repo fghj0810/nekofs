@@ -1,8 +1,16 @@
 ﻿#include "nekofs.h"
 
 #include <cstdio>
-
+#include <cstring>
 #include <iostream>
+
+#ifdef _WIN32
+const fschar* fs_filepath = L"D:/test/testfile";
+const char* c_filepath = "D:/test/testfile";
+#else
+const fschar* fs_filepath = "/mnt/d/test/testfile";
+const char* c_filepath = "/mnt/d/test/testfile";
+#endif
 
 extern "C" {
 	void log111(int32_t, fschar* str)
@@ -31,10 +39,10 @@ int32_t read_nekofs(FILE* f, void* buf, const int32_t& size)
 int main()
 {
 	nekofs_SetLogDelegate(log111);
-	auto handle2 = nekofs_native_OpenOStream(L"D:/test/testfile");
-	auto handle3 = nekofs_native_OpenIStream(L"D:/test/testfile");
-	auto handle = nekofs_native_OpenIStream(L"D:/test/testfile");
-	auto cfile = fopen("D:/test/testfile", "rb");
+	auto handle2 = nekofs_native_OpenOStream(fs_filepath);
+	auto handle3 = nekofs_native_OpenIStream(fs_filepath);
+	auto handle = nekofs_native_OpenIStream(fs_filepath);
+	auto cfile = fopen(c_filepath, "rb");
 	const size_t testSize = 991;
 	auto buf1 = new char[testSize];
 	auto buf2 = new char[testSize];

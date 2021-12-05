@@ -22,28 +22,24 @@ namespace nekofs {
 		{
 			return 0;
 		}
-		if (INVALID_HANDLE_VALUE != fd_)
+		DWORD ret = 0;
+		if (FALSE == WriteFile(fd_, buf, size, &ret, NULL))
 		{
-			DWORD ret = 0;
-			if (FALSE == WriteFile(fd_, buf, size, &ret, NULL))
+			ret = -1;
+			DWORD err = GetLastError();
+			LPWSTR msgBuffer = NULL;
+			if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
 			{
-				ret = -1;
-				DWORD err = GetLastError();
-				LPWSTR msgBuffer = NULL;
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-				{
-					std::wstringstream ss;
-					ss << L"NativeOStream::write WriteFile error ! filepath = ";
-					ss << file_->getFilePath();
-					ss << L", err = ";
-					ss << msgBuffer;
-					LocalFree(msgBuffer);
-					logprint(LogType::Error, ss.str());
-				};
+				std::wstringstream ss;
+				ss << L"NativeOStream::write WriteFile error ! filepath = ";
+				ss << file_->getFilePath();
+				ss << L", err = ";
+				ss << msgBuffer;
+				LocalFree(msgBuffer);
+				logprint(LogType::Error, ss.str());
 			}
-			return ret;
 		}
-		return -1;
+		return ret;
 	}
 	int64_t NativeOStream::seek(int64_t offset, const SeekOrigin& origin)
 	{
@@ -79,7 +75,7 @@ namespace nekofs {
 					ss << msgBuffer;
 					LocalFree(msgBuffer);
 					logprint(LogType::Error, ss.str());
-				};
+				}
 			}
 			return -1;
 		}
@@ -104,7 +100,7 @@ namespace nekofs {
 				ss << msgBuffer;
 				LocalFree(msgBuffer);
 				logprint(LogType::Error, ss.str());
-			};
+			}
 			return -1;
 		}
 		return position.QuadPart;
@@ -125,7 +121,7 @@ namespace nekofs {
 				ss << msgBuffer;
 				LocalFree(msgBuffer);
 				logprint(LogType::Error, ss.str());
-			};
+			}
 			return -1;
 		}
 		return length.QuadPart;

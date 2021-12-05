@@ -187,8 +187,7 @@ namespace nekofs {
 							ss << msgBuffer;
 							LocalFree(msgBuffer);
 							logprint(LogType::Error, ss.str());
-						};
-						return false;
+						}
 					}
 				}
 			}
@@ -287,7 +286,7 @@ namespace nekofs {
 							ss << msgBuffer;
 							LocalFree(msgBuffer);
 							logprint(LogType::Error, ss.str());
-						};
+						}
 						return false;
 					}
 				}
@@ -310,7 +309,7 @@ namespace nekofs {
 							ss << msgBuffer;
 							LocalFree(msgBuffer);
 							logprint(LogType::Error, ss.str());
-						};
+						}
 						return false;
 					}
 				}
@@ -381,7 +380,7 @@ namespace nekofs {
 						ss << msgBuffer;
 						LocalFree(msgBuffer);
 						logprint(LogType::Error, ss.str());
-					};
+					}
 					return false;
 				}
 			}
@@ -422,7 +421,7 @@ namespace nekofs {
 			if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
 			{
 				std::wstringstream ss;
-				ss << L"NativeFileSystem::moveDirectory MoveFileA error. srcpath = ";
+				ss << L"NativeFileSystem::moveDirectory MoveFile error. srcpath = ";
 				ss << srcpath;
 				ss << L", destpath = ";
 				ss << destpath;
@@ -430,7 +429,7 @@ namespace nekofs {
 				ss << msgBuffer;
 				LocalFree(msgBuffer);
 				logprint(LogType::Error, ss.str());
-			};
+			}
 			return false;
 		}
 		return true;
@@ -467,7 +466,7 @@ namespace nekofs {
 				ss << msgBuffer;
 				LocalFree(msgBuffer);
 				logprint(LogType::Error, ss.str());
-			};
+			}
 			return false;
 		}
 		return true;
@@ -506,7 +505,7 @@ namespace nekofs {
 			if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
 			{
 				std::wstringstream ss;
-				ss << L"NativeFileSystem::moveFile MoveFileA error. srcpath = ";
+				ss << L"NativeFileSystem::moveFile MoveFile error. srcpath = ";
 				ss << srcpath;
 				ss << L", destpath = ";
 				ss << destpath;
@@ -514,7 +513,7 @@ namespace nekofs {
 				ss << msgBuffer;
 				LocalFree(msgBuffer);
 				logprint(LogType::Error, ss.str());
-			};
+			}
 			return false;
 		}
 		return true;

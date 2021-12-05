@@ -1,7 +1,9 @@
 ﻿#include "env.h"
 #ifdef _WIN32
 #include "../native_win/nativefilesystem.h"
-#endif // _WIN32
+#else
+#include "../native_posix/nativefilesystem.h"
+#endif
 
 
 namespace nekofs {

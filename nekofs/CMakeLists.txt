@@ -12,22 +12,37 @@ if (WIN32)
     MESSAGE(STATUS "Now is windows")
     add_definitions("-D_UNICODE" "-DUNICODE")
     remove_definitions("-D_MBCS")
-endif ()
 
-set(NEKOFS_NATIVE
-    native_win/nativefile.h
-    native_win/nativefile.cpp
-    native_win/nativefileblock.h
-    native_win/nativefileblock.cpp
-    native_win/nativefilehandle.h
-    native_win/nativefilehandle.cpp
-    native_win/nativefilesystem.h
-    native_win/nativefilesystem.cpp
-    native_win/nativefileistream.h
-    native_win/nativefileistream.cpp
-    native_win/nativefileostream.h
-    native_win/nativefileostream.cpp
-)
+    set(NEKOFS_NATIVE
+        native_win/nativefile.h
+        native_win/nativefile.cpp
+        native_win/nativefileblock.h
+        native_win/nativefileblock.cpp
+        native_win/nativefilehandle.h
+        native_win/nativefilehandle.cpp
+        native_win/nativefilesystem.h
+        native_win/nativefilesystem.cpp
+        native_win/nativefileistream.h
+        native_win/nativefileistream.cpp
+        native_win/nativefileostream.h
+        native_win/nativefileostream.cpp
+    )
+else()
+    set(NEKOFS_NATIVE
+        native_posix/nativefile.h
+        native_posix/nativefile.cpp
+        native_posix/nativefileblock.h
+        native_posix/nativefileblock.cpp
+        native_posix/nativefilehandle.h
+        native_posix/nativefilehandle.cpp
+        native_posix/nativefilesystem.h
+        native_posix/nativefilesystem.cpp
+        native_posix/nativefileistream.h
+        native_posix/nativefileistream.cpp
+        native_posix/nativefileostream.h
+        native_posix/nativefileostream.cpp
+    )
+endif ()
 
 set(NEKOFS_COMMON
     common/typedef.h

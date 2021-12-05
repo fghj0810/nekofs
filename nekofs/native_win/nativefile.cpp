@@ -84,6 +84,7 @@ namespace nekofs {
 					const int64_t offset = index << nekofs_MapBlockSizeBitOffset;
 					const int32_t size = readFileSize_ - offset > nekofs_MapBlockSize ? nekofs_MapBlockSize : static_cast<int32_t>(readFileSize_ - offset);
 					rawPtr = new NativeFileBlock(shared_from_this(), offset, size);
+					rawPtr->mmap();
 					blockPtrs_[index] = rawPtr;
 				}
 				fPtr.reset(rawPtr, std::bind(&NativeFile::weakBlockDeleteCallback, std::weak_ptr<NativeFile>(shared_from_this()), std::placeholders::_1));
@@ -140,6 +141,7 @@ namespace nekofs {
 		}
 		else
 		{
+			block->munmap();
 			delete block;
 		}
 	}
@@ -150,6 +152,7 @@ namespace nekofs {
 		auto sp = blocks_[index].lock();
 		if (!sp)
 		{
+			blockPtrs_[index]->munmap();
 			delete blockPtrs_[index];
 			blockPtrs_[index] = nullptr;
 		}
@@ -172,7 +175,7 @@ namespace nekofs {
 					ss << msgBuffer;
 					LocalFree(msgBuffer);
 					logprint(LogType::Error, ss.str());
-				};
+				}
 			}
 			else
 			{
@@ -190,7 +193,7 @@ namespace nekofs {
 						ss << msgBuffer;
 						LocalFree(msgBuffer);
 						logprint(LogType::Error, ss.str());
-					};
+					}
 					if (FALSE == CloseHandle(readFd_))
 					{
 						DWORD err = GetLastError();
@@ -204,7 +207,7 @@ namespace nekofs {
 							ss << msgBuffer;
 							LocalFree(msgBuffer);
 							logprint(LogType::Error, ss.str());
-						};
+						}
 					}
 					readFd_ = INVALID_HANDLE_VALUE;
 				}
@@ -230,7 +233,7 @@ namespace nekofs {
 								ss << msgBuffer;
 								LocalFree(msgBuffer);
 								logprint(LogType::Error, ss.str());
-							};
+							}
 							if (FALSE == CloseHandle(readFd_))
 							{
 								DWORD err = GetLastError();
@@ -244,7 +247,7 @@ namespace nekofs {
 									ss << msgBuffer;
 									LocalFree(msgBuffer);
 									logprint(LogType::Error, ss.str());
-								};
+								}
 							}
 							readFd_ = INVALID_HANDLE_VALUE;
 							readFileSize_ = 0;
@@ -271,7 +274,7 @@ namespace nekofs {
 					ss << msgBuffer;
 					LocalFree(msgBuffer);
 					logprint(LogType::Error, ss.str());
-				};
+				}
 			}
 			readMapFd_ = NULL;
 		}
@@ -290,7 +293,7 @@ namespace nekofs {
 					ss << msgBuffer;
 					LocalFree(msgBuffer);
 					logprint(LogType::Error, ss.str());
-				};
+				}
 			}
 			readFd_ = INVALID_HANDLE_VALUE;
 		}
@@ -336,7 +339,7 @@ namespace nekofs {
 					ss << msgBuffer;
 					LocalFree(msgBuffer);
 					logprint(LogType::Error, ss.str());
-				};
+				}
 			}
 			writeFd_ = INVALID_HANDLE_VALUE;
 		}
