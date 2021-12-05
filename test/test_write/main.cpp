@@ -9,8 +9,8 @@
 const fschar* old_file = L"D:/test/testfile";
 const fschar* new_filepath = L"D:/test/testfile2";
 #else
-const fschar* old_file = "/mnt/d/test/testfile";
-const fschar* new_filepath = "/mnt/d/test/testfile2";
+const fschar* old_file = "/home/jie/work/testfile";
+const fschar* new_filepath = "/home/jie/work/testfile2";
 #endif
 
 extern "C" {

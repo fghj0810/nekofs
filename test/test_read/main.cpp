@@ -8,8 +8,8 @@
 const fschar* fs_filepath = L"D:/test/testfile";
 const char* c_filepath = "D:/test/testfile";
 #else
-const fschar* fs_filepath = "/mnt/d/test/testfile";
-const char* c_filepath = "/mnt/d/test/testfile";
+const fschar* fs_filepath = "/home/jie/work/testfile";
+const char* c_filepath = "/home/jie/work/testfile";
 #endif
 
 extern "C" {
@@ -39,8 +39,6 @@ int32_t read_nekofs(FILE* f, void* buf, const int32_t& size)
 int main()
 {
 	nekofs_SetLogDelegate(log111);
-	auto handle2 = nekofs_native_OpenOStream(fs_filepath);
-	auto handle3 = nekofs_native_OpenIStream(fs_filepath);
 	auto handle = nekofs_native_OpenIStream(fs_filepath);
 	auto cfile = fopen(c_filepath, "rb");
 	const size_t testSize = 991;

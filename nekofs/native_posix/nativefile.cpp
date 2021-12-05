@@ -196,6 +196,9 @@ namespace nekofs {
 				else
 				{
 					readFileSize_ = info.st_size;
+					const size_t vector_size = (readFileSize_ >> nekofs_MapBlockSizeBitOffset) + 1;
+					blockPtrs_.resize(vector_size);
+					blocks_.resize(vector_size);
 				}
 			}
 		}
