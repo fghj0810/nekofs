@@ -24,7 +24,6 @@ namespace nekofs {
 		std::shared_ptr<NativeOStream> openOStream();
 		void createParentDirectory();
 		std::shared_ptr<NativeFileBlock> openBlockInternal(int64_t offset);
-		const HANDLE& getMapHandle() const;
 
 	private:
 		static void weakWriteDeleteCallback(std::weak_ptr<NativeFile> file, NativeOStream* ostream);

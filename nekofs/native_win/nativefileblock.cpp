@@ -5,9 +5,10 @@
 #include <sstream>
 
 namespace nekofs {
-	NativeFileBlock::NativeFileBlock(std::shared_ptr<NativeFile> file, int64_t offset, int32_t size)
+	NativeFileBlock::NativeFileBlock(std::shared_ptr<NativeFile> file, HANDLE readMapFd, int64_t offset, int32_t size)
 	{
 		file_ = file;
+		readMapFd_ = readMapFd;
 		offset_ = offset;
 		size_ = size;
 	}
@@ -46,7 +47,7 @@ namespace nekofs {
 		DWORD dwFileOffsetHigh = offset_ >> 32;
 		DWORD dwFileOffsetLow = offset_ & 0x0FFFFFFFF;
 		SIZE_T dwNumberOfBytesToMap = size_;
-		lpBaseAddress_ = MapViewOfFile(file_->getMapHandle(), FILE_MAP_READ, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
+		lpBaseAddress_ = MapViewOfFile(readMapFd_, FILE_MAP_READ, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
 		if (NULL == lpBaseAddress_)
 		{
 			DWORD err = GetLastError();

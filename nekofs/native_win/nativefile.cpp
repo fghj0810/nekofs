@@ -83,7 +83,7 @@ namespace nekofs {
 				{
 					const int64_t offset = index << nekofs_MapBlockSizeBitOffset;
 					const int32_t size = readFileSize_ - offset > nekofs_MapBlockSize ? nekofs_MapBlockSize : static_cast<int32_t>(readFileSize_ - offset);
-					rawPtr = new NativeFileBlock(shared_from_this(), offset, size);
+					rawPtr = new NativeFileBlock(shared_from_this(), readMapFd_, offset, size);
 					rawPtr->mmap();
 					blockPtrs_[index] = rawPtr;
 				}
@@ -94,56 +94,29 @@ namespace nekofs {
 		return fPtr;
 	}
 
-	const HANDLE& NativeFile::getMapHandle() const
-	{
-		return readMapFd_;
-	}
-
 
 	void NativeFile::weakWriteDeleteCallback(std::weak_ptr<NativeFile> file, NativeOStream* ostream)
 	{
 		auto fp = file.lock();
-		if (fp)
-		{
-			std::lock_guard<std::recursive_mutex> lock(fp->mtx_);
-			fp->closeWriteFdInternal();
-			delete ostream;
-		}
-		else
-		{
-			delete ostream;
-		}
+		std::lock_guard<std::recursive_mutex> lock(fp->mtx_);
+		fp->closeWriteFdInternal();
+		delete ostream;
 	}
 	void NativeFile::weakReadDeleteCallback(std::weak_ptr<NativeFile> file, NativeIStream* istream)
 	{
 		auto fp = file.lock();
-		if (fp)
+		std::lock_guard<std::recursive_mutex> lock(fp->mtx_);
+		fp->readStreamCount_--;
+		if (fp->readStreamCount_ == 0)
 		{
-			std::lock_guard<std::recursive_mutex> lock(fp->mtx_);
-			fp->readStreamCount_--;
-			if (fp->readStreamCount_ == 0)
-			{
-				fp->closeReadFdInternal();
-			}
-			delete istream;
+			fp->closeReadFdInternal();
 		}
-		else
-		{
-			delete istream;
-		}
+		delete istream;
 	}
 	void NativeFile::weakBlockDeleteCallback(std::weak_ptr<NativeFile> file, NativeFileBlock* block)
 	{
 		auto fp = file.lock();
-		if (fp)
-		{
-			fp->closeBlockInternal(block->getOffset());
-		}
-		else
-		{
-			block->munmap();
-			delete block;
-		}
+		fp->closeBlockInternal(block->getOffset());
 	}
 	void NativeFile::closeBlockInternal(int64_t offset)
 	{

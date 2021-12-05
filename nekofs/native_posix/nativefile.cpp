@@ -103,47 +103,25 @@ namespace nekofs {
 	void NativeFile::weakWriteDeleteCallback(std::weak_ptr<NativeFile> file, NativeOStream* ostream)
 	{
 		auto fp = file.lock();
-		if (fp)
-		{
-			std::lock_guard<std::recursive_mutex> lock(fp->mtx_);
-			fp->closeWriteFdInternal();
-			delete ostream;
-		}
-		else
-		{
-			delete ostream;
-		}
+		std::lock_guard<std::recursive_mutex> lock(fp->mtx_);
+		fp->closeWriteFdInternal();
+		delete ostream;
 	}
 	void NativeFile::weakReadDeleteCallback(std::weak_ptr<NativeFile> file, NativeIStream* istream)
 	{
 		auto fp = file.lock();
-		if (fp)
+		std::lock_guard<std::recursive_mutex> lock(fp->mtx_);
+		fp->readStreamCount_--;
+		if (fp->readStreamCount_ == 0)
 		{
-			std::lock_guard<std::recursive_mutex> lock(fp->mtx_);
-			fp->readStreamCount_--;
-			if (fp->readStreamCount_ == 0)
-			{
-				fp->closeReadFdInternal();
-			}
-			delete istream;
+			fp->closeReadFdInternal();
 		}
-		else
-		{
-			delete istream;
-		}
+		delete istream;
 	}
 	void NativeFile::weakBlockDeleteCallback(std::weak_ptr<NativeFile> file, NativeFileBlock* block)
 	{
 		auto fp = file.lock();
-		if (fp)
-		{
-			fp->closeBlockInternal(block->getOffset());
-		}
-		else
-		{
-			block->munmap();
-			delete block;
-		}
+		fp->closeBlockInternal(block->getOffset());
 	}
 	void NativeFile::closeBlockInternal(int64_t offset)
 	{
