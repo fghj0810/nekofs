@@ -16,7 +16,7 @@ extern "C" {
 	typedef int32_t NekoFSOrigin;
 	typedef uint32_t NekoFSBool;
 	typedef int32_t NekoFSHandle;
-	typedef void logdelegate(int32_t level, fschar* message);
+	typedef void logdelegate(int32_t level, const fschar* message);
 
 #ifdef __cplusplus
 }

@@ -11,11 +11,26 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <filesystem>
 
 std::mutex g_mtx_istreams_;
 std::unordered_map<NekoFSHandle, std::shared_ptr<nekofs::IStream>> g_istreams_;
 std::mutex g_mtx_ostreams_;
 std::unordered_map<NekoFSHandle, std::shared_ptr<nekofs::OStream>> g_ostreams_;
+
+static inline fsstring __normalpath(const fschar* path)
+{
+	std::filesystem::path p(path);
+	if (!p.has_root_path())
+	{
+		return fsstring();
+	}
+#ifdef _WIN32
+	return p.lexically_normal().generic_wstring();
+#else
+	return p.lexically_normal().generic_string();
+#endif
+}
 
 NEKOFS_API void nekofs_SetLogDelegate(logdelegate* delegate)
 {
@@ -24,28 +39,63 @@ NEKOFS_API void nekofs_SetLogDelegate(logdelegate* delegate)
 
 NEKOFS_API NekoFSBool nekofs_native_FileExist(const fschar* filepath)
 {
-	return nekofs::env::getInstance().getNativeFileSystem()->fileExist(filepath) ? NEKOFS_TRUE : NEKOFS_FALSE;
+	auto path = __normalpath(filepath);
+	if (path.empty())
+	{
+		return NEKOFS_FALSE;
+	}
+	return nekofs::env::getInstance().getNativeFileSystem()->fileExist(path) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
 
 NEKOFS_API int64_t nekofs_native_GetFileSize(const fschar* filepath)
 {
-	return nekofs::env::getInstance().getNativeFileSystem()->getSize(filepath);
+	auto path = __normalpath(filepath);
+	if (path.empty())
+	{
+		return -1;
+	}
+	return nekofs::env::getInstance().getNativeFileSystem()->getSize(path);
 }
 
 NEKOFS_API NekoFSBool nekofs_native_RemoveFile(const fschar* filepath)
 {
-	return nekofs::env::getInstance().getNativeFileSystem()->removeFile(filepath) ? NEKOFS_TRUE : NEKOFS_FALSE;
+	auto path = __normalpath(filepath);
+	if (path.empty())
+	{
+		return NEKOFS_FALSE;
+	}
+	return nekofs::env::getInstance().getNativeFileSystem()->removeFile(path) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
 
 NEKOFS_API NekoFSBool nekofs_native_RemoveDirectory(const fschar* dirpath)
 {
-	return nekofs::env::getInstance().getNativeFileSystem()->removeDirectories(dirpath) ? NEKOFS_TRUE : NEKOFS_FALSE;
+	auto path = __normalpath(dirpath);
+	if (path.empty())
+	{
+		return NEKOFS_FALSE;
+	}
+	return nekofs::env::getInstance().getNativeFileSystem()->removeDirectories(path) ? NEKOFS_TRUE : NEKOFS_FALSE;
+}
+
+NEKOFS_API NekoFSBool nekofs_native_CleanEmptyDirectory(const fschar* dirpath)
+{
+	auto path = __normalpath(dirpath);
+	if (path.empty())
+	{
+		return NEKOFS_FALSE;
+	}
+	return nekofs::env::getInstance().getNativeFileSystem()->cleanEmptyDirectories(path) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
 
 NEKOFS_API NekoFSHandle nekofs_native_OpenIStream(const fschar* filepath)
 {
+	auto path = __normalpath(filepath);
+	if (path.empty())
+	{
+		return INVALID_NEKOFSHANDLE;
+	}
 	NekoFSHandle handle = INVALID_NEKOFSHANDLE;
-	auto stream = nekofs::env::getInstance().getNativeFileSystem()->openIStream(filepath);
+	auto stream = nekofs::env::getInstance().getNativeFileSystem()->openIStream(path);
 	if (stream)
 	{
 		handle = nekofs::env::getInstance().genId();
@@ -57,8 +107,13 @@ NEKOFS_API NekoFSHandle nekofs_native_OpenIStream(const fschar* filepath)
 
 NEKOFS_API NekoFSHandle nekofs_native_OpenOStream(const fschar* filepath)
 {
+	auto path = __normalpath(filepath);
+	if (path.empty())
+	{
+		return INVALID_NEKOFSHANDLE;
+	}
 	NekoFSHandle handle = INVALID_NEKOFSHANDLE;
-	auto stream = nekofs::env::getInstance().getNativeFileSystem()->openOStream(filepath);
+	auto stream = nekofs::env::getInstance().getNativeFileSystem()->openOStream(path);
 	if (stream)
 	{
 		handle = nekofs::env::getInstance().genId();

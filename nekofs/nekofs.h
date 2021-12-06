@@ -17,6 +17,7 @@ extern "C" {
 	NEKOFS_API int64_t nekofs_native_GetFileSize(const fschar* filepath);
 	NEKOFS_API NekoFSBool nekofs_native_RemoveFile(const fschar* filepath);
 	NEKOFS_API NekoFSBool nekofs_native_RemoveDirectory(const fschar* dirpath);
+	NEKOFS_API NekoFSBool nekofs_native_CleanEmptyDirectory(const fschar* dirpath);
 	NEKOFS_API NekoFSHandle nekofs_native_OpenIStream(const fschar* filepath);
 	NEKOFS_API NekoFSHandle nekofs_native_OpenOStream(const fschar* filepath);
 

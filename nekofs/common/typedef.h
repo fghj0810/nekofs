@@ -32,6 +32,13 @@ namespace nekofs {
 		Layer,
 		Native,
 	};
+	enum class ItemType
+	{
+		None,
+		File,
+		Directory,
+		Unkonwn
+	};
 
 	class FileHandle;
 	class IStream;

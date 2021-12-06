@@ -40,7 +40,7 @@ namespace nekofs {
 		std::shared_ptr<NativeFile> openFileInternal(const fsstring& filepath);
 		void closeFileInternal(const fsstring& filepath);
 		bool hasOpenFiles(const fsstring& dirpath) const;
-		bool itemExist(const fsstring& path) const;
+		ItemType getItemType(const fsstring& path) const;
 
 	private:
 		std::map<fsstring, std::weak_ptr<NativeFile>> files_;

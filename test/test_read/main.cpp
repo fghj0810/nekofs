@@ -13,10 +13,43 @@ const char* c_filepath = "/home/jie/work/testfile";
 #endif
 
 extern "C" {
-	void log111(int32_t, fschar* str)
+#ifdef _WIN32
+	void log111(int32_t level, const fschar* str)
 	{
-		std::wcout << str << std::endl;
+		switch (level)
+		{
+		case NEKOFS_LOGINFO:
+			std::wcout << "[INFO]  " << str << std::endl;
+			break;
+		case NEKOFS_LOGWARN:
+			std::wcout << "[WARN]  " << str << std::endl;
+			break;
+		case NEKOFS_LOGERR:
+			std::wcout << "[ERRO]  " << str << std::endl;
+			break;
+		default:
+			break;
+		}
 	}
+#else
+	void log111(int32_t level, const fschar* str)
+	{
+		switch (level)
+		{
+		case NEKOFS_LOGINFO:
+			std::cout << "[INFO]  " << str << std::endl;
+			break;
+		case NEKOFS_LOGWARN:
+			std::cout << "[WARN]  " << str << std::endl;
+			break;
+		case NEKOFS_LOGERR:
+			std::cout << "[ERRO]  " << str << std::endl;
+			break;
+		default:
+			break;
+		}
+	}
+#endif
 }
 
 int32_t read_nekofs(FILE* f, void* buf, const int32_t& size)

@@ -7,17 +7,50 @@
 
 #ifdef _WIN32
 const fschar* old_file = L"D:/test/testfile";
-const fschar* new_filepath = L"D:/test/testfile2";
+const fschar* new_filepath = L"D:/test2/testfile2/2/2";
 #else
 const fschar* old_file = "/home/jie/work/testfile";
-const fschar* new_filepath = "/home/jie/work/testfile2";
+const fschar* new_filepath = "/home/jie/work/testfile2/2/2";
 #endif
 
 extern "C" {
-	void log111(int32_t, fschar* str)
+#ifdef _WIN32
+	void log111(int32_t level, const fschar* str)
 	{
-		std::wcout << str << std::endl;
+		switch (level)
+		{
+		case NEKOFS_LOGINFO:
+			std::wcout << "[INFO]  " << str << std::endl;
+			break;
+		case NEKOFS_LOGWARN:
+			std::wcout << "[WARN]  " << str << std::endl;
+			break;
+		case NEKOFS_LOGERR:
+			std::wcout << "[ERRO]  " << str << std::endl;
+			break;
+		default:
+			break;
+		}
 	}
+#else
+	void log111(int32_t level, const fschar* str)
+	{
+		switch (level)
+		{
+		case NEKOFS_LOGINFO:
+			std::cout << "[INFO]  " << str << std::endl;
+			break;
+		case NEKOFS_LOGWARN:
+			std::cout << "[WARN]  " << str << std::endl;
+			break;
+		case NEKOFS_LOGERR:
+			std::cout << "[ERRO]  " << str << std::endl;
+			break;
+		default:
+			break;
+		}
+	}
+#endif
 }
 
 int32_t read_nekofs(FILE* f, void* buf, const int32_t& size)
@@ -52,6 +85,7 @@ void copy_test(NekoFSHandle is, NekoFSHandle os)
 			break;
 		}
 	} while (actual > 0);
+	delete[] buf;
 }
 
 void copy_test_random(NekoFSHandle is, NekoFSHandle os)
@@ -72,6 +106,7 @@ void copy_test_random(NekoFSHandle is, NekoFSHandle os)
 		nekofs_istream_Seek(is, -offset, NEKOFS_CURRENT);
 		nekofs_ostream_Seek(os, -offset, NEKOFS_CURRENT);
 	} while (actual > 0);
+	delete[] buf;
 }
 
 bool compare_stream(NekoFSHandle is1, NekoFSHandle is2)
@@ -91,9 +126,13 @@ bool compare_stream(NekoFSHandle is1, NekoFSHandle is2)
 		ret2 = nekofs_istream_Read(is2, buf2, testSize);
 		if (ret1 != ret2 || std::memcmp(buf1, buf2, testSize) != 0)
 		{
+			delete[] buf1;
+			delete[] buf2;
 			return false;
 		}
 	} while (ret1 > 0 && ret2 > 0);
+	delete[] buf1;
+	delete[] buf2;
 	if (ret1 != ret2)
 	{
 		return false;

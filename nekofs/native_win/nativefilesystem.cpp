@@ -67,45 +67,11 @@ namespace nekofs {
 	}
 	bool NativeFileSystem::fileExist(const fsstring& filepath) const
 	{
-		WIN32_FIND_DATA find_data;
-		HANDLE findHandle = FindFirstFile(filepath.c_str(), &find_data);
-		if (INVALID_HANDLE_VALUE != findHandle)
-		{
-			FindClose(findHandle);
-			if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0)
-			{
-				return true;
-			}
-			else
-			{
-				std::wstringstream ss;
-				ss << L"NativeFileSystem::fileExist not a file! ";
-				ss << filepath;
-				logprint(LogType::Error, ss.str());
-			}
-		}
-		return false;
+		return getItemType(filepath) == ItemType::File;
 	}
 	bool NativeFileSystem::dirExist(const fsstring& dirpath) const
 	{
-		WIN32_FIND_DATA find_data;
-		HANDLE findHandle = FindFirstFile(dirpath.c_str(), &find_data);
-		if (INVALID_HANDLE_VALUE != findHandle)
-		{
-			FindClose(findHandle);
-			if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-			{
-				return true;
-			}
-			else
-			{
-				std::wstringstream ss;
-				ss << L"NativeFileSystem::dirExist not a directory! ";
-				ss << dirpath;
-				logprint(LogType::Error, ss.str());
-			}
-		}
-		return false;
+		return getItemType(dirpath) == ItemType::Directory;
 	}
 	int64_t NativeFileSystem::getSize(const fsstring& filepath) const
 	{
@@ -145,65 +111,74 @@ namespace nekofs {
 
 	bool NativeFileSystem::createDirectories(const fsstring& dirpath)
 	{
-		WIN32_FIND_DATA find_data;
-		HANDLE findHandle = FindFirstFile(dirpath.c_str(), &find_data);
-		if (INVALID_HANDLE_VALUE != findHandle)
+		std::vector<fsstring> result;
+		std::lock_guard<std::recursive_mutex> lock(mtx_);
+		for (size_t fpos = dirpath.size(); fpos != dirpath.npos; fpos = dirpath.rfind(L"/", fpos - 1))
 		{
-			FindClose(findHandle);
-			findHandle = INVALID_HANDLE_VALUE;
-			if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+			fsstring curpath = dirpath.substr(0, fpos);
+			auto type = getItemType(curpath);
+			if (type == ItemType::None) {
+				result.push_back(curpath);
+				if (std::filesystem::path tmp(curpath); tmp.parent_path() == tmp.root_path())
+				{
+					break;
+				}
+			}
+			else if (type == ItemType::Directory)
 			{
-				return true;
+				break;
 			}
 			else
 			{
 				std::wstringstream ss;
-				ss << L"NativeFileSystem::createDirectories filepath exist. not a directory. path = ";
+				ss << L"NativeFileSystem::createDirectories error: path not a directory. dirpath = ";
 				ss << dirpath;
+				ss << L", curpath = ";
+				ss << curpath;
 				logprint(LogType::Error, ss.str());
+				return false;
 			}
 		}
-		else
+		for (size_t i = result.size(); i > 0; i--)
 		{
-			size_t pos = dirpath.rfind(L"/");
-			if (pos != dirpath.npos)
+			if (FALSE == CreateDirectory(result[i - 1].c_str(), NULL))
 			{
-				if (createDirectories(dirpath.substr(0, pos)))
+				DWORD err = GetLastError();
+				LPWSTR msgBuffer = NULL;
+				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
 				{
-					if (TRUE == CreateDirectory(dirpath.c_str(), NULL))
-					{
-						return true;
-					}
-					else
-					{
-						DWORD err = GetLastError();
-						LPWSTR msgBuffer = NULL;
-						if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-						{
-							std::wstringstream ss;
-							ss << L"NativeFileSystem::createDirectories CreateDirectory error. dirpath = ";
-							ss << dirpath;
-							ss << L", err = ";
-							ss << msgBuffer;
-							LocalFree(msgBuffer);
-							logprint(LogType::Error, ss.str());
-						}
-					}
+					std::wstringstream ss;
+					ss << L"NativeFileSystem::createDirectories CreateDirectory error. dirpath = ";
+					ss << result[i - 1];
+					ss << L", err = ";
+					ss << msgBuffer;
+					LocalFree(msgBuffer);
+					logprint(LogType::Error, ss.str());
 				}
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 	bool NativeFileSystem::removeDirectories(const fsstring& dirpath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
-		if (!dirExist(dirpath))
+		auto dirpath_type = getItemType(dirpath);
+		if (dirpath_type == ItemType::None)
 		{
 			std::wstringstream ss;
 			ss << L"NativeFileSystem::removeDirectories dir not exist. path = ";
 			ss << dirpath;
 			logprint(LogType::Warning, ss.str());
 			return true;
+		}
+		if (dirpath_type != ItemType::Directory)
+		{
+			std::wstringstream ss;
+			ss << L"NativeFileSystem::removeDirectories not a dir path. path = ";
+			ss << dirpath;
+			logprint(LogType::Error, ss.str());
+			return false;
 		}
 		if (hasOpenFiles(dirpath))
 		{
@@ -225,7 +200,7 @@ namespace nekofs {
 		{
 			fsstring currentpath = dirs.front();
 			dirs.pop();
-			HANDLE findHandle = FindFirstFile((dirpath + L"/*").c_str(), &find_data);
+			HANDLE findHandle = FindFirstFile((currentpath + L"/*").c_str(), &find_data);
 			if (INVALID_HANDLE_VALUE == findHandle)
 			{
 				continue;
@@ -321,13 +296,22 @@ namespace nekofs {
 	bool NativeFileSystem::cleanEmptyDirectories(const fsstring& dirpath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
-		if (!dirExist(dirpath))
+		auto dirpath_type = getItemType(dirpath);
+		if (dirpath_type == ItemType::None)
 		{
 			std::wstringstream ss;
 			ss << L"NativeFileSystem::cleanEmptyDirectories dir not exist. path = ";
 			ss << dirpath;
 			logprint(LogType::Warning, ss.str());
 			return true;
+		}
+		if (dirpath_type != ItemType::Directory)
+		{
+			std::wstringstream ss;
+			ss << L"NativeFileSystem::cleanEmptyDirectories not a dir path. path = ";
+			ss << dirpath;
+			logprint(LogType::Error, ss.str());
+			return false;
 		}
 		WIN32_FIND_DATA find_data{};
 		std::vector<std::pair<fsstring, int>> result;
@@ -339,7 +323,7 @@ namespace nekofs {
 			result.push_back(std::pair<fsstring, int>(currentpath, 0));
 			auto& data = result.back();
 			dirs.pop();
-			HANDLE findHandle = FindFirstFile((dirpath + L"/*").c_str(), &find_data);
+			HANDLE findHandle = FindFirstFile((currentpath + L"/*").c_str(), &find_data);
 			if (INVALID_HANDLE_VALUE == findHandle)
 			{
 				continue;
@@ -352,6 +336,7 @@ namespace nekofs {
 				}
 				if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
 				{
+					dirs.emplace(currentpath + L"/" + find_data.cFileName);
 					continue;
 				}
 				else
@@ -384,20 +369,24 @@ namespace nekofs {
 					return false;
 				}
 			}
+			else
+			{
+				auto parent = item.first.substr(0, item.first.rfind(L"/"));
+				for (size_t j = i - 1; j > 0; j--)
+				{
+					if (parent == result[j - 1].first)
+					{
+						result[j - 1].second += item.second;
+						break;
+					}
+				}
+			}
 		}
 		return true;
 	}
 	bool NativeFileSystem::moveDirectory(const fsstring& srcpath, const fsstring& destpath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
-		if (hasOpenFiles(srcpath))
-		{
-			std::wstringstream ss;
-			ss << L"NativeFileSystem::moveDirectory some files in use. path = ";
-			ss << srcpath;
-			logprint(LogType::Error, ss.str());
-			return false;
-		}
 		if (!dirExist(srcpath))
 		{
 			std::wstringstream ss;
@@ -406,7 +395,15 @@ namespace nekofs {
 			logprint(LogType::Error, ss.str());
 			return false;
 		}
-		if (itemExist(destpath))
+		if (hasOpenFiles(srcpath))
+		{
+			std::wstringstream ss;
+			ss << L"NativeFileSystem::moveDirectory some files in use. path = ";
+			ss << srcpath;
+			logprint(LogType::Error, ss.str());
+			return false;
+		}
+		if (getItemType(destpath) != ItemType::None)
 		{
 			std::wstringstream ss;
 			ss << L"NativeFileSystem::moveDirectory already exist. path = ";
@@ -445,10 +442,19 @@ namespace nekofs {
 			logprint(LogType::Error, ss.str());
 			return false;
 		}
-		if (!fileExist(filepath))
+		auto filepath_type = getItemType(filepath);
+		if (filepath_type == ItemType::None)
 		{
 			std::wstringstream ss;
 			ss << L"NativeFileSystem::removeFile file not exist. path = ";
+			ss << filepath;
+			logprint(LogType::Warning, ss.str());
+			return true;
+		}
+		if (filepath_type != ItemType::File)
+		{
+			std::wstringstream ss;
+			ss << L"NativeFileSystem::removeFile not a file path. path = ";
 			ss << filepath;
 			logprint(LogType::Error, ss.str());
 			return false;
@@ -490,7 +496,7 @@ namespace nekofs {
 			logprint(LogType::Error, ss.str());
 			return false;
 		}
-		if (itemExist(destpath))
+		if (getItemType(destpath) != ItemType::None)
 		{
 			std::wstringstream ss;
 			ss << L"NativeFileSystem::moveFile already exist. path = ";
@@ -601,15 +607,26 @@ namespace nekofs {
 		}
 		return false;
 	}
-	bool NativeFileSystem::itemExist(const fsstring& path) const
+	ItemType NativeFileSystem::getItemType(const fsstring& path) const
 	{
 		WIN32_FIND_DATA find_data;
 		HANDLE findHandle = FindFirstFile(path.c_str(), &find_data);
 		if (INVALID_HANDLE_VALUE != findHandle)
 		{
 			FindClose(findHandle);
-			return true;
+			if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+			{
+				return ItemType::Directory;
+			}
+			else if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0)
+			{
+				return ItemType::File;
+			}
+			else
+			{
+				return ItemType::Unkonwn;
+			}
 		}
-		return false;
+		return ItemType::None;
 	}
 }
