@@ -45,12 +45,12 @@ namespace nekofs {
 				}
 				if (dir->d_type == DT_DIR)
 				{
-					dirs.emplace(currentpath + "/" + dir->d_name);
+					dirs.emplace(currentpath + nekofs_PathSeparator + dir->d_name);
 					continue;
 				}
 				else if (dir->d_type == DT_REG)
 				{
-					result.push_back(currentpath + "/" + dir->d_name);
+					result.push_back(currentpath + nekofs_PathSeparator + dir->d_name);
 					continue;
 				}
 			}
@@ -110,7 +110,7 @@ namespace nekofs {
 	{
 		std::vector<fsstring> result;
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
-		for (size_t fpos = dirpath.size(); fpos != dirpath.npos; fpos = dirpath.rfind("/", fpos - 1))
+		for (size_t fpos = dirpath.size(); fpos != dirpath.npos; fpos = dirpath.rfind(nekofs_PathSeparator, fpos - 1))
 		{
 			fsstring curpath = dirpath.substr(0, fpos);
 			auto type = getItemType(curpath);
@@ -204,18 +204,18 @@ namespace nekofs {
 				}
 				if (dir->d_type == DT_DIR)
 				{
-					dirs.emplace(currentpath + "/" + dir->d_name);
-					result.push_back(std::pair<fsstring, int>(currentpath + "/" + dir->d_name, DirType));
+					dirs.emplace(currentpath + nekofs_PathSeparator + dir->d_name);
+					result.push_back(std::pair<fsstring, int>(currentpath + nekofs_PathSeparator + dir->d_name, DirType));
 					continue;
 				}
 				else if (dir->d_type == DT_REG)
 				{
-					result.push_back(std::pair<fsstring, int>(currentpath + "/" + dir->d_name, FileType));
+					result.push_back(std::pair<fsstring, int>(currentpath + nekofs_PathSeparator + dir->d_name, FileType));
 					continue;
 				}
 				else
 				{
-					result.push_back(std::pair<fsstring, int>(currentpath + "/" + dir->d_name, OtherType));
+					result.push_back(std::pair<fsstring, int>(currentpath + nekofs_PathSeparator + dir->d_name, OtherType));
 					continue;
 				}
 			}
@@ -315,7 +315,7 @@ namespace nekofs {
 				}
 				if (dir->d_type == DT_DIR)
 				{
-					dirs.emplace(currentpath + "/" + dir->d_name);
+					dirs.emplace(currentpath + nekofs_PathSeparator + dir->d_name);
 					continue;
 				}
 				else
@@ -344,7 +344,7 @@ namespace nekofs {
 			}
 			else
 			{
-				auto parent = item.first.substr(0, item.first.rfind("/"));
+				auto parent = item.first.substr(0, item.first.rfind(nekofs_PathSeparator));
 				for (size_t j = i - 1; j > 0; j--)
 				{
 					if (parent == result[j - 1].first)
@@ -552,7 +552,7 @@ namespace nekofs {
 	}
 	bool NativeFileSystem::hasOpenFiles(const fsstring& dirpath) const
 	{
-		fsstring parentPath = dirpath + "/";
+		fsstring parentPath = dirpath + nekofs_PathSeparator;
 		for (const auto& item : filePtrs_)
 		{
 			if (item.first.find(parentPath) == 0)

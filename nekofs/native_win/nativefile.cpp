@@ -67,7 +67,7 @@ namespace nekofs {
 		{
 			return;
 		}
-		env::getInstance().getNativeFileSystem()->createDirectories(filepath_.substr(0, filepath_.rfind(L"/")));
+		env::getInstance().getNativeFileSystem()->createDirectories(filepath_.substr(0, filepath_.rfind(nekofs_PathSeparator)));
 	}
 	std::shared_ptr<NativeFileBlock> NativeFile::openBlockInternal(int64_t offset)
 	{

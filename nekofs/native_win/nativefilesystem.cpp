@@ -44,12 +44,12 @@ namespace nekofs {
 				}
 				if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
 				{
-					dirs.emplace(currentpath + L"/" + find_data.cFileName);
+					dirs.emplace(currentpath + nekofs_PathSeparator + find_data.cFileName);
 					continue;
 				}
 				else if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0)
 				{
-					result.push_back(currentpath + L"/" + find_data.cFileName);
+					result.push_back(currentpath + nekofs_PathSeparator + find_data.cFileName);
 					continue;
 				}
 			} while (TRUE == FindNextFile(findHandle, &find_data));
@@ -113,7 +113,7 @@ namespace nekofs {
 	{
 		std::vector<fsstring> result;
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
-		for (size_t fpos = dirpath.size(); fpos != dirpath.npos; fpos = dirpath.rfind(L"/", fpos - 1))
+		for (size_t fpos = dirpath.size(); fpos != dirpath.npos; fpos = dirpath.rfind(nekofs_PathSeparator, fpos - 1))
 		{
 			fsstring curpath = dirpath.substr(0, fpos);
 			auto type = getItemType(curpath);
@@ -213,18 +213,18 @@ namespace nekofs {
 				}
 				if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
 				{
-					dirs.emplace(currentpath + L"/" + find_data.cFileName);
-					result.push_back(std::pair<fsstring, int>(currentpath + L"/" + find_data.cFileName, DirType));
+					dirs.emplace(currentpath + nekofs_PathSeparator + find_data.cFileName);
+					result.push_back(std::pair<fsstring, int>(currentpath + nekofs_PathSeparator + find_data.cFileName, DirType));
 					continue;
 				}
 				else if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0)
 				{
-					result.push_back(std::pair<fsstring, int>(currentpath + L"/" + find_data.cFileName, FileType));
+					result.push_back(std::pair<fsstring, int>(currentpath + nekofs_PathSeparator + find_data.cFileName, FileType));
 					continue;
 				}
 				else
 				{
-					result.push_back(std::pair<fsstring, int>(currentpath + L"/" + find_data.cFileName, OtherType));
+					result.push_back(std::pair<fsstring, int>(currentpath + nekofs_PathSeparator + find_data.cFileName, OtherType));
 					continue;
 				}
 			} while (TRUE == FindNextFile(findHandle, &find_data));
@@ -336,7 +336,7 @@ namespace nekofs {
 				}
 				if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
 				{
-					dirs.emplace(currentpath + L"/" + find_data.cFileName);
+					dirs.emplace(currentpath + nekofs_PathSeparator + find_data.cFileName);
 					continue;
 				}
 				else
@@ -371,7 +371,7 @@ namespace nekofs {
 			}
 			else
 			{
-				auto parent = item.first.substr(0, item.first.rfind(L"/"));
+				auto parent = item.first.substr(0, item.first.rfind(nekofs_PathSeparator));
 				for (size_t j = i - 1; j > 0; j--)
 				{
 					if (parent == result[j - 1].first)
@@ -597,7 +597,7 @@ namespace nekofs {
 	}
 	bool NativeFileSystem::hasOpenFiles(const fsstring& dirpath) const
 	{
-		fsstring parentPath = dirpath + L"/";
+		fsstring parentPath = dirpath + nekofs_PathSeparator;
 		for (const auto& item : filePtrs_)
 		{
 			if (item.first.find(parentPath) == 0)

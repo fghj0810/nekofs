@@ -80,8 +80,10 @@ namespace nekofs {
 }
 
 #ifdef _WIN32
+constexpr const fschar* nekofs_PathSeparator = L"/";
 constexpr int32_t nekofs_MapBlockSizeBitOffset = 26;
 #else
+constexpr const fschar* nekofs_PathSeparator = "/";
 constexpr int32_t nekofs_MapBlockSizeBitOffset = 25;
 #endif
 constexpr int32_t nekofs_MapBlockSize = 1 << nekofs_MapBlockSizeBitOffset;
