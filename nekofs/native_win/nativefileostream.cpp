@@ -12,7 +12,7 @@ namespace nekofs {
 	}
 
 
-	int32_t NativeOStream::write(void* buf, int32_t size)
+	int32_t NativeOStream::write(const void* buf, int32_t size)
 	{
 		if (size < 0)
 		{

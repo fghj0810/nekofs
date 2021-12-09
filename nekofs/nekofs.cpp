@@ -6,8 +6,9 @@
 #include "native_posix/nativefilesystem.h"
 #endif
 #include "common/utils.h"
+#include "common/sha256.h"
 
-
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -123,30 +124,30 @@ NEKOFS_API NekoFSHandle nekofs_native_OpenOStream(const fschar* filepath)
 	return handle;
 }
 
-NEKOFS_API void nekofs_istream_Close(NekoFSHandle handle)
+NEKOFS_API void nekofs_istream_Close(NekoFSHandle isHandle)
 {
-	if (INVALID_NEKOFSHANDLE == handle)
+	if (INVALID_NEKOFSHANDLE == isHandle)
 	{
 		return;
 	}
 	std::lock_guard<std::mutex> lock(g_mtx_istreams_);
-	auto it = g_istreams_.find(handle);
+	auto it = g_istreams_.find(isHandle);
 	if (it != g_istreams_.end())
 	{
 		g_istreams_.erase(it);
 	}
 }
 
-NEKOFS_API int32_t nekofs_istream_Read(NekoFSHandle handle, void* buffer, int32_t size)
+NEKOFS_API int32_t nekofs_istream_Read(NekoFSHandle isHandle, void* buffer, int32_t size)
 {
-	if (INVALID_NEKOFSHANDLE == handle)
+	if (INVALID_NEKOFSHANDLE == isHandle)
 	{
 		return -1;
 	}
 	std::shared_ptr<nekofs::IStream> stream;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_istreams_);
-		auto it = g_istreams_.find(handle);
+		auto it = g_istreams_.find(isHandle);
 		if (it != g_istreams_.end())
 		{
 			stream = it->second;
@@ -159,9 +160,9 @@ NEKOFS_API int32_t nekofs_istream_Read(NekoFSHandle handle, void* buffer, int32_
 	return -1;
 }
 
-NEKOFS_API int64_t nekofs_istream_Seek(NekoFSHandle handle, int64_t offset, NekoFSOrigin origin)
+NEKOFS_API int64_t nekofs_istream_Seek(NekoFSHandle isHandle, int64_t offset, NekoFSOrigin origin)
 {
-	if (INVALID_NEKOFSHANDLE == handle)
+	if (INVALID_NEKOFSHANDLE == isHandle)
 	{
 		return -1;
 	}
@@ -173,7 +174,7 @@ NEKOFS_API int64_t nekofs_istream_Seek(NekoFSHandle handle, int64_t offset, Neko
 	std::shared_ptr<nekofs::IStream> stream;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_istreams_);
-		auto it = g_istreams_.find(handle);
+		auto it = g_istreams_.find(isHandle);
 		if (it != g_istreams_.end())
 		{
 			stream = it->second;
@@ -186,16 +187,16 @@ NEKOFS_API int64_t nekofs_istream_Seek(NekoFSHandle handle, int64_t offset, Neko
 	return -1;
 }
 
-NEKOFS_API int64_t nekofs_istream_GetPosition(NekoFSHandle handle)
+NEKOFS_API int64_t nekofs_istream_GetPosition(NekoFSHandle isHandle)
 {
-	if (INVALID_NEKOFSHANDLE == handle)
+	if (INVALID_NEKOFSHANDLE == isHandle)
 	{
 		return -1;
 	}
 	std::shared_ptr<nekofs::IStream> stream;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_istreams_);
-		auto it = g_istreams_.find(handle);
+		auto it = g_istreams_.find(isHandle);
 		if (it != g_istreams_.end())
 		{
 			stream = it->second;
@@ -208,16 +209,16 @@ NEKOFS_API int64_t nekofs_istream_GetPosition(NekoFSHandle handle)
 	return -1;
 }
 
-NEKOFS_API int64_t nekofs_istream_GetLength(NekoFSHandle handle)
+NEKOFS_API int64_t nekofs_istream_GetLength(NekoFSHandle isHandle)
 {
-	if (INVALID_NEKOFSHANDLE == handle)
+	if (INVALID_NEKOFSHANDLE == isHandle)
 	{
 		return -1;
 	}
 	std::shared_ptr<nekofs::IStream> stream;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_istreams_);
-		auto it = g_istreams_.find(handle);
+		auto it = g_istreams_.find(isHandle);
 		if (it != g_istreams_.end())
 		{
 			stream = it->second;
@@ -230,30 +231,30 @@ NEKOFS_API int64_t nekofs_istream_GetLength(NekoFSHandle handle)
 	return -1;
 }
 
-NEKOFS_API void nekofs_ostream_Close(NekoFSHandle handle)
+NEKOFS_API void nekofs_ostream_Close(NekoFSHandle oshandle)
 {
-	if (INVALID_NEKOFSHANDLE == handle)
+	if (INVALID_NEKOFSHANDLE == oshandle)
 	{
 		return;
 	}
 	std::lock_guard<std::mutex> lock(g_mtx_ostreams_);
-	auto it = g_ostreams_.find(handle);
+	auto it = g_ostreams_.find(oshandle);
 	if (it != g_ostreams_.end())
 	{
 		g_ostreams_.erase(it);
 	}
 }
 
-NEKOFS_API int32_t nekofs_ostream_Write(NekoFSHandle handle, void* buffer, int32_t size)
+NEKOFS_API int32_t nekofs_ostream_Write(NekoFSHandle oshandle, const void* buffer, int32_t size)
 {
-	if (INVALID_NEKOFSHANDLE == handle)
+	if (INVALID_NEKOFSHANDLE == oshandle)
 	{
 		return -1;
 	}
 	std::shared_ptr<nekofs::OStream> stream;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_ostreams_);
-		auto it = g_ostreams_.find(handle);
+		auto it = g_ostreams_.find(oshandle);
 		if (it != g_ostreams_.end())
 		{
 			stream = it->second;
@@ -266,9 +267,9 @@ NEKOFS_API int32_t nekofs_ostream_Write(NekoFSHandle handle, void* buffer, int32
 	return -1;
 }
 
-NEKOFS_API int64_t nekofs_ostream_Seek(NekoFSHandle handle, int64_t offset, NekoFSOrigin origin)
+NEKOFS_API int64_t nekofs_ostream_Seek(NekoFSHandle oshandle, int64_t offset, NekoFSOrigin origin)
 {
-	if (INVALID_NEKOFSHANDLE == handle)
+	if (INVALID_NEKOFSHANDLE == oshandle)
 	{
 		return -1;
 	}
@@ -280,7 +281,7 @@ NEKOFS_API int64_t nekofs_ostream_Seek(NekoFSHandle handle, int64_t offset, Neko
 	std::shared_ptr<nekofs::OStream> stream;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_ostreams_);
-		auto it = g_ostreams_.find(handle);
+		auto it = g_ostreams_.find(oshandle);
 		if (it != g_ostreams_.end())
 		{
 			stream = it->second;
@@ -293,16 +294,16 @@ NEKOFS_API int64_t nekofs_ostream_Seek(NekoFSHandle handle, int64_t offset, Neko
 	return -1;
 }
 
-NEKOFS_API int64_t nekofs_ostream_GetPosition(NekoFSHandle handle)
+NEKOFS_API int64_t nekofs_ostream_GetPosition(NekoFSHandle oshandle)
 {
-	if (INVALID_NEKOFSHANDLE == handle)
+	if (INVALID_NEKOFSHANDLE == oshandle)
 	{
 		return -1;
 	}
 	std::shared_ptr<nekofs::OStream> stream;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_ostreams_);
-		auto it = g_ostreams_.find(handle);
+		auto it = g_ostreams_.find(oshandle);
 		if (it != g_ostreams_.end())
 		{
 			stream = it->second;
@@ -315,16 +316,16 @@ NEKOFS_API int64_t nekofs_ostream_GetPosition(NekoFSHandle handle)
 	return -1;
 }
 
-NEKOFS_API int64_t nekofs_ostream_GetLength(NekoFSHandle handle)
+NEKOFS_API int64_t nekofs_ostream_GetLength(NekoFSHandle oshandle)
 {
-	if (INVALID_NEKOFSHANDLE == handle)
+	if (INVALID_NEKOFSHANDLE == oshandle)
 	{
 		return -1;
 	}
 	std::shared_ptr<nekofs::OStream> stream;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_ostreams_);
-		auto it = g_ostreams_.find(handle);
+		auto it = g_ostreams_.find(oshandle);
 		if (it != g_ostreams_.end())
 		{
 			stream = it->second;
@@ -335,4 +336,44 @@ NEKOFS_API int64_t nekofs_ostream_GetLength(NekoFSHandle handle)
 		return stream->getLength();
 	}
 	return -1;
+}
+
+NEKOFS_API NekoFSBool nekofs_sha256_sumistream(NekoFSHandle isHandle, uint8_t result[32])
+{
+	::memset(result, 0, 32);
+	if (INVALID_NEKOFSHANDLE == isHandle)
+	{
+		return NEKOFS_FALSE;
+	}
+	std::shared_ptr<nekofs::IStream> stream;
+	{
+		std::lock_guard<std::mutex> lock(g_mtx_istreams_);
+		auto it = g_istreams_.find(isHandle);
+		if (it != g_istreams_.end())
+		{
+			stream = it->second;
+		}
+	}
+	if (stream)
+	{
+		stream->seek(0, nekofs::SeekOrigin::Begin);
+		const size_t buffer_size = 8 * 1024;
+		uint8_t buffer[buffer_size];
+		int32_t actualRead = 0;
+		nekofs::sha256sum sha256;
+		do
+		{
+			actualRead = nekofs::istream_read(stream, buffer, buffer_size);
+			if (actualRead > 0)
+			{
+				sha256.update(buffer, actualRead);
+			}
+		} while (actualRead > 0);
+		if (actualRead >= 0)
+		{
+			sha256.final(nullptr, 0, result);
+			return NEKOFS_TRUE;
+		}
+	}
+	return NEKOFS_FALSE;
 }

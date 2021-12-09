@@ -20,5 +20,5 @@ namespace nekofs {
 	//};
 
 	int32_t istream_read(std::shared_ptr<IStream>& is, void* buf, const int32_t& size);
-	int32_t ostream_write(std::shared_ptr<OStream>& os, void* buf, const int32_t& size);
+	int32_t ostream_write(std::shared_ptr<OStream>& os, const void* buf, const int32_t& size);
 }

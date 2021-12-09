@@ -52,6 +52,8 @@ set(NEKOFS_COMMON
     common/utils.cpp
     common/env.h
     common/env.cpp
+    common/sha256.h
+    common/sha256.cpp
 )
 
 set(NEKOFS

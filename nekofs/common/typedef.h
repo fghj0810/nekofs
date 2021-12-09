@@ -60,7 +60,7 @@ namespace nekofs {
 	};
 	class OStream {
 	public:
-		virtual int32_t write(void* buf, int32_t size) = 0;
+		virtual int32_t write(const void* buf, int32_t size) = 0;
 		virtual int64_t seek(int64_t offset, const SeekOrigin& origin) = 0;
 		virtual int64_t getPosition() const = 0;
 		virtual int64_t getLength() const = 0;

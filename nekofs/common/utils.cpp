@@ -72,7 +72,7 @@ namespace nekofs {
 		return size - size_tmp;
 	}
 
-	int32_t ostream_write(std::shared_ptr<OStream>& os, void* buf, const int32_t& size)
+	int32_t ostream_write(std::shared_ptr<OStream>& os, const void* buf, const int32_t& size)
 	{
 		if (size < 0)
 		{
@@ -83,7 +83,7 @@ namespace nekofs {
 			return 0;
 		}
 		int32_t size_tmp = size;
-		uint8_t* buffer = static_cast<uint8_t*>(buf);
+		const uint8_t* buffer = static_cast<const uint8_t*>(buf);
 		int32_t actulWrite = 0;
 		do
 		{
