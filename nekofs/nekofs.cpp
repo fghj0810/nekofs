@@ -356,7 +356,6 @@ NEKOFS_API NekoFSBool nekofs_sha256_sumistream(NekoFSHandle isHandle, uint8_t re
 	}
 	if (stream)
 	{
-		stream->seek(0, nekofs::SeekOrigin::Begin);
 		const size_t buffer_size = 8 * 1024;
 		uint8_t buffer[buffer_size];
 		int32_t actualRead = 0;

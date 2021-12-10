@@ -107,19 +107,19 @@ namespace nekofs {
 				for (size_t i = 0; i < count; i++) {
 					message_[msg_index] = message_[msg_index] << 8 | pBuf[i];
 				}
+				pBuf += count;
 				bitLength_ += count << 3;
 				messageLength_ += count;
-				return;
+				count = 0;
 			}
 		}
 		if (count > 0)
 		{
 			msg_index = messageLength_ >> 2;
-			size_t max_count = (count + msg_index) >> 6;
+			size_t max_count = (count + messageLength_) >> 6;
 			if (max_count > 0)
 			{
-				size_t length = (max_count - 1) * 64;
-				length += (16 - msg_index) * 4;
+				size_t length = max_count * 64 - messageLength_;
 				count -= length;
 				bitLength_ += length << 3;
 				messageLength_ = 0;
@@ -150,15 +150,15 @@ namespace nekofs {
 					count -= length;
 					bitLength_ += length << 3;
 					messageLength_ += length;
-				}
-				for (size_t i = 0; i < max_count; i++) {
-					uint32_t a = static_cast<uint32_t>(pBuf[0]) << 24;
-					uint32_t b = static_cast<uint32_t>(pBuf[1]) << 16;
-					uint32_t c = static_cast<uint32_t>(pBuf[2]) << 8;
-					uint32_t d = static_cast<uint32_t>(pBuf[3]) << 0;
-					message_[msg_index] = a | b | c | d;
-					pBuf += 4;
-					msg_index++;
+					for (size_t i = 0; i < max_count; i++) {
+						uint32_t a = static_cast<uint32_t>(pBuf[0]) << 24;
+						uint32_t b = static_cast<uint32_t>(pBuf[1]) << 16;
+						uint32_t c = static_cast<uint32_t>(pBuf[2]) << 8;
+						uint32_t d = static_cast<uint32_t>(pBuf[3]) << 0;
+						message_[msg_index] = a | b | c | d;
+						pBuf += 4;
+						msg_index++;
+					}
 				}
 
 				if (count > 0)
