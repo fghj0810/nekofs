@@ -20,6 +20,7 @@ extern "C" {
 	NEKOFS_API NekoFSBool nekofs_native_CleanEmptyDirectory(const fschar* dirpath);
 	NEKOFS_API NekoFSHandle nekofs_native_OpenIStream(const fschar* filepath);
 	NEKOFS_API NekoFSHandle nekofs_native_OpenOStream(const fschar* filepath);
+	NEKOFS_API const fschar* nekofs_native_GetAllFiles(const fschar* dirpath);;
 
 	NEKOFS_API void nekofs_istream_Close(NekoFSHandle isHandle);
 	NEKOFS_API int32_t nekofs_istream_Read(NekoFSHandle isHandle, void* buffer, int32_t size);
@@ -34,6 +35,10 @@ extern "C" {
 	NEKOFS_API int64_t nekofs_ostream_GetLength(NekoFSHandle oshandle);
 
 	NEKOFS_API NekoFSBool nekofs_sha256_sumistream(NekoFSHandle isHandle, uint8_t result[32]);
+
+	NEKOFS_API void nekofs_layer_Destroy(NekoFSHandle fsHandle);
+	NEKOFS_API NekoFSBool nekofs_layer_CreateNative(const fschar* dirpath);
+	NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const fschar* filepath);
 
 #ifdef __cplusplus
 }

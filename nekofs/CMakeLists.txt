@@ -54,6 +54,12 @@ set(NEKOFS_COMMON
     common/env.cpp
     common/sha256.h
     common/sha256.cpp
+    common/rapidjson.h
+)
+
+set(NEKOFS_LAYER
+    layer/layerfilesystem.h
+    layer/layerfilesystem.cpp
 )
 
 set(NEKOFS
@@ -63,12 +69,14 @@ set(NEKOFS
 )
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_NATIVE})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_COMMON})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_LAYER})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS})
 
     add_library(${PROJECT_NAME} SHARED
-        ${NEKOFS}
-        ${NEKOFS_COMMON}
         ${NEKOFS_NATIVE}
+        ${NEKOFS_COMMON}
+        ${NEKOFS_LAYER}
+        ${NEKOFS}
     )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ../thirdparty/rapidjson/include)

@@ -1,14 +1,17 @@
 ﻿#include "nekofs.h"
 #include "common/env.h"
+#include "common/utils.h"
+#include "common/sha256.h"
+#include "common/rapidjson.h"
 #ifdef _WIN32
 #include "native_win/nativefilesystem.h"
 #else
 #include "native_posix/nativefilesystem.h"
 #endif
-#include "common/utils.h"
-#include "common/sha256.h"
+#include "layer/layerfilesystem.h"
 
 #include <cstring>
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -18,11 +21,28 @@ std::mutex g_mtx_istreams_;
 std::unordered_map<NekoFSHandle, std::shared_ptr<nekofs::IStream>> g_istreams_;
 std::mutex g_mtx_ostreams_;
 std::unordered_map<NekoFSHandle, std::shared_ptr<nekofs::OStream>> g_ostreams_;
+std::mutex g_mtx_layerfs_;
+std::unordered_map<NekoFSHandle, std::shared_ptr<nekofs::FileSystem>> g_layerfilesystems_;
 
-static inline fsstring __normalpath(const fschar* path)
+static thread_local nekofs::JSONStringBuffer g_jsonstrbuffer;
+
+static inline fsstring __normalrootpath(const fschar* path)
 {
 	std::filesystem::path p(path);
 	if (!p.has_root_path())
+	{
+		return fsstring();
+	}
+#ifdef _WIN32
+	return p.lexically_normal().generic_wstring();
+#else
+	return p.lexically_normal().generic_string();
+#endif
+}
+static inline fsstring __normalpath(const fschar* path)
+{
+	std::filesystem::path p(path);
+	if (p.has_root_path())
 	{
 		return fsstring();
 	}
@@ -40,7 +60,7 @@ NEKOFS_API void nekofs_SetLogDelegate(logdelegate* delegate)
 
 NEKOFS_API NekoFSBool nekofs_native_FileExist(const fschar* filepath)
 {
-	auto path = __normalpath(filepath);
+	auto path = __normalrootpath(filepath);
 	if (path.empty())
 	{
 		return NEKOFS_FALSE;
@@ -50,7 +70,7 @@ NEKOFS_API NekoFSBool nekofs_native_FileExist(const fschar* filepath)
 
 NEKOFS_API int64_t nekofs_native_GetFileSize(const fschar* filepath)
 {
-	auto path = __normalpath(filepath);
+	auto path = __normalrootpath(filepath);
 	if (path.empty())
 	{
 		return -1;
@@ -60,7 +80,7 @@ NEKOFS_API int64_t nekofs_native_GetFileSize(const fschar* filepath)
 
 NEKOFS_API NekoFSBool nekofs_native_RemoveFile(const fschar* filepath)
 {
-	auto path = __normalpath(filepath);
+	auto path = __normalrootpath(filepath);
 	if (path.empty())
 	{
 		return NEKOFS_FALSE;
@@ -70,7 +90,7 @@ NEKOFS_API NekoFSBool nekofs_native_RemoveFile(const fschar* filepath)
 
 NEKOFS_API NekoFSBool nekofs_native_RemoveDirectory(const fschar* dirpath)
 {
-	auto path = __normalpath(dirpath);
+	auto path = __normalrootpath(dirpath);
 	if (path.empty())
 	{
 		return NEKOFS_FALSE;
@@ -80,7 +100,7 @@ NEKOFS_API NekoFSBool nekofs_native_RemoveDirectory(const fschar* dirpath)
 
 NEKOFS_API NekoFSBool nekofs_native_CleanEmptyDirectory(const fschar* dirpath)
 {
-	auto path = __normalpath(dirpath);
+	auto path = __normalrootpath(dirpath);
 	if (path.empty())
 	{
 		return NEKOFS_FALSE;
@@ -90,7 +110,7 @@ NEKOFS_API NekoFSBool nekofs_native_CleanEmptyDirectory(const fschar* dirpath)
 
 NEKOFS_API NekoFSHandle nekofs_native_OpenIStream(const fschar* filepath)
 {
-	auto path = __normalpath(filepath);
+	auto path = __normalrootpath(filepath);
 	if (path.empty())
 	{
 		return INVALID_NEKOFSHANDLE;
@@ -108,7 +128,7 @@ NEKOFS_API NekoFSHandle nekofs_native_OpenIStream(const fschar* filepath)
 
 NEKOFS_API NekoFSHandle nekofs_native_OpenOStream(const fschar* filepath)
 {
-	auto path = __normalpath(filepath);
+	auto path = __normalrootpath(filepath);
 	if (path.empty())
 	{
 		return INVALID_NEKOFSHANDLE;
@@ -124,6 +144,31 @@ NEKOFS_API NekoFSHandle nekofs_native_OpenOStream(const fschar* filepath)
 	return handle;
 }
 
+NEKOFS_API const fschar* nekofs_native_GetAllFiles(const fschar* dirpath)
+{
+	auto path = __normalrootpath(dirpath);
+	if (path.empty())
+	{
+		return nullptr;
+	}
+	g_jsonstrbuffer.Clear();
+
+	auto allfiles = nekofs::env::getInstance().getNativeFileSystem()->getAllFiles(dirpath);
+	std::sort(allfiles.begin(), allfiles.end());
+
+	nekofs::JSONStringWriter writer(g_jsonstrbuffer);
+	nekofs::JSONDocument d(rapidjson::kArrayType);
+	rapidjson::Document::AllocatorType& allocator = d.GetAllocator();
+
+	for (const auto& item : allfiles)
+	{
+		d.PushBack(rapidjson::StringRef(item.c_str()), allocator);
+	}
+
+	d.Accept(writer);
+	return g_jsonstrbuffer.GetString();
+}
+
 NEKOFS_API void nekofs_istream_Close(NekoFSHandle isHandle)
 {
 	if (INVALID_NEKOFSHANDLE == isHandle)
@@ -135,6 +180,7 @@ NEKOFS_API void nekofs_istream_Close(NekoFSHandle isHandle)
 	if (it != g_istreams_.end())
 	{
 		g_istreams_.erase(it);
+		nekofs::env::getInstance().ungenId(isHandle);
 	}
 }
 
@@ -242,6 +288,7 @@ NEKOFS_API void nekofs_ostream_Close(NekoFSHandle oshandle)
 	if (it != g_ostreams_.end())
 	{
 		g_ostreams_.erase(it);
+		nekofs::env::getInstance().ungenId(oshandle);
 	}
 }
 
@@ -375,4 +422,67 @@ NEKOFS_API NekoFSBool nekofs_sha256_sumistream(NekoFSHandle isHandle, uint8_t re
 		}
 	}
 	return NEKOFS_FALSE;
+}
+
+NEKOFS_API void nekofs_layer_Destroy(NekoFSHandle fsHandle)
+{
+	if (INVALID_NEKOFSHANDLE == fsHandle)
+	{
+		return;
+	}
+	std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+	auto it = g_layerfilesystems_.find(fsHandle);
+	if (it != g_layerfilesystems_.end())
+	{
+		g_layerfilesystems_.erase(it);
+		nekofs::env::getInstance().ungenId(fsHandle);
+	}
+}
+
+NEKOFS_API NekoFSBool nekofs_layer_CreateNative(const fschar* dirpath)
+{
+	auto path = __normalrootpath(dirpath);
+	if (path.empty())
+	{
+		return INVALID_NEKOFSHANDLE;
+	}
+	NekoFSHandle handle = INVALID_NEKOFSHANDLE;
+	auto lfs = nekofs::LayerFileSystem::createNativeLayer(path);
+	if (lfs)
+	{
+		handle = nekofs::env::getInstance().genId();
+		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		g_layerfilesystems_[handle] = lfs;
+	}
+	return handle;
+}
+
+NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const fschar* filepath)
+{
+	auto path = __normalpath(filepath);
+	if (path.empty())
+	{
+		return INVALID_NEKOFSHANDLE;
+	}
+	std::shared_ptr<nekofs::FileSystem> fs;
+	{
+		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		auto it = g_layerfilesystems_.find(fsHandle);
+		if (it != g_layerfilesystems_.end())
+		{
+			fs = it->second;
+		}
+	}
+	NekoFSHandle handle = INVALID_NEKOFSHANDLE;
+	if (fs)
+	{
+		auto stream = fs->openIStream(path);
+		if (stream)
+		{
+			handle = nekofs::env::getInstance().genId();
+			std::lock_guard<std::mutex> lock(g_mtx_istreams_);
+			g_istreams_[handle] = stream;
+		}
+	}
+	return handle;
 }
