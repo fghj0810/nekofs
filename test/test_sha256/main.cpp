@@ -55,12 +55,12 @@ extern "C" {
 int main()
 {
 	nekofs_SetLogDelegate(log111);
-	uint8_t result[32];
+	uint32_t result[8];
 	auto handle_read = nekofs_native_OpenIStream(test_file);
-	nekofs_sha256_sumistream(handle_read, result);
-	for (size_t i = 0; i < 32; i++)
+	nekofs_sha256_sumistream32(handle_read, result);
+	for (size_t i = 0; i < 8; i++)
 	{
-		std::cout << std::hex << std::setw(2) << std::setfill('0') << (uint32_t)result[i];
+		std::cout << std::hex << std::setw(8) << std::setfill('0') << result[i];
 	}
 	std::cout << std::endl;
 	return 0;

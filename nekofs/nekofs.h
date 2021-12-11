@@ -34,7 +34,7 @@ extern "C" {
 	NEKOFS_API int64_t nekofs_ostream_GetPosition(NekoFSHandle oshandle);
 	NEKOFS_API int64_t nekofs_ostream_GetLength(NekoFSHandle oshandle);
 
-	NEKOFS_API NekoFSBool nekofs_sha256_sumistream(NekoFSHandle isHandle, uint8_t result[32]);
+	NEKOFS_API NekoFSBool nekofs_sha256_sumistream32(NekoFSHandle isHandle, uint32_t result[8]);
 
 	NEKOFS_API void nekofs_layer_Destroy(NekoFSHandle fsHandle);
 	NEKOFS_API NekoFSBool nekofs_layer_CreateNative(const fschar* dirpath);

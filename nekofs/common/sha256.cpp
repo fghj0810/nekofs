@@ -173,7 +173,7 @@ namespace nekofs {
 			}
 		}
 	}
-	void sha256sum::final(const void* data, size_t count, uint8_t result[32])
+	void sha256sum::final(const void* data, size_t count)
 	{
 		update(data, count);
 		{
@@ -206,10 +206,6 @@ namespace nekofs {
 			sha256_calc(message_, h_);
 			messageLength_ = 0;
 		}
-		if (result != nullptr)
-		{
-			readHash(result);
-		}
 	}
 	void sha256sum::readHash(uint8_t result[32])
 	{
@@ -220,5 +216,9 @@ namespace nekofs {
 			result[(i << 2) + 2] = static_cast<uint8_t>(h_[i] >> 8);
 			result[(i << 2) + 3] = static_cast<uint8_t>(h_[i] >> 0);
 		}
+	}
+	void sha256sum::readHash(uint32_t result[8])
+	{
+		std::copy(h_, h_ + 8, result);
 	}
 }

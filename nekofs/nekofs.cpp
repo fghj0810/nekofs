@@ -385,7 +385,7 @@ NEKOFS_API int64_t nekofs_ostream_GetLength(NekoFSHandle oshandle)
 	return -1;
 }
 
-NEKOFS_API NekoFSBool nekofs_sha256_sumistream(NekoFSHandle isHandle, uint8_t result[32])
+NEKOFS_API NekoFSBool nekofs_sha256_sumistream32(NekoFSHandle isHandle, uint32_t result[8])
 {
 	::memset(result, 0, 32);
 	if (INVALID_NEKOFSHANDLE == isHandle)
@@ -417,7 +417,8 @@ NEKOFS_API NekoFSBool nekofs_sha256_sumistream(NekoFSHandle isHandle, uint8_t re
 		} while (actualRead > 0);
 		if (actualRead >= 0)
 		{
-			sha256.final(nullptr, 0, result);
+			sha256.final();
+			sha256.readHash(result);
 			return NEKOFS_TRUE;
 		}
 	}

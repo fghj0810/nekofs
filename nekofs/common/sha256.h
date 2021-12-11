@@ -13,8 +13,9 @@ namespace nekofs {
 	public:
 		sha256sum();
 		void update(const void* data, size_t count);
-		void final(const void* data, size_t count, uint8_t result[32]);
+		void final(const void* data = nullptr, size_t count = 0);
 		void readHash(uint8_t result[32]);
+		void readHash(uint32_t result[8]);
 
 	private:
 		uint32_t message_[16] = { 0 };
