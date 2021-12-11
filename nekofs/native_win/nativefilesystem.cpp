@@ -31,7 +31,7 @@ namespace nekofs {
 		{
 			auto currentpath = dirs.front();
 			dirs.pop();
-			HANDLE findHandle = FindFirstFile((dirpath + L"/*").c_str(), &find_data);
+			HANDLE findHandle = FindFirstFile((currentpath + L"/*").c_str(), &find_data);
 			if (INVALID_HANDLE_VALUE == findHandle)
 			{
 				continue;

@@ -32,7 +32,7 @@ namespace nekofs {
 		{
 			auto currentpath = dirs.front();
 			dirs.pop();
-			DIR* d = ::opendir(dirpath.c_str());
+			DIR* d = ::opendir(currentpath.c_str());
 			if (NULL == d)
 			{
 				continue;
