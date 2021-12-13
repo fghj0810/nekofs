@@ -52,14 +52,19 @@ set(NEKOFS_COMMON
     common/utils.cpp
     common/env.h
     common/env.cpp
+    common/error.h
+    common/error.cpp
     common/sha256.h
     common/sha256.cpp
     common/rapidjson.h
+    common/rapidjson.cpp
 )
 
 set(NEKOFS_LAYER
     layer/layerfilesystem.h
     layer/layerfilesystem.cpp
+    layer/layerfilesmeta.h
+    layer/layerfilesmeta.cpp
 )
 
 set(NEKOFS

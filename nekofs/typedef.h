@@ -33,3 +33,5 @@ extern "C" {
 #define INVALID_NEKOFSHANDLE ((NekoFSHandle)-1)
 #define NEKOFS_TRUE ((NekoFSBool)1)
 #define NEKOFS_FALSE ((NekoFSBool)0)
+
+#define NEKOFS_ERRCODE_WRITEERR (1)

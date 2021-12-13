@@ -82,8 +82,18 @@ namespace nekofs {
 #ifdef _WIN32
 constexpr const fschar* nekofs_PathSeparator = L"/";
 constexpr int32_t nekofs_MapBlockSizeBitOffset = 26;
+constexpr const fschar* nekofs_kLayerFiles_Files = L"files";
+constexpr const fschar* nekofs_kLayerFiles_FilesVersion = L"version";
+constexpr const fschar* nekofs_kLayerFiles_FilesSHA256 = L"sha256";
+constexpr const fschar* nekofs_kLayerFiles_FilesSize = L"size";
+constexpr const fschar* nekofs_kLayerFiles_Deletes = L"deletes";
 #else
 constexpr const fschar* nekofs_PathSeparator = "/";
 constexpr int32_t nekofs_MapBlockSizeBitOffset = 25;
+constexpr const fschar* nekofs_kLayerFiles_Files = "files";
+constexpr const fschar* nekofs_kLayerFiles_FilesVersion = "version";
+constexpr const fschar* nekofs_kLayerFiles_FilesSHA256 = "sha256";
+constexpr const fschar* nekofs_kLayerFiles_FilesSize = "size";
+constexpr const fschar* nekofs_kLayerFiles_Deletes = "deletes";
 #endif
 constexpr int32_t nekofs_MapBlockSize = 1 << nekofs_MapBlockSizeBitOffset;
