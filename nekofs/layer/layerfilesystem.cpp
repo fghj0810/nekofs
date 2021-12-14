@@ -16,6 +16,10 @@ namespace nekofs {
 	}
 	std::string LayerFileSystem::getFullPath(const std::string& path) const
 	{
+		if (path.empty())
+		{
+			return currentpath_;
+		}
 		return currentpath_ + nekofs_PathSeparator + path;
 	}
 

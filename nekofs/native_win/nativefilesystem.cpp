@@ -49,7 +49,8 @@ namespace nekofs {
 				}
 				else if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0)
 				{
-					result.push_back(currentpath + nekofs_PathSeparator + u16_to_u8(find_data.cFileName));
+					std::string path = currentpath + nekofs_PathSeparator + u16_to_u8(find_data.cFileName);
+					result.push_back(path.substr(dirpath.size() + 1));
 					continue;
 				}
 			} while (TRUE == FindNextFile(findHandle, &find_data));

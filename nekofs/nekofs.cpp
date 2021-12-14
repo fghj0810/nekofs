@@ -485,6 +485,18 @@ NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const ch
 
 NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8args)
 {
-	return NEKOFS_FALSE;
+	nekofs::JSONStringStream mis(u8args);
+	nekofs::JSONDocument d;
+	d.ParseStream(mis);
+	if (d.HasParseError())
+	{
+		return NEKOFS_FALSE;
+	}
+	auto arg = nekofs::tools::PrePareArgs::load(&d);
+	if (!arg.has_value())
+	{
+		return NEKOFS_FALSE;
+	}
+	return nekofs::tools::PrePare::exec(arg.value()) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
 #endif

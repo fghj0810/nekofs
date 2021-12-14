@@ -69,7 +69,6 @@ namespace nekofs {
 		{
 			// files
 			JSONValue files(rapidjson::kObjectType);
-			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerFiles_Files), files, allocator);
 			for (const auto& item : lfmeta.files_)
 			{
 				JSONValue meta(rapidjson::kObjectType);
@@ -85,18 +84,19 @@ namespace nekofs {
 				meta.AddMember(rapidjson::StringRef(nekofs_kLayerFiles_FilesSize), size, allocator);
 				files.AddMember(rapidjson::StringRef(item.first.c_str()), meta, allocator);
 			}
+			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerFiles_Files), files, allocator);
 		}
 
 		{
 			// deletes
 			JSONValue deletes(rapidjson::kObjectType);
-			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerFiles_Deletes), deletes, allocator);
 			for (const auto& item : lfmeta.deletes_)
 			{
 				JSONValue version(rapidjson::kNumberType);
 				version.SetUint(item.second);
 				deletes.AddMember(rapidjson::StringRef(item.first.c_str()), version, allocator);
 			}
+			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerFiles_Deletes), deletes, allocator);
 		}
 		return true;
 	}

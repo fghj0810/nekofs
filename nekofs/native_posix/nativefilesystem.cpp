@@ -50,7 +50,8 @@ namespace nekofs {
 				}
 				else if (dir->d_type == DT_REG)
 				{
-					result.push_back(currentpath + nekofs_PathSeparator + dir->d_name);
+					std::string path = currentpath + nekofs_PathSeparator + dir->d_name;
+					result.push_back(path.substr(dirpath.size() + 1));
 					continue;
 				}
 			}
