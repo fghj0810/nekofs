@@ -15,18 +15,18 @@
 #include <queue>
 
 namespace nekofs {
-	fsstring NativeFileSystem::getCurrentPath() const
+	std::string NativeFileSystem::getCurrentPath() const
 	{
-		return fsstring();
+		return std::string();
 	}
-	std::vector<fsstring> NativeFileSystem::getAllFiles(const fsstring& dirpath) const
+	std::vector<std::string> NativeFileSystem::getAllFiles(const std::string& dirpath) const
 	{
 		if (dirpath.empty())
 		{
-			return std::vector<fsstring>();
+			return std::vector<std::string>();
 		}
-		std::vector<fsstring> result;
-		std::queue<fsstring> dirs;
+		std::vector<std::string> result;
+		std::queue<std::string> dirs;
 		dirs.push(dirpath);
 		while (!dirs.empty())
 		{
@@ -58,23 +58,23 @@ namespace nekofs {
 		}
 		return result;
 	}
-	std::unique_ptr<FileHandle> NativeFileSystem::getFileHandle(const fsstring& filepath)
+	std::unique_ptr<FileHandle> NativeFileSystem::getFileHandle(const std::string& filepath)
 	{
 		return std::unique_ptr<FileHandle>(new NativeFileHandle(openFileInternal(filepath)));
 	}
-	std::shared_ptr<IStream> NativeFileSystem::openIStream(const fsstring& filepath)
+	std::shared_ptr<IStream> NativeFileSystem::openIStream(const std::string& filepath)
 	{
 		return openFileInternal(filepath)->openIStream();
 	}
-	bool NativeFileSystem::fileExist(const fsstring& filepath) const
+	bool NativeFileSystem::fileExist(const std::string& filepath) const
 	{
 		return getItemType(filepath) == ItemType::File;
 	}
-	bool NativeFileSystem::dirExist(const fsstring& dirpath) const
+	bool NativeFileSystem::dirExist(const std::string& dirpath) const
 	{
 		return getItemType(dirpath) == ItemType::Directory;
 	}
-	int64_t NativeFileSystem::getSize(const fsstring& filepath) const
+	int64_t NativeFileSystem::getSize(const std::string& filepath) const
 	{
 		struct stat info;
 		if (0 == ::stat(filepath.c_str(), &info))
@@ -106,13 +106,13 @@ namespace nekofs {
 	}
 
 
-	bool NativeFileSystem::createDirectories(const fsstring& dirpath)
+	bool NativeFileSystem::createDirectories(const std::string& dirpath)
 	{
-		std::vector<fsstring> result;
+		std::vector<std::string> result;
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
 		for (size_t fpos = dirpath.size(); fpos != dirpath.npos; fpos = dirpath.rfind(nekofs_PathSeparator, fpos - 1))
 		{
-			fsstring curpath = dirpath.substr(0, fpos);
+			std::string curpath = dirpath.substr(0, fpos);
 			auto type = getItemType(curpath);
 			if (type == ItemType::None) {
 				result.push_back(curpath);
@@ -140,18 +140,19 @@ namespace nekofs {
 		{
 			if (0 != ::mkdir(result[i - 1].c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH))
 			{
+				auto errmsg = getSysErrMsg();
 				std::stringstream ss;
 				ss << "NativeFileSystem::createDirectories mkdir error. dirpath = ";
 				ss << result[i - 1];
 				ss << ", err = ";
-				ss << std::strerror(errno);
+				ss << errmsg;
 				logprint(LogType::Error, ss.str());
 				return false;
 			}
 		}
 		return true;
 	}
-	bool NativeFileSystem::removeDirectories(const fsstring& dirpath)
+	bool NativeFileSystem::removeDirectories(const std::string& dirpath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
 		auto dirpath_type = getItemType(dirpath);
@@ -183,13 +184,13 @@ namespace nekofs {
 		const int FileType = 1;
 		const int DirType = 2;
 		struct stat info{};
-		std::vector<std::pair<fsstring, int>> result;
-		std::queue<fsstring> dirs;
+		std::vector<std::pair<std::string, int>> result;
+		std::queue<std::string> dirs;
 		dirs.push(dirpath);
-		result.push_back(std::pair<fsstring, int>(dirpath, DirType));
+		result.push_back(std::pair<std::string, int>(dirpath, DirType));
 		while (!dirs.empty())
 		{
-			fsstring currentpath = dirs.front();
+			std::string currentpath = dirs.front();
 			dirs.pop();
 			DIR* d = ::opendir(currentpath.c_str());
 			if (NULL == d)
@@ -205,17 +206,17 @@ namespace nekofs {
 				if (dir->d_type == DT_DIR)
 				{
 					dirs.emplace(currentpath + nekofs_PathSeparator + dir->d_name);
-					result.push_back(std::pair<fsstring, int>(currentpath + nekofs_PathSeparator + dir->d_name, DirType));
+					result.push_back(std::pair<std::string, int>(currentpath + nekofs_PathSeparator + dir->d_name, DirType));
 					continue;
 				}
 				else if (dir->d_type == DT_REG)
 				{
-					result.push_back(std::pair<fsstring, int>(currentpath + nekofs_PathSeparator + dir->d_name, FileType));
+					result.push_back(std::pair<std::string, int>(currentpath + nekofs_PathSeparator + dir->d_name, FileType));
 					continue;
 				}
 				else
 				{
-					result.push_back(std::pair<fsstring, int>(currentpath + nekofs_PathSeparator + dir->d_name, OtherType));
+					result.push_back(std::pair<std::string, int>(currentpath + nekofs_PathSeparator + dir->d_name, OtherType));
 					continue;
 				}
 			}
@@ -241,11 +242,12 @@ namespace nekofs {
 				{
 					if (-1 == ::unlink(item.first.c_str()))
 					{
+						auto errmsg = getSysErrMsg();
 						std::stringstream ss;
 						ss << "NativeFileSystem::removeDirectories unlink error. filepath = ";
 						ss << item.first;
 						ss << ", err = ";
-						ss << std::strerror(errno);
+						ss << errmsg;
 						logprint(LogType::Error, ss.str());
 						return false;
 					}
@@ -258,11 +260,12 @@ namespace nekofs {
 				{
 					if (-1 == ::rmdir(item.first.c_str()))
 					{
+						auto errmsg = getSysErrMsg();
 						std::stringstream ss;
 						ss << "NativeFileSystem::removeDirectories rmdir error. dirpath = ";
 						ss << item.first;
 						ss << ", err = ";
-						ss << std::strerror(errno);
+						ss << errmsg;
 						logprint(LogType::Error, ss.str());
 						return false;
 					}
@@ -272,7 +275,7 @@ namespace nekofs {
 		}
 		return false;
 	}
-	bool NativeFileSystem::cleanEmptyDirectories(const fsstring& dirpath)
+	bool NativeFileSystem::cleanEmptyDirectories(const std::string& dirpath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
 		auto dirpath_type = getItemType(dirpath);
@@ -293,13 +296,13 @@ namespace nekofs {
 			return false;
 		}
 		struct stat info{};
-		std::vector<std::pair<fsstring, int>> result;
-		std::queue<fsstring> dirs;
+		std::vector<std::pair<std::string, int>> result;
+		std::queue<std::string> dirs;
 		dirs.push(dirpath);
 		while (!dirs.empty())
 		{
-			fsstring currentpath = dirs.front();
-			result.push_back(std::pair<fsstring, int>(currentpath, 0));
+			std::string currentpath = dirs.front();
+			result.push_back(std::pair<std::string, int>(currentpath, 0));
 			auto& data = result.back();
 			dirs.pop();
 			DIR* d = ::opendir(currentpath.c_str());
@@ -333,11 +336,12 @@ namespace nekofs {
 			{
 				if (-1 == ::rmdir(item.first.c_str()))
 				{
+					auto errmsg = getSysErrMsg();
 					std::stringstream ss;
 					ss << "NativeFileSystem::cleanEmptyDirectories rmdir error. dirpath = ";
 					ss << item.first;
 					ss << ", err = ";
-					ss << std::strerror(errno);
+					ss << errmsg;
 					logprint(LogType::Error, ss.str());
 					return false;
 				}
@@ -357,7 +361,7 @@ namespace nekofs {
 		}
 		return true;
 	}
-	bool NativeFileSystem::moveDirectory(const fsstring& srcpath, const fsstring& destpath)
+	bool NativeFileSystem::moveDirectory(const std::string& srcpath, const std::string& destpath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
 		if (!dirExist(srcpath))
@@ -386,19 +390,20 @@ namespace nekofs {
 		}
 		if (-1 == ::rename(srcpath.c_str(), destpath.c_str()))
 		{
+			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
 			ss << "NativeFileSystem::moveDirectory rename error. srcpath = ";
 			ss << srcpath;
 			ss << ", destpath = ";
 			ss << destpath;
 			ss << ", err = ";
-			ss << std::strerror(errno);
+			ss << errmsg;
 			logprint(LogType::Error, ss.str());
 			return false;
 		}
 		return true;
 	}
-	bool NativeFileSystem::removeFile(const fsstring& filepath)
+	bool NativeFileSystem::removeFile(const std::string& filepath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
 		if (filePtrs_.find(filepath) != filePtrs_.end())
@@ -428,17 +433,18 @@ namespace nekofs {
 		}
 		if (-1 == ::unlink(filepath.c_str()))
 		{
+			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
 			ss << "NativeFileSystem::removeFile unlink error. filepath = ";
 			ss << filepath;
 			ss << ", err = ";
-			ss << std::strerror(errno);
+			ss << errmsg;
 			logprint(LogType::Error, ss.str());
 			return false;
 		}
 		return true;
 	}
-	bool NativeFileSystem::moveFile(const fsstring& srcpath, const fsstring& destpath)
+	bool NativeFileSystem::moveFile(const std::string& srcpath, const std::string& destpath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
 		if (filePtrs_.find(srcpath) != filePtrs_.end())
@@ -467,19 +473,20 @@ namespace nekofs {
 		}
 		if (-1 == ::rename(srcpath.c_str(), destpath.c_str()))
 		{
+			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
 			ss << "NativeFileSystem::moveFile rename error. srcpath = ";
 			ss << srcpath;
 			ss << ", destpath = ";
 			ss << destpath;
 			ss << ", err = ";
-			ss << std::strerror(errno);
+			ss << errmsg;
 			logprint(LogType::Error, ss.str());
 			return false;
 		}
 		return true;
 	}
-	std::shared_ptr<OStream> NativeFileSystem::openOStream(const fsstring& filepath)
+	std::shared_ptr<OStream> NativeFileSystem::openOStream(const std::string& filepath)
 	{
 		return openFileInternal(filepath)->openOStream();
 	}
@@ -497,7 +504,7 @@ namespace nekofs {
 			delete file;
 		}
 	}
-	std::shared_ptr<NativeFile> NativeFileSystem::openFileInternal(const fsstring& filepath)
+	std::shared_ptr<NativeFile> NativeFileSystem::openFileInternal(const std::string& filepath)
 	{
 		std::shared_ptr<NativeFile> fPtr;
 		{
@@ -526,7 +533,7 @@ namespace nekofs {
 		}
 		return fPtr;
 	}
-	void NativeFileSystem::closeFileInternal(const fsstring& filepath)
+	void NativeFileSystem::closeFileInternal(const std::string& filepath)
 	{
 		std::shared_ptr<NativeFile> fPtr;
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -550,9 +557,9 @@ namespace nekofs {
 			}
 		}
 	}
-	bool NativeFileSystem::hasOpenFiles(const fsstring& dirpath) const
+	bool NativeFileSystem::hasOpenFiles(const std::string& dirpath) const
 	{
-		fsstring parentPath = dirpath + nekofs_PathSeparator;
+		std::string parentPath = dirpath + nekofs_PathSeparator;
 		for (const auto& item : filePtrs_)
 		{
 			if (item.first.find(parentPath) == 0)
@@ -562,7 +569,7 @@ namespace nekofs {
 		}
 		return false;
 	}
-	ItemType NativeFileSystem::getItemType(const fsstring& path) const
+	ItemType NativeFileSystem::getItemType(const std::string& path) const
 	{
 		struct stat info;
 		if (0 == ::stat(path.c_str(), &info))

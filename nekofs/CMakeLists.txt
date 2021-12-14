@@ -72,6 +72,15 @@ set(NEKOFS
     nekofs.h
     typedef.h
 )
+
+if(NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
+    set(NEKOFS ${NEKOFS}
+        tools/prepare.cpp
+        tools/prepare.h
+    )
+    ADD_DEFINITIONS("-DNEKOFS_TOOLS")
+endif()
+
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_NATIVE})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_COMMON})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_LAYER})

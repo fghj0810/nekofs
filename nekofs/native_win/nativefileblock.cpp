@@ -1,5 +1,6 @@
 ﻿#include "nativefileblock.h"
 #include "nativefile.h"
+#include "nativefilesystem.h"
 #include "../common/utils.h"
 
 #include <sstream>
@@ -50,22 +51,17 @@ namespace nekofs {
 		lpBaseAddress_ = MapViewOfFile(readMapFd_, FILE_MAP_READ, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
 		if (NULL == lpBaseAddress_)
 		{
-			DWORD err = GetLastError();
-			LPWSTR msgBuffer = NULL;
-			if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-			{
-				std::wstringstream ss;
-				ss << L"NativeFileBlock::mmap MapViewOfFile error! filepath = ";
-				ss << file_->getFilePath();
-				ss << L", offset = ";
-				ss << offset_;
-				ss << L", size = ";
-				ss << size_;
-				ss << L", err = ";
-				ss << msgBuffer;
-				LocalFree(msgBuffer);
-				logprint(LogType::Error, ss.str());
-			}
+			auto errmsg = getSysErrMsg();
+			std::stringstream ss;
+			ss << u8"NativeFileBlock::mmap MapViewOfFile error! filepath = ";
+			ss << file_->getFilePath();
+			ss << u8", offset = ";
+			ss << offset_;
+			ss << u8", size = ";
+			ss << size_;
+			ss << u8", err = ";
+			ss << errmsg;
+			logprint(LogType::Error, ss.str());
 		}
 	}
 	void NativeFileBlock::munmap()
@@ -74,22 +70,17 @@ namespace nekofs {
 		{
 			if (FALSE == UnmapViewOfFile(lpBaseAddress_))
 			{
-				DWORD err = GetLastError();
-				LPWSTR msgBuffer = NULL;
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-				{
-					std::wstringstream ss;
-					ss << L"NativeFileBlock::munmap UnmapViewOfFile error! filepath = ";
-					ss << file_->getFilePath();
-					ss << L", offset = ";
-					ss << offset_;
-					ss << L", size = ";
-					ss << size_;
-					ss << L", err = ";
-					ss << msgBuffer;
-					LocalFree(msgBuffer);
-					logprint(LogType::Error, ss.str());
-				}
+				auto errmsg = getSysErrMsg();
+				std::stringstream ss;
+				ss << u8"NativeFileBlock::munmap UnmapViewOfFile error! filepath = ";
+				ss << file_->getFilePath();
+				ss << u8", offset = ";
+				ss << offset_;
+				ss << u8", size = ";
+				ss << size_;
+				ss << u8", err = ";
+				ss << errmsg;
+				logprint(LogType::Error, ss.str());
 			}
 			lpBaseAddress_ = NULL;
 		}

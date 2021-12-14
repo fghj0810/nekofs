@@ -11,11 +11,11 @@
 #include <filesystem>
 
 namespace nekofs {
-	NativeFile::NativeFile(const fsstring& filepath)
+	NativeFile::NativeFile(const std::string& filepath)
 	{
 		filepath_ = filepath;
 	}
-	const fsstring& NativeFile::getFilePath() const
+	const std::string& NativeFile::getFilePath() const
 	{
 		return filepath_;
 	}
@@ -24,8 +24,8 @@ namespace nekofs {
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
 		if (INVALID_HANDLE_VALUE != writeFd_)
 		{
-			std::wstringstream ss;
-			ss << L"NativeFile::openIStream file in use! filepath = ";
+			std::stringstream ss;
+			ss << u8"NativeFile::openIStream file in use! filepath = ";
 			ss << filepath_;
 			logprint(LogType::Error, ss.str());
 			return nullptr;
@@ -45,8 +45,8 @@ namespace nekofs {
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
 		if (readStreamCount_ > 0 || INVALID_HANDLE_VALUE != writeFd_)
 		{
-			std::wstringstream ss;
-			ss << L"NativeFile::openOStream file in use! filepath = ";
+			std::stringstream ss;
+			ss << u8"NativeFile::openOStream file in use! filepath = ";
 			ss << filepath_;
 			logprint(LogType::Error, ss.str());
 			return nullptr;
@@ -134,53 +134,40 @@ namespace nekofs {
 	{
 		if (INVALID_HANDLE_VALUE == readFd_)
 		{
-			readFd_ = CreateFile(filepath_.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY | FILE_FLAG_RANDOM_ACCESS, NULL);
+			readFd_ = CreateFile(u8_to_u16(filepath_).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY | FILE_FLAG_RANDOM_ACCESS, NULL);
 			if (INVALID_HANDLE_VALUE == readFd_)
 			{
-				DWORD err = GetLastError();
-				LPWSTR msgBuffer = NULL;
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-				{
-					std::wstringstream ss;
-					ss << L"NativeFile::openReadFdInternal CreateFile error! filepath = ";
-					ss << filepath_;
-					ss << L", err = ";
-					ss << msgBuffer;
-					LocalFree(msgBuffer);
-					logprint(LogType::Error, ss.str());
-				}
+				auto errmsg = getSysErrMsg();
+				std::stringstream ss;
+				ss << u8"NativeFile::openReadFdInternal CreateFile error! filepath = ";
+				ss << filepath_;
+				ss << u8", err = ";
+				ss << errmsg;
+				logprint(LogType::Error, ss.str());
 			}
 			else
 			{
 				LARGE_INTEGER size;
 				if (FALSE == GetFileSizeEx(readFd_, &size))
 				{
-					DWORD err = GetLastError();
-					LPWSTR msgBuffer = NULL;
-					if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
 					{
-						std::wstringstream ss;
-						ss << L"NativeFile::openReadFdInternal GetFileSizeEx error! filepath = ";
+						auto errmsg = getSysErrMsg();
+						std::stringstream ss;
+						ss << u8"NativeFile::openReadFdInternal GetFileSizeEx error! filepath = ";
 						ss << filepath_;
-						ss << L", err = ";
-						ss << msgBuffer;
-						LocalFree(msgBuffer);
+						ss << u8", err = ";
+						ss << errmsg;
 						logprint(LogType::Error, ss.str());
 					}
 					if (FALSE == CloseHandle(readFd_))
 					{
-						DWORD err = GetLastError();
-						LPWSTR msgBuffer = NULL;
-						if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-						{
-							std::wstringstream ss;
-							ss << L"NativeFile::openReadFdInternal CloseHandle1 error! filepath = ";
-							ss << filepath_;
-							ss << L", err = ";
-							ss << msgBuffer;
-							LocalFree(msgBuffer);
-							logprint(LogType::Error, ss.str());
-						}
+						auto errmsg = getSysErrMsg();
+						std::stringstream ss;
+						ss << u8"NativeFile::openReadFdInternal CloseHandle1 error! filepath = ";
+						ss << filepath_;
+						ss << u8", err = ";
+						ss << errmsg;
+						logprint(LogType::Error, ss.str());
 					}
 					readFd_ = INVALID_HANDLE_VALUE;
 				}
@@ -195,32 +182,24 @@ namespace nekofs {
 						readMapFd_ = CreateFileMapping(readFd_, NULL, PAGE_READONLY, 0, 0, NULL);
 						if (NULL == readFd_)
 						{
-							DWORD err = GetLastError();
-							LPWSTR msgBuffer = NULL;
-							if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
 							{
-								std::wstringstream ss;
-								ss << L"NativeFile::openReadFdInternal CreateFileMapping error! filepath = ";
+								auto errmsg = getSysErrMsg();
+								std::stringstream ss;
+								ss << u8"NativeFile::openReadFdInternal CreateFileMapping error! filepath = ";
 								ss << filepath_;
-								ss << L", err = ";
-								ss << msgBuffer;
-								LocalFree(msgBuffer);
+								ss << u8", err = ";
+								ss << errmsg;
 								logprint(LogType::Error, ss.str());
 							}
 							if (FALSE == CloseHandle(readFd_))
 							{
-								DWORD err = GetLastError();
-								LPWSTR msgBuffer = NULL;
-								if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-								{
-									std::wstringstream ss;
-									ss << L"NativeFile::openReadFdInternal CloseHandle2 error! filepath = ";
-									ss << filepath_;
-									ss << L", err = ";
-									ss << msgBuffer;
-									LocalFree(msgBuffer);
-									logprint(LogType::Error, ss.str());
-								}
+								auto errmsg = getSysErrMsg();
+								std::stringstream ss;
+								ss << u8"NativeFile::openReadFdInternal CloseHandle2 error! filepath = ";
+								ss << filepath_;
+								ss << u8", err = ";
+								ss << errmsg;
+								logprint(LogType::Error, ss.str());
 							}
 							readFd_ = INVALID_HANDLE_VALUE;
 							readFileSize_ = 0;
@@ -236,18 +215,13 @@ namespace nekofs {
 		{
 			if (FALSE == CloseHandle(readMapFd_))
 			{
-				DWORD err = GetLastError();
-				LPWSTR msgBuffer = NULL;
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-				{
-					std::wstringstream ss;
-					ss << L"NativeFile::closeReadFdInternal CloseHandle readMap error! filepath = ";
-					ss << filepath_;
-					ss << L", err = ";
-					ss << msgBuffer;
-					LocalFree(msgBuffer);
-					logprint(LogType::Error, ss.str());
-				}
+				auto errmsg = getSysErrMsg();
+				std::stringstream ss;
+				ss << u8"NativeFile::closeReadFdInternal CloseHandle readMap error! filepath = ";
+				ss << filepath_;
+				ss << u8", err = ";
+				ss << errmsg;
+				logprint(LogType::Error, ss.str());
 			}
 			readMapFd_ = NULL;
 		}
@@ -255,18 +229,13 @@ namespace nekofs {
 		{
 			if (FALSE == CloseHandle(readFd_))
 			{
-				DWORD err = GetLastError();
-				LPWSTR msgBuffer = NULL;
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-				{
-					std::wstringstream ss;
-					ss << L"NativeFile::closeReadFdInternal CloseHandle readFd error! filepath = ";
-					ss << filepath_;
-					ss << L", err = ";
-					ss << msgBuffer;
-					LocalFree(msgBuffer);
-					logprint(LogType::Error, ss.str());
-				}
+				auto errmsg = getSysErrMsg();
+				std::stringstream ss;
+				ss << u8"NativeFile::closeReadFdInternal CloseHandle readFd error! filepath = ";
+				ss << filepath_;
+				ss << u8", err = ";
+				ss << errmsg;
+				logprint(LogType::Error, ss.str());
 			}
 			readFd_ = INVALID_HANDLE_VALUE;
 		}
@@ -277,21 +246,16 @@ namespace nekofs {
 		if (INVALID_HANDLE_VALUE == writeFd_)
 		{
 			createParentDirectory();
-			writeFd_ = CreateFile(filepath_.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+			writeFd_ = CreateFile(u8_to_u16(filepath_).c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 			if (INVALID_HANDLE_VALUE == writeFd_)
 			{
-				DWORD err = GetLastError();
-				LPWSTR msgBuffer = NULL;
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-				{
-					std::wstringstream ss;
-					ss << L"NativeFile::openWriteFdInternal CreateFile error ! filepath = ";
-					ss << filepath_;
-					ss << L", err = ";
-					ss << msgBuffer;
-					LocalFree(msgBuffer);
-					logprint(LogType::Error, ss.str());
-				}
+				auto errmsg = getSysErrMsg();
+				std::stringstream ss;
+				ss << u8"NativeFile::openWriteFdInternal CreateFile error ! filepath = ";
+				ss << filepath_;
+				ss << u8", err = ";
+				ss << errmsg;
+				logprint(LogType::Error, ss.str());
 			}
 		}
 	}
@@ -301,18 +265,13 @@ namespace nekofs {
 		{
 			if (FALSE == CloseHandle(writeFd_))
 			{
-				DWORD err = GetLastError();
-				LPWSTR msgBuffer = NULL;
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-				{
-					std::wstringstream ss;
-					ss << L"NativeFile::closeWriteFdInternal CloseHandle error ! filepath = ";
-					ss << filepath_;
-					ss << L", err = ";
-					ss << msgBuffer;
-					LocalFree(msgBuffer);
-					logprint(LogType::Error, ss.str());
-				}
+				auto errmsg = getSysErrMsg();
+				std::stringstream ss;
+				ss << u8"NativeFile::closeWriteFdInternal CloseHandle error ! filepath = ";
+				ss << filepath_;
+				ss << u8", err = ";
+				ss << errmsg;
+				logprint(LogType::Error, ss.str());
 			}
 			writeFd_ = INVALID_HANDLE_VALUE;
 		}

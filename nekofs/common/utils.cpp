@@ -2,8 +2,34 @@
 #include "env.h"
 #include "utils.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+std::string nekofs::getSysErrMsg()
+{
+	DWORD err = GetLastError();
+	LPWSTR msgBuffer = NULL;
+	auto msgSize = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL);
+	if (msgSize > 0)
+	{
+		auto size_needed = WideCharToMultiByte(CP_UTF8, 0, msgBuffer, msgSize, NULL, 0, NULL, NULL);
+		std::string retvalue(size_needed, 0);
+		WideCharToMultiByte(CP_UTF8, 0, msgBuffer, msgSize, &retvalue[0], size_needed, NULL, NULL);
+		LocalFree(msgBuffer);
+		return retvalue;
+	}
+	return std::string();
+}
+#else
+#include <cstring>
+std::string nekofs::getSysErrMsg()
+{
+	return std::strerror(errno);
+}
+#endif // _WIN32
+
+
 namespace nekofs {
-	void logprint(const LogType& level, const fschar* message)
+	void logprint(const LogType& level, const char* message)
 	{
 		auto cb = env::getInstance().getLogDelegate();
 		if (cb != nullptr)
@@ -11,20 +37,20 @@ namespace nekofs {
 			switch (level)
 			{
 			case nekofs::LogType::Info:
-				cb(NEKOFS_LOGINFO, const_cast<fschar*>(message));
+				cb(NEKOFS_LOGINFO, message);
 				break;
 			case nekofs::LogType::Warning:
-				cb(NEKOFS_LOGWARN, const_cast<fschar*>(message));
+				cb(NEKOFS_LOGWARN, message);
 				break;
 			case nekofs::LogType::Error:
-				cb(NEKOFS_LOGERR, const_cast<fschar*>(message));
+				cb(NEKOFS_LOGERR, message);
 				break;
 			default:
 				break;
 			}
 		}
 	}
-	void logprint(const LogType& level, const fsstring& message)
+	void logprint(const LogType& level, const std::string& message)
 	{
 		logprint(level, message.c_str());
 	}
@@ -101,24 +127,14 @@ namespace nekofs {
 		return size - size_tmp;
 	}
 
-#ifdef _WIN32
-	static inline uint8_t hextob(fschar ch)
-	{
-		if (ch >= L'0' && ch <= L'9') return ch - L'0';
-		if (ch >= L'A' && ch <= L'F') return ch - L'A' + 10;
-		if (ch >= L'a' && ch <= L'f') return ch - L'a' + 10;
-		return 0;
-	}
-#else
-	static inline uint8_t hextob(fschar ch)
+	static inline uint8_t hextob(char ch)
 	{
 		if (ch >= '0' && ch <= '9') return ch - '0';
 		if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
 		if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
 		return 0;
 	}
-#endif
-	void str_to_sha256(const fschar* in, uint32_t out[8])
+	void str_to_sha256(const char* in, uint32_t out[8])
 	{
 		for (size_t i = 0; i < 8; i++, in += 8)
 		{
@@ -132,14 +148,10 @@ namespace nekofs {
 			out[i] = (out[i] << 4) | hextob(in[7]);
 		}
 	}
-	fsstring sha256_to_str(const uint32_t out[8])
+	std::string sha256_to_str(const uint32_t out[8])
 	{
-#ifdef _WIN32
-		const fschar kh[16] = { L'0',L'1',L'2',L'3',L'4',L'5',L'6',L'7',L'8',L'9',L'a',L'b',L'c',L'd',L'e',L'f' };
-#else
-		const fschar kh[16] = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
-#endif
-		fsstring str(64, 0);
+		const char kh[16] = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
+		std::string str(64, 0);
 		for (size_t i = 0; i < 8; i++)
 		{
 			str[0 + i * 8] = kh[(out[i] & 0xF0000000) >> 28];

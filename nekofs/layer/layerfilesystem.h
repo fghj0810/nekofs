@@ -13,21 +13,21 @@ namespace nekofs {
 	class LayerFileSystem final : public FileSystem, private noncopyable, private nonmovable, public std::enable_shared_from_this<LayerFileSystem>
 	{
 	public:
-		static std::shared_ptr<LayerFileSystem> createNativeLayer(const fsstring& dirpath);
-		fsstring getFullPath(const fsstring& path) const;
+		static std::shared_ptr<LayerFileSystem> createNativeLayer(const std::string& dirpath);
+		std::string getFullPath(const std::string& path) const;
 
 	public:
-		fsstring getCurrentPath() const override;
-		std::vector<fsstring> getAllFiles(const fsstring& dirpath) const override;
-		std::unique_ptr<FileHandle> getFileHandle(const fsstring& filepath) override;
-		std::shared_ptr<IStream> openIStream(const fsstring& filepath) override;
-		bool fileExist(const fsstring& filepath) const override;
-		bool dirExist(const fsstring& dirpath) const override;
-		int64_t getSize(const fsstring& filepath) const override;
+		std::string getCurrentPath() const override;
+		std::vector<std::string> getAllFiles(const std::string& dirpath) const override;
+		std::unique_ptr<FileHandle> getFileHandle(const std::string& filepath) override;
+		std::shared_ptr<IStream> openIStream(const std::string& filepath) override;
+		bool fileExist(const std::string& filepath) const override;
+		bool dirExist(const std::string& dirpath) const override;
+		int64_t getSize(const std::string& filepath) const override;
 		FileSystemType getFSType() const override;
 
 	private:
 		std::shared_ptr<FileSystem> filesystem_;
-		fsstring currentpath_;
+		std::string currentpath_;
 	};
 }

@@ -5,34 +5,15 @@
 #include <iostream>
 
 #ifdef _WIN32
-const fschar* fs_filepath = L"D:/test/testfile";
+const char* fs_filepath = u8"D:/test/testfile";
 const char* c_filepath = "D:/test/testfile";
 #else
-const fschar* fs_filepath = "/home/jie/work/testfile";
+const char* fs_filepath = u8"/home/jie/work/testfile";
 const char* c_filepath = "/home/jie/work/testfile";
 #endif
 
 extern "C" {
-#ifdef _WIN32
-	void log111(int32_t level, const fschar* str)
-	{
-		switch (level)
-		{
-		case NEKOFS_LOGINFO:
-			std::wcout << "[INFO]  " << str << std::endl;
-			break;
-		case NEKOFS_LOGWARN:
-			std::wcout << "[WARN]  " << str << std::endl;
-			break;
-		case NEKOFS_LOGERR:
-			std::wcout << "[ERRO]  " << str << std::endl;
-			break;
-		default:
-			break;
-		}
-	}
-#else
-	void log111(int32_t level, const fschar* str)
+	void log111(int32_t level, const char* str)
 	{
 		switch (level)
 		{
@@ -49,7 +30,6 @@ extern "C" {
 			break;
 		}
 	}
-#endif
 }
 
 int32_t read_nekofs(FILE* f, void* buf, const int32_t& size)

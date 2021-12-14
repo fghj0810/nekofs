@@ -4,6 +4,7 @@
 #include "../common/rapidjson.h"
 
 #include <algorithm>
+#include <sstream>
 
 namespace nekofs {
 	bool LayerFilesMeta::load(LayerFilesMeta& lfmeta, std::shared_ptr<IStream> is)
@@ -15,7 +16,7 @@ namespace nekofs {
 		}
 		JsonInputStream jis(is);
 		JSONDocument d;
-		d.ParseStream<0, rapidjson::UTF8<>>(jis);
+		d.ParseStream(jis);
 		if (d.HasParseError())
 		{
 			return false;
@@ -55,12 +56,10 @@ namespace nekofs {
 		}
 		catch (const FSException& ex)
 		{
-			// todo
-#ifdef _WIN32
-			logprint(LogType::Error, L"LayerFilesMeta::save error");
-#else
-			logprint(LogType::Error, "LayerFilesMeta::save error");
-#endif
+			std::stringstream ss;
+			ss << u8"LayerFilesMeta::save error. code = ";
+			ss << (int32_t)ex.getErrCode();
+			logprint(LogType::Error, ss.str());
 			return false;
 		}
 		return true;
@@ -78,7 +77,7 @@ namespace nekofs {
 				JSONValue sha256(rapidjson::kStringType);
 				JSONValue size(rapidjson::kNumberType);
 				version.SetUint(item.second.getVersion());
-				fsstring sha256str = sha256_to_str(item.second.getSHA256());
+				std::string sha256str = sha256_to_str(item.second.getSHA256());
 				sha256.SetString(sha256str.c_str(), allocator);
 				size.SetInt64(item.second.getSize());
 				meta.AddMember(rapidjson::StringRef(nekofs_kLayerFiles_FilesVersion), version, allocator);
@@ -102,7 +101,7 @@ namespace nekofs {
 		return true;
 	}
 
-	void LayerFilesMeta::setFileMeta(const fsstring& filename, const FileMeta& meta)
+	void LayerFilesMeta::setFileMeta(const std::string& filename, const FileMeta& meta)
 	{
 		auto it = deletes_.find(filename);
 		if (it != deletes_.end())
@@ -111,7 +110,7 @@ namespace nekofs {
 		}
 		files_[filename] = meta;
 	}
-	std::optional<LayerFilesMeta::FileMeta> LayerFilesMeta::getFileMeta(const fsstring& filename) const
+	std::optional<LayerFilesMeta::FileMeta> LayerFilesMeta::getFileMeta(const std::string& filename) const
 	{
 		auto it = files_.find(filename);
 		if (it != files_.end())
@@ -120,7 +119,7 @@ namespace nekofs {
 		}
 		return std::nullopt;
 	}
-	void LayerFilesMeta::setDeleteVersion(const fsstring& filename, const uint32_t& version)
+	void LayerFilesMeta::setDeleteVersion(const std::string& filename, const uint32_t& version)
 	{
 		auto it = files_.find(filename);
 		if (it != files_.end())
@@ -129,7 +128,7 @@ namespace nekofs {
 		}
 		deletes_[filename] = version;
 	}
-	std::optional<uint32_t> LayerFilesMeta::getDeleteVersion(const fsstring& filename) const
+	std::optional<uint32_t> LayerFilesMeta::getDeleteVersion(const std::string& filename) const
 	{
 		auto it = deletes_.find(filename);
 		if (it != deletes_.end())
@@ -146,7 +145,7 @@ namespace nekofs {
 		{
 			for (auto itr = files->value.MemberBegin(); itr != files->value.MemberEnd(); itr++)
 			{
-				fsstring filename(itr->name.GetString());
+				std::string filename(itr->name.GetString());
 				FileMeta meta;
 				auto versionIt = itr->value.FindMember(nekofs_kLayerFiles_FilesVersion);
 				if (versionIt != itr->value.MemberEnd())
@@ -177,7 +176,7 @@ namespace nekofs {
 		{
 			for (auto itr = deletes->value.MemberBegin(); itr != deletes->value.MemberEnd(); itr++)
 			{
-				fsstring filename(itr->name.GetString());
+				std::string filename(itr->name.GetString());
 				lfmeta.deletes_[filename] = itr->value.GetUint();
 			}
 		}

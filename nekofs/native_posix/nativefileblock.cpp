@@ -50,6 +50,7 @@ namespace nekofs {
 		lpBaseAddress_ = ::mmap(NULL, length, PROT_READ, MAP_SHARED, fd_, offset);
 		if (MAP_FAILED == lpBaseAddress_)
 		{
+			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
 			ss << "NativeFileBlock::mmap mmap error! filepath = ";
 			ss << file_->getFilePath();
@@ -58,7 +59,7 @@ namespace nekofs {
 			ss << ", size = ";
 			ss << size_;
 			ss << ", err = ";
-			ss << std::strerror(errno);
+			ss << errmsg;
 			logprint(LogType::Error, ss.str());
 		}
 	}
@@ -69,6 +70,7 @@ namespace nekofs {
 			size_t length = size_;
 			if (-1 == ::munmap(lpBaseAddress_, length))
 			{
+				auto errmsg = getSysErrMsg();
 				std::stringstream ss;
 				ss << "NativeFileBlock::munmap munmap error! filepath = ";
 				ss << file_->getFilePath();
@@ -77,7 +79,7 @@ namespace nekofs {
 				ss << ", size = ";
 				ss << size_;
 				ss << ", err = ";
-				ss << std::strerror(errno);
+				ss << errmsg;
 				logprint(LogType::Error, ss.str());
 			}
 			lpBaseAddress_ = MAP_FAILED;

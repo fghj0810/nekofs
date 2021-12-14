@@ -6,12 +6,6 @@
 #include <memory>
 #include <vector>
 
-#ifdef _WIN32
-typedef std::wstring fsstring;
-#else
-typedef std::string fsstring;
-#endif // _WIN32
-
 namespace nekofs {
 	enum class LogType : int32_t
 	{
@@ -68,32 +62,22 @@ namespace nekofs {
 	class FileSystem
 	{
 	public:
-		virtual fsstring getCurrentPath() const = 0;
-		virtual std::vector<fsstring> getAllFiles(const fsstring& dirpath) const = 0;
-		virtual std::unique_ptr<FileHandle> getFileHandle(const fsstring& filepath) = 0;
-		virtual std::shared_ptr<IStream> openIStream(const fsstring& filepath) = 0;
-		virtual bool fileExist(const fsstring& filepath) const = 0;
-		virtual bool dirExist(const fsstring& dirpath) const = 0;
-		virtual int64_t getSize(const fsstring& filepath) const = 0;
+		virtual std::string getCurrentPath() const = 0;
+		virtual std::vector<std::string> getAllFiles(const std::string& dirpath) const = 0;
+		virtual std::unique_ptr<FileHandle> getFileHandle(const std::string& filepath) = 0;
+		virtual std::shared_ptr<IStream> openIStream(const std::string& filepath) = 0;
+		virtual bool fileExist(const std::string& filepath) const = 0;
+		virtual bool dirExist(const std::string& dirpath) const = 0;
+		virtual int64_t getSize(const std::string& filepath) const = 0;
 		virtual FileSystemType getFSType() const = 0;
 	};
 }
 
-#ifdef _WIN32
-constexpr const fschar* nekofs_PathSeparator = L"/";
-constexpr int32_t nekofs_MapBlockSizeBitOffset = 26;
-constexpr const fschar* nekofs_kLayerFiles_Files = L"files";
-constexpr const fschar* nekofs_kLayerFiles_FilesVersion = L"version";
-constexpr const fschar* nekofs_kLayerFiles_FilesSHA256 = L"sha256";
-constexpr const fschar* nekofs_kLayerFiles_FilesSize = L"size";
-constexpr const fschar* nekofs_kLayerFiles_Deletes = L"deletes";
-#else
-constexpr const fschar* nekofs_PathSeparator = "/";
+constexpr const char* nekofs_PathSeparator = u8"/";
 constexpr int32_t nekofs_MapBlockSizeBitOffset = 25;
-constexpr const fschar* nekofs_kLayerFiles_Files = "files";
-constexpr const fschar* nekofs_kLayerFiles_FilesVersion = "version";
-constexpr const fschar* nekofs_kLayerFiles_FilesSHA256 = "sha256";
-constexpr const fschar* nekofs_kLayerFiles_FilesSize = "size";
-constexpr const fschar* nekofs_kLayerFiles_Deletes = "deletes";
-#endif
+constexpr const char* nekofs_kLayerFiles_Files = u8"files";
+constexpr const char* nekofs_kLayerFiles_FilesVersion = u8"version";
+constexpr const char* nekofs_kLayerFiles_FilesSHA256 = u8"sha256";
+constexpr const char* nekofs_kLayerFiles_FilesSize = u8"size";
+constexpr const char* nekofs_kLayerFiles_Deletes = u8"deletes";
 constexpr int32_t nekofs_MapBlockSize = 1 << nekofs_MapBlockSizeBitOffset;

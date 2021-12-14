@@ -13,14 +13,14 @@ extern "C" {
 
 	NEKOFS_API void nekofs_SetLogDelegate(logdelegate* delegate);
 
-	NEKOFS_API NekoFSBool nekofs_native_FileExist(const fschar* filepath);
-	NEKOFS_API int64_t nekofs_native_GetFileSize(const fschar* filepath);
-	NEKOFS_API NekoFSBool nekofs_native_RemoveFile(const fschar* filepath);
-	NEKOFS_API NekoFSBool nekofs_native_RemoveDirectory(const fschar* dirpath);
-	NEKOFS_API NekoFSBool nekofs_native_CleanEmptyDirectory(const fschar* dirpath);
-	NEKOFS_API NekoFSHandle nekofs_native_OpenIStream(const fschar* filepath);
-	NEKOFS_API NekoFSHandle nekofs_native_OpenOStream(const fschar* filepath);
-	NEKOFS_API const fschar* nekofs_native_GetAllFiles(const fschar* dirpath);;
+	NEKOFS_API NekoFSBool nekofs_native_FileExist(const char* u8filepath);
+	NEKOFS_API int64_t nekofs_native_GetFileSize(const char* u8filepath);
+	NEKOFS_API NekoFSBool nekofs_native_RemoveFile(const char* u8filepath);
+	NEKOFS_API NekoFSBool nekofs_native_RemoveDirectory(const char* u8dirpath);
+	NEKOFS_API NekoFSBool nekofs_native_CleanEmptyDirectory(const char* u8dirpath);
+	NEKOFS_API NekoFSHandle nekofs_native_OpenIStream(const char* u8filepath);
+	NEKOFS_API NekoFSHandle nekofs_native_OpenOStream(const char* u8filepath);
+	NEKOFS_API const char* nekofs_native_GetAllFiles(const char* u8dirpath);;
 
 	NEKOFS_API void nekofs_istream_Close(NekoFSHandle isHandle);
 	NEKOFS_API int32_t nekofs_istream_Read(NekoFSHandle isHandle, void* buffer, int32_t size);
@@ -37,8 +37,12 @@ extern "C" {
 	NEKOFS_API NekoFSBool nekofs_sha256_sumistream32(NekoFSHandle isHandle, uint32_t result[8]);
 
 	NEKOFS_API void nekofs_layer_Destroy(NekoFSHandle fsHandle);
-	NEKOFS_API NekoFSBool nekofs_layer_CreateNative(const fschar* dirpath);
-	NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const fschar* filepath);
+	NEKOFS_API NekoFSBool nekofs_layer_CreateNative(const char* u8dirpath);
+	NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const char* u8filepath);
+
+#ifdef NEKOFS_TOOLS
+	NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8args);
+#endif // NEKOFS_TOOLS
 
 #ifdef __cplusplus
 }

@@ -7,44 +7,44 @@
 #endif
 
 namespace nekofs {
-	std::shared_ptr<LayerFileSystem> LayerFileSystem::createNativeLayer(const fsstring& dirpath)
+	std::shared_ptr<LayerFileSystem> LayerFileSystem::createNativeLayer(const std::string& dirpath)
 	{
 		auto lfs = std::make_shared<LayerFileSystem>();
 		lfs->filesystem_ = env::getInstance().getNativeFileSystem();
 		lfs->currentpath_ = dirpath;
 		return lfs;
 	}
-	fsstring LayerFileSystem::getFullPath(const fsstring& path) const
+	std::string LayerFileSystem::getFullPath(const std::string& path) const
 	{
 		return currentpath_ + nekofs_PathSeparator + path;
 	}
 
 
-	fsstring LayerFileSystem::getCurrentPath() const
+	std::string LayerFileSystem::getCurrentPath() const
 	{
 		return currentpath_;
 	}
-	std::vector<fsstring> LayerFileSystem::getAllFiles(const fsstring& dirpath) const
+	std::vector<std::string> LayerFileSystem::getAllFiles(const std::string& dirpath) const
 	{
 		return filesystem_->getAllFiles(getFullPath(dirpath));
 	}
-	std::unique_ptr<FileHandle> LayerFileSystem::getFileHandle(const fsstring& filepath)
+	std::unique_ptr<FileHandle> LayerFileSystem::getFileHandle(const std::string& filepath)
 	{
 		return filesystem_->getFileHandle(getFullPath(filepath));
 	}
-	std::shared_ptr<IStream> LayerFileSystem::openIStream(const fsstring& filepath)
+	std::shared_ptr<IStream> LayerFileSystem::openIStream(const std::string& filepath)
 	{
 		return filesystem_->openIStream(getFullPath(filepath));
 	}
-	bool LayerFileSystem::fileExist(const fsstring& filepath) const
+	bool LayerFileSystem::fileExist(const std::string& filepath) const
 	{
 		return filesystem_->fileExist(getFullPath(filepath));
 	}
-	bool LayerFileSystem::dirExist(const fsstring& dirpath) const
+	bool LayerFileSystem::dirExist(const std::string& dirpath) const
 	{
 		return filesystem_->dirExist(getFullPath(dirpath));
 	}
-	int64_t LayerFileSystem::getSize(const fsstring& filepath) const
+	int64_t LayerFileSystem::getSize(const std::string& filepath) const
 	{
 		return filesystem_->getSize(getFullPath(filepath));
 	}

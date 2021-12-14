@@ -7,32 +7,13 @@
 #include <iomanip>
 
 #ifdef _WIN32
-const fschar* test_file = L"D:/test/testfile";
+const char* test_file = u8"D:/test/testfile";
 #else
-const fschar* test_file = "/home/jie/work/testfile";
+const char* test_file = "/home/jie/work/testfile";
 #endif
 
 extern "C" {
-#ifdef _WIN32
-	void log111(int32_t level, const fschar* str)
-	{
-		switch (level)
-		{
-		case NEKOFS_LOGINFO:
-			std::wcout << "[INFO]  " << str << std::endl;
-			break;
-		case NEKOFS_LOGWARN:
-			std::wcout << "[WARN]  " << str << std::endl;
-			break;
-		case NEKOFS_LOGERR:
-			std::wcout << "[ERRO]  " << str << std::endl;
-			break;
-		default:
-			break;
-		}
-	}
-#else
-	void log111(int32_t level, const fschar* str)
+	void log111(int32_t level, const char* str)
 	{
 		switch (level)
 		{
@@ -49,7 +30,6 @@ extern "C" {
 			break;
 		}
 	}
-#endif
 }
 
 int main()

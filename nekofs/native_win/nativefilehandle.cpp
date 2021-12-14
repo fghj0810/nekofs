@@ -11,15 +11,15 @@ namespace nekofs {
 	}
 	void NativeFileHandle::print() const
 	{
-		std::wstringstream ss;
+		std::stringstream ss;
 		if (file_)
 		{
-			ss << L"NativeFileHandle::print filepath = ";
+			ss << "NativeFileHandle::print filepath = ";
 			ss << file_->getFilePath();
 		}
 		else
 		{
-			ss << L"NativeFileHandle::print no file!";
+			ss << "NativeFileHandle::print no file!";
 		}
 		logprint(LogType::Info, ss.str());
 	}

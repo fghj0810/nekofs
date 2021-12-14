@@ -17,8 +17,8 @@ namespace nekofs {
 	class NativeFile final: private noncopyable, private nonmovable, public std::enable_shared_from_this<NativeFile>
 	{
 	public:
-		NativeFile(const fsstring& filepath);
-		const fsstring& getFilePath() const;
+		NativeFile(const std::string& filepath);
+		const std::string& getFilePath() const;
 		std::shared_ptr<NativeIStream> openIStream();
 		std::shared_ptr<NativeOStream> openOStream();
 		void createParentDirectory();
@@ -35,7 +35,7 @@ namespace nekofs {
 		void closeWriteFdInternal();
 
 	private:
-		fsstring filepath_;
+		std::string filepath_;
 		int readFd_ = -1;
 		int64_t readFileSize_ = 0;
 		int writeFd_ = -1;

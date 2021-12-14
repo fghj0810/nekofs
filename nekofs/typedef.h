@@ -1,11 +1,4 @@
 ﻿#pragma once
-#ifdef _WIN32
-typedef wchar_t         fschar;
-static_assert(sizeof(wchar_t) == 2, "sizeof(wchar_t) != 2");
-#else
-typedef char            fschar;
-#endif // _WIN32
-
 #ifdef __cplusplus
 #include <cstdint>
 extern "C" {
@@ -16,7 +9,7 @@ extern "C" {
 	typedef int32_t NekoFSOrigin;
 	typedef uint32_t NekoFSBool;
 	typedef int32_t NekoFSHandle;
-	typedef void logdelegate(int32_t level, const fschar* message);
+	typedef void logdelegate(int32_t level, const char* u8message);
 
 #ifdef __cplusplus
 }

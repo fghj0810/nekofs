@@ -26,18 +26,13 @@ namespace nekofs {
 		if (FALSE == WriteFile(fd_, buf, size, &ret, NULL))
 		{
 			ret = -1;
-			DWORD err = GetLastError();
-			LPWSTR msgBuffer = NULL;
-			if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-			{
-				std::wstringstream ss;
-				ss << L"NativeOStream::write WriteFile error ! filepath = ";
-				ss << file_->getFilePath();
-				ss << L", err = ";
-				ss << msgBuffer;
-				LocalFree(msgBuffer);
-				logprint(LogType::Error, ss.str());
-			}
+			auto errmsg = getSysErrMsg();
+			std::stringstream ss;
+			ss << u8"NativeOStream::write WriteFile error ! filepath = ";
+			ss << file_->getFilePath();
+			ss << u8", err = ";
+			ss << errmsg;
+			logprint(LogType::Error, ss.str());
 		}
 		return ret;
 	}
@@ -64,18 +59,13 @@ namespace nekofs {
 		{
 			if (origin != SeekOrigin::Unknown)
 			{
-				DWORD err = GetLastError();
-				LPWSTR msgBuffer = NULL;
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-				{
-					std::wstringstream ss;
-					ss << L"NativeOStream::seek SetFilePointerEx error ! filepath = ";
-					ss << file_->getFilePath();
-					ss << L", err = ";
-					ss << msgBuffer;
-					LocalFree(msgBuffer);
-					logprint(LogType::Error, ss.str());
-				}
+				auto errmsg = getSysErrMsg();
+				std::stringstream ss;
+				ss << u8"NativeOStream::seek SetFilePointerEx error ! filepath = ";
+				ss << file_->getFilePath();
+				ss << u8", err = ";
+				ss << errmsg;
+				logprint(LogType::Error, ss.str());
 			}
 			return -1;
 		}
@@ -89,18 +79,13 @@ namespace nekofs {
 		position.QuadPart = 0;
 		if (FALSE == SetFilePointerEx(fd_, distanceToMove, &position, FILE_CURRENT))
 		{
-			DWORD err = GetLastError();
-			LPWSTR msgBuffer = NULL;
-			if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-			{
-				std::wstringstream ss;
-				ss << L"NativeOStream::getPosition SetFilePointerEx error ! filepath = ";
-				ss << file_->getFilePath();
-				ss << L", err = ";
-				ss << msgBuffer;
-				LocalFree(msgBuffer);
-				logprint(LogType::Error, ss.str());
-			}
+			auto errmsg = getSysErrMsg();
+			std::stringstream ss;
+			ss << u8"NativeOStream::getPosition SetFilePointerEx error ! filepath = ";
+			ss << file_->getFilePath();
+			ss << u8", err = ";
+			ss << errmsg;
+			logprint(LogType::Error, ss.str());
 			return -1;
 		}
 		return position.QuadPart;
@@ -110,18 +95,13 @@ namespace nekofs {
 		LARGE_INTEGER length;
 		if (FALSE == GetFileSizeEx(fd_, &length))
 		{
-			DWORD err = GetLastError();
-			LPWSTR msgBuffer = NULL;
-			if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), (LPWSTR)&msgBuffer, 0, NULL) > 0)
-			{
-				std::wstringstream ss;
-				ss << L"NativeOStream::getLength GetFileSizeEx error ! filepath = ";
-				ss << file_->getFilePath();
-				ss << L", err = ";
-				ss << msgBuffer;
-				LocalFree(msgBuffer);
-				logprint(LogType::Error, ss.str());
-			}
+			auto errmsg = getSysErrMsg();
+			std::stringstream ss;
+			ss << u8"NativeOStream::getLength GetFileSizeEx error ! filepath = ";
+			ss << file_->getFilePath();
+			ss << u8", err = ";
+			ss << errmsg;
+			logprint(LogType::Error, ss.str());
 			return -1;
 		}
 		return length.QuadPart;

@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.8)
 
 project(Project_nekofs)
 
-option(NEKOFS_TOOLS "This is a option for tools" OFF)
+option(NEKOFS_MAKE_TOOLS_LIB "This is a option for tools" OFF)
 option(NEKOFS_TEST "This is a option for test" OFF)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -19,8 +19,8 @@ if (NEKOFS_TEST STREQUAL "ON")
     add_subdirectory("test/test_read")
     add_subdirectory("test/test_write")
     add_subdirectory("test/test_sha256")
-endif ()
 
-if (NEKOFS_TOOLS STREQUAL "ON")
-    add_subdirectory("tools")
+    if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
+        add_subdirectory("test/test_prepare")
+    endif ()
 endif ()
