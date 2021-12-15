@@ -2,3 +2,7 @@
 	path = thirdparty/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
 	branch = version1.1.0
+[submodule "thirdparty/gflags"]
+	path = thirdparty/gflags
+	url = https://github.com/gflags/gflags.git
+	branch = 524b83d
