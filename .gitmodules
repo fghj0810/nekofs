@@ -5,4 +5,4 @@
 [submodule "thirdparty/gflags"]
 	path = thirdparty/gflags
 	url = https://github.com/gflags/gflags.git
-	branch = 524b83d
+	branch = v2.2.2
