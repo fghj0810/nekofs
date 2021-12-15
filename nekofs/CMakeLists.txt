@@ -27,7 +27,7 @@ if (WIN32)
         native_win/nativefileostream.h
         native_win/nativefileostream.cpp
     )
-else()
+else ()
     set(NEKOFS_NATIVE
         native_posix/nativefile.h
         native_posix/nativefile.cpp
@@ -69,28 +69,38 @@ set(NEKOFS_LAYER
 
 set(NEKOFS
     nekofs.cpp
-    nekofs.h
-    typedef.h
+    include/nekofs/nekofs.h
+    include/nekofs/typedef.h
 )
 
-if(NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
+if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
     set(NEKOFS ${NEKOFS}
         tools/prepare.cpp
         tools/prepare.h
     )
     ADD_DEFINITIONS("-DNEKOFS_TOOLS")
-endif()
+endif ()
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_NATIVE})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_COMMON})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_LAYER})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS})
 
+if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
+    add_library(${PROJECT_NAME} STATIC
+        ${NEKOFS_NATIVE}
+        ${NEKOFS_COMMON}
+        ${NEKOFS_LAYER}
+        ${NEKOFS}
+    )
+else ()
     add_library(${PROJECT_NAME} SHARED
         ${NEKOFS_NATIVE}
         ${NEKOFS_COMMON}
         ${NEKOFS_LAYER}
         ${NEKOFS}
     )
+endif ()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ../thirdparty/rapidjson/include)
+target_include_directories(${PROJECT_NAME} PUBLIC include)

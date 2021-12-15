@@ -15,4 +15,4 @@ add_executable(${PROJECT_NAME}
     main.cpp
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE nekofs)
-target_include_directories(${PROJECT_NAME} PRIVATE ../../nekofs)
+target_link_libraries(${PROJECT_NAME} PRIVATE gflags::gflags)

@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../typedef.h"
+#include "nekofs/typedef.h"
 
 #include <cstdint>
 #include <string>
