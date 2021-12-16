@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
-project(test_prepare)
+project(tool)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -12,6 +12,10 @@ endif ()
 ADD_DEFINITIONS("-DNEKOFS_TOOLS")
 
 add_executable(${PROJECT_NAME}
+    common.h
     main.cpp
+    prepare.h
+    prepare.cpp
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE nekofs)
+target_link_libraries(${PROJECT_NAME} PRIVATE gflags::gflags)

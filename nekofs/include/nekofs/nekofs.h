@@ -41,7 +41,7 @@ extern "C" {
 	NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const char* u8filepath);
 
 #ifdef NEKOFS_TOOLS
-	NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8args);
+	NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path);
 #endif // NEKOFS_TOOLS
 
 #ifdef __cplusplus

@@ -16,6 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_subdirectory("nekofs")
 if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
     add_subdirectory("thirdparty/gflags")
+    add_subdirectory("tool")
 endif ()
 
 if (NEKOFS_TEST STREQUAL "ON")

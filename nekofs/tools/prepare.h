@@ -10,20 +10,10 @@
 #include <optional>
 
 namespace nekofs::tools {
-	class PrePareArgs final
-	{
-	public:
-		static std::optional<PrePareArgs> load(const JSONValue* jsondoc);
-		const std::string& getNativePath() const;
-
-	private:
-		std::string nativePath_;
-	};
-
 	class PrePare final
 	{
 	public:
-		static bool exec(const PrePareArgs& arg);
+		static bool exec(const std::string& genpath);
 	};
 }
 

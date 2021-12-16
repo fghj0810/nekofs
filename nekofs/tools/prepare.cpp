@@ -10,47 +10,21 @@
 #endif
 
 namespace nekofs::tools {
-	constexpr const char* prepare_nativepath = u8"nativepath";
-
-	std::optional<PrePareArgs> PrePareArgs::load(const JSONValue* jsondoc)
+	bool PrePare::exec(const std::string& genpath)
 	{
-		PrePareArgs arg;
-		auto npIt = jsondoc->FindMember(prepare_nativepath);
-		if (npIt != jsondoc->MemberEnd() && !npIt->value.IsNull())
-		{
-			arg.nativePath_ = std::string(npIt->value.GetString());
-		}
-		else
-		{
-			return std::nullopt;
-		}
-		return arg;
-	}
-
-	const std::string& PrePareArgs::getNativePath() const
-	{
-		return nativePath_;
-	}
-
-	bool PrePare::exec(const PrePareArgs& arg)
-	{
-		if (arg.getNativePath().empty())
-		{
-			return false;
-		}
 		auto nativefs = env::getInstance().getNativeFileSystem();
-		if (nativefs->fileExist(arg.getNativePath() + nekofs_PathSeparator + nekofs_kLayerFiles))
+		if (nativefs->fileExist(genpath + nekofs_PathSeparator + nekofs_kLayerFiles))
 		{
-			nativefs->removeFile(arg.getNativePath() + nekofs_PathSeparator + nekofs_kLayerFiles);
+			nativefs->removeFile(genpath + nekofs_PathSeparator + nekofs_kLayerFiles);
 		}
 		const uint32_t buffer_size = 8 * 1024;
 		char buffer[8 * 1024];
 		nekofs::LayerFilesMeta lfm;
-		auto allfiles = nativefs->getAllFiles(arg.getNativePath());
+		auto allfiles = nativefs->getAllFiles(genpath);
 		for (const auto& item : allfiles)
 		{
 			sha256sum sum;
-			auto is = nativefs->openIStream(arg.getNativePath() + nekofs_PathSeparator + item);
+			auto is = nativefs->openIStream(genpath + nekofs_PathSeparator + item);
 			int32_t actualRead = 0;
 			do
 			{
@@ -73,7 +47,7 @@ namespace nekofs::tools {
 			meta.setSize(is->getLength());
 			lfm.setFileMeta(item, meta);
 		}
-		auto fos = nativefs->openOStream(arg.getNativePath() + nekofs_PathSeparator + nekofs_kLayerFiles);
+		auto fos = nativefs->openOStream(genpath + nekofs_PathSeparator + nekofs_kLayerFiles);
 		return nekofs::LayerFilesMeta::save(lfm, fos);
 	}
 }
