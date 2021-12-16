@@ -31,10 +31,10 @@ extern "C" {
 				std::cout << "[INFO]  " << astr << std::endl;
 				break;
 			case NEKOFS_LOGWARN:
-				std::cout << "[WARN]  " << astr << std::endl;
+				std::cout << "\033[33m" << "[WARN]" << "\033[0m" << "  " << astr << std::endl;
 				break;
 			case NEKOFS_LOGERR:
-				std::cerr << "[ERRO]  " << astr << std::endl;
+				std::cerr << "\033[31m" << "[ERRO]" << "\033[0m" << "  " << astr << std::endl;
 				break;
 			default:
 				break;
@@ -52,10 +52,10 @@ extern "C" {
 				std::cout << "[INFO]  " << u8str << std::endl;
 				break;
 			case NEKOFS_LOGWARN:
-				std::cout << "[WARN]  " << u8str << std::endl;
+				std::cout << "\033[33m" << "[WARN]" << "\033[0m" << "  " << u8str << std::endl;
 				break;
 			case NEKOFS_LOGERR:
-				std::cerr << "[ERRO]  " << u8str << std::endl;
+				std::cerr << "\033[31m" << "[ERRO]" << "\033[0m" << "  " << u8str << std::endl;
 				break;
 			default:
 				break;

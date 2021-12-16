@@ -15,9 +15,9 @@ namespace nekofs::tools {
 	bool PrePare::exec(const std::string& genpath, const std::string& versionfile, uint32_t versionOffset)
 	{
 		auto nativefs = env::getInstance().getNativeFileSystem();
-		if (nativefs->fileExist(genpath + nekofs_PathSeparator + nekofs_kLayerFiles))
+		if (auto ft = nativefs->getFileType(genpath + nekofs_PathSeparator + nekofs_kLayerFiles); ft != nekofs::FileType::None)
 		{
-			if (!nativefs->removeFile(genpath + nekofs_PathSeparator + nekofs_kLayerFiles))
+			if (nativefs->removeFile(genpath + nekofs_PathSeparator + nekofs_kLayerFiles))
 			{
 				return false;
 			}
@@ -29,7 +29,12 @@ namespace nekofs::tools {
 			return false;
 		}
 		lvm->setVersion(lvm->getVersion() + versionOffset);
-		if (nativefs->fileExist(genpath + nekofs_PathSeparator + nekofs_kLayerVersion))
+		if (lvm->getVersion() == 0)
+		{
+			nekofs::logprint(nekofs::LogType::Error, u8"lvm->getVersion() == 0");
+			return false;
+		}
+		if (auto ft = nativefs->getFileType(genpath + nekofs_PathSeparator + nekofs_kLayerVersion); ft != nekofs::FileType::None)
 		{
 			if (!nativefs->removeFile(genpath + nekofs_PathSeparator + nekofs_kLayerVersion))
 			{

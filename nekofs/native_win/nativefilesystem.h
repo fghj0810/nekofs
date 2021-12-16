@@ -22,8 +22,7 @@ namespace nekofs {
 		std::vector<std::string> getAllFiles(const std::string& dirpath) const override;
 		std::unique_ptr<FileHandle> getFileHandle(const std::string& filepath) override;
 		std::shared_ptr<IStream> openIStream(const std::string& filepath) override;
-		bool fileExist(const std::string& filepath) const override;
-		bool dirExist(const std::string& dirpath) const override;
+		FileType getFileType(const std::string& path) const override;
 		int64_t getSize(const std::string& filepath) const override;
 		FileSystemType getFSType() const override;
 
@@ -41,7 +40,6 @@ namespace nekofs {
 		std::shared_ptr<NativeFile> openFileInternal(const std::string& filepath);
 		void closeFileInternal(const std::string& filepath);
 		bool hasOpenFiles(const std::string& dirpath) const;
-		ItemType getItemType(const std::string& path) const;
 
 	private:
 		std::map<std::string, std::weak_ptr<NativeFile>> files_;

@@ -21,8 +21,7 @@ namespace nekofs {
 		std::vector<std::string> getAllFiles(const std::string& dirpath) const override;
 		std::unique_ptr<FileHandle> getFileHandle(const std::string& filepath) override;
 		std::shared_ptr<IStream> openIStream(const std::string& filepath) override;
-		bool fileExist(const std::string& filepath) const override;
-		bool dirExist(const std::string& dirpath) const override;
+		FileType getFileType(const std::string& path) const override;
 		int64_t getSize(const std::string& filepath) const override;
 		FileSystemType getFSType() const override;
 

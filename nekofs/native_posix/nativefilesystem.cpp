@@ -67,13 +67,25 @@ namespace nekofs {
 	{
 		return openFileInternal(filepath)->openIStream();
 	}
-	bool NativeFileSystem::fileExist(const std::string& filepath) const
+	FileType NativeFileSystem::getFileType(const std::string& path) const
 	{
-		return getItemType(filepath) == ItemType::File;
-	}
-	bool NativeFileSystem::dirExist(const std::string& dirpath) const
-	{
-		return getItemType(dirpath) == ItemType::Directory;
+		struct stat info;
+		if (0 == ::stat(path.c_str(), &info))
+		{
+			if ((info.st_mode & S_IFDIR) != 0 && (info.st_mode & S_IFREG) == 0)
+			{
+				return FileType::Directory;
+			}
+			else if ((info.st_mode & S_IFDIR) == 0 && (info.st_mode & S_IFREG) != 0)
+			{
+				return FileType::Regular;
+			}
+			else
+			{
+				return FileType::Unkonwn;
+			}
+		}
+		return FileType::None;
 	}
 	int64_t NativeFileSystem::getSize(const std::string& filepath) const
 	{
@@ -114,15 +126,15 @@ namespace nekofs {
 		for (size_t fpos = dirpath.size(); fpos != dirpath.npos; fpos = dirpath.rfind(nekofs_PathSeparator, fpos - 1))
 		{
 			std::string curpath = dirpath.substr(0, fpos);
-			auto type = getItemType(curpath);
-			if (type == ItemType::None) {
+			auto type = getFileType(curpath);
+			if (type == FileType::None) {
 				result.push_back(curpath);
 				if (std::filesystem::path tmp(curpath); tmp.parent_path() == tmp.root_path())
 				{
 					break;
 				}
 			}
-			else if (type == ItemType::Directory)
+			else if (type == FileType::Directory)
 			{
 				break;
 			}
@@ -156,8 +168,8 @@ namespace nekofs {
 	bool NativeFileSystem::removeDirectories(const std::string& dirpath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
-		auto dirpath_type = getItemType(dirpath);
-		if (dirpath_type == ItemType::None)
+		auto dirpath_type = getFileType(dirpath);
+		if (dirpath_type == FileType::None)
 		{
 			std::stringstream ss;
 			ss << "NativeFileSystem::removeDirectories dir not exist. path = ";
@@ -165,7 +177,7 @@ namespace nekofs {
 			logprint(LogType::Warning, ss.str());
 			return true;
 		}
-		if (dirpath_type != ItemType::Directory)
+		if (dirpath_type != FileType::Directory)
 		{
 			std::stringstream ss;
 			ss << "NativeFileSystem::removeDirectories not a dir path. path = ";
@@ -279,8 +291,8 @@ namespace nekofs {
 	bool NativeFileSystem::cleanEmptyDirectories(const std::string& dirpath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
-		auto dirpath_type = getItemType(dirpath);
-		if (dirpath_type == ItemType::None)
+		auto dirpath_type = getFileType(dirpath);
+		if (dirpath_type == FileType::None)
 		{
 			std::stringstream ss;
 			ss << "NativeFileSystem::cleanEmptyDirectories dir not exist. path = ";
@@ -288,7 +300,7 @@ namespace nekofs {
 			logprint(LogType::Warning, ss.str());
 			return true;
 		}
-		if (dirpath_type != ItemType::Directory)
+		if (dirpath_type != FileType::Directory)
 		{
 			std::stringstream ss;
 			ss << "NativeFileSystem::cleanEmptyDirectories not a dir path. path = ";
@@ -365,7 +377,7 @@ namespace nekofs {
 	bool NativeFileSystem::moveDirectory(const std::string& srcpath, const std::string& destpath)
 	{
 		std::lock_guard<std::recursive_mutex> lock(mtx_);
-		if (!dirExist(srcpath))
+		if (getFileType(srcpath) != FileType::Directory)
 		{
 			std::stringstream ss;
 			ss << "NativeFileSystem::moveDirectory dir not exist. path = ";
@@ -381,7 +393,7 @@ namespace nekofs {
 			logprint(LogType::Error, ss.str());
 			return false;
 		}
-		if (getItemType(destpath) != ItemType::None)
+		if (getFileType(destpath) != FileType::None)
 		{
 			std::stringstream ss;
 			ss << "NativeFileSystem::moveDirectory already exist. path = ";
@@ -415,8 +427,8 @@ namespace nekofs {
 			logprint(LogType::Error, ss.str());
 			return false;
 		}
-		auto filepath_type = getItemType(filepath);
-		if (filepath_type == ItemType::None)
+		auto filepath_type = getFileType(filepath);
+		if (filepath_type == FileType::None)
 		{
 			std::stringstream ss;
 			ss << "NativeFileSystem::removeFile file not exist. path = ";
@@ -424,7 +436,7 @@ namespace nekofs {
 			logprint(LogType::Warning, ss.str());
 			return true;
 		}
-		if (filepath_type != ItemType::File)
+		if (filepath_type != FileType::Regular)
 		{
 			std::stringstream ss;
 			ss << "NativeFileSystem::removeFile not a file path. path = ";
@@ -456,7 +468,7 @@ namespace nekofs {
 			logprint(LogType::Error, ss.str());
 			return false;
 		}
-		if (!fileExist(srcpath))
+		if (getFileType(srcpath) != FileType::Regular)
 		{
 			std::stringstream ss;
 			ss << "NativeFileSystem::moveFile file not exist. path = ";
@@ -464,7 +476,7 @@ namespace nekofs {
 			logprint(LogType::Error, ss.str());
 			return false;
 		}
-		if (getItemType(destpath) != ItemType::None)
+		if (getFileType(destpath) != FileType::None)
 		{
 			std::stringstream ss;
 			ss << "NativeFileSystem::moveFile already exist. path = ";
@@ -569,25 +581,5 @@ namespace nekofs {
 			}
 		}
 		return false;
-	}
-	ItemType NativeFileSystem::getItemType(const std::string& path) const
-	{
-		struct stat info;
-		if (0 == ::stat(path.c_str(), &info))
-		{
-			if ((info.st_mode & S_IFDIR) != 0 && (info.st_mode & S_IFREG) == 0)
-			{
-				return ItemType::Directory;
-			}
-			else if ((info.st_mode & S_IFDIR) == 0 && (info.st_mode & S_IFREG) != 0)
-			{
-				return ItemType::File;
-			}
-			else
-			{
-				return ItemType::Unkonwn;
-			}
-		}
-		return ItemType::None;
 	}
 }

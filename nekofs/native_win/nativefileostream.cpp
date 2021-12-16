@@ -57,16 +57,13 @@ namespace nekofs {
 		}
 		if (!success)
 		{
-			if (origin != SeekOrigin::Unknown)
-			{
-				auto errmsg = getSysErrMsg();
-				std::stringstream ss;
-				ss << u8"NativeOStream::seek SetFilePointerEx error ! filepath = ";
-				ss << file_->getFilePath();
-				ss << u8", err = ";
-				ss << errmsg;
-				logprint(LogType::Error, ss.str());
-			}
+			auto errmsg = getSysErrMsg();
+			std::stringstream ss;
+			ss << u8"NativeOStream::seek SetFilePointerEx error ! filepath = ";
+			ss << file_->getFilePath();
+			ss << u8", err = ";
+			ss << errmsg;
+			logprint(LogType::Error, ss.str());
 			return -1;
 		}
 		return position.QuadPart;

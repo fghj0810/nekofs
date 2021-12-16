@@ -13,14 +13,14 @@ extern "C" {
 
 	NEKOFS_API void nekofs_SetLogDelegate(logdelegate* delegate);
 
-	NEKOFS_API NekoFSBool nekofs_native_FileExist(const char* u8filepath);
+	NEKOFS_API NekoFSFileType nekofs_native_GetFileType(const char* u8path);
 	NEKOFS_API int64_t nekofs_native_GetFileSize(const char* u8filepath);
 	NEKOFS_API NekoFSBool nekofs_native_RemoveFile(const char* u8filepath);
 	NEKOFS_API NekoFSBool nekofs_native_RemoveDirectory(const char* u8dirpath);
 	NEKOFS_API NekoFSBool nekofs_native_CleanEmptyDirectory(const char* u8dirpath);
 	NEKOFS_API NekoFSHandle nekofs_native_OpenIStream(const char* u8filepath);
 	NEKOFS_API NekoFSHandle nekofs_native_OpenOStream(const char* u8filepath);
-	NEKOFS_API const char* nekofs_native_GetAllFiles(const char* u8dirpath);;
+	NEKOFS_API const char* nekofs_native_GetAllFiles(const char* u8dirpath);
 
 	NEKOFS_API void nekofs_istream_Close(NekoFSHandle isHandle);
 	NEKOFS_API int32_t nekofs_istream_Read(NekoFSHandle isHandle, void* buffer, int32_t size);

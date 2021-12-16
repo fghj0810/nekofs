@@ -50,14 +50,14 @@ NEKOFS_API void nekofs_SetLogDelegate(logdelegate* delegate)
 	nekofs::env::getInstance().setLogDelegate(delegate);
 }
 
-NEKOFS_API NekoFSBool nekofs_native_FileExist(const char* u8filepath)
+NEKOFS_API NekoFSFileType nekofs_native_GetFileType(const char* u8path)
 {
-	auto path = __normalrootpath(u8filepath);
+	auto path = __normalrootpath(u8path);
 	if (path.empty())
 	{
 		return NEKOFS_FALSE;
 	}
-	return nekofs::env::getInstance().getNativeFileSystem()->fileExist(path) ? NEKOFS_TRUE : NEKOFS_FALSE;
+	return static_cast<NekoFSFileType>(nekofs::env::getInstance().getNativeFileSystem()->getFileType(path));
 }
 
 NEKOFS_API int64_t nekofs_native_GetFileSize(const char* u8filepath)
@@ -204,8 +204,7 @@ NEKOFS_API int64_t nekofs_istream_Seek(NekoFSHandle isHandle, int64_t offset, Ne
 	{
 		return -1;
 	}
-	nekofs::SeekOrigin seekOrigin = nekofs::Int2SeekOrigin(origin);
-	if (seekOrigin == nekofs::SeekOrigin::Unknown)
+	if (!nekofs::checkSeekOrigin(origin))
 	{
 		return -1;
 	}
@@ -220,7 +219,7 @@ NEKOFS_API int64_t nekofs_istream_Seek(NekoFSHandle isHandle, int64_t offset, Ne
 	}
 	if (stream)
 	{
-		return stream->seek(offset, seekOrigin);
+		return stream->seek(offset, static_cast<nekofs::SeekOrigin>(origin));
 	}
 	return -1;
 }
@@ -312,8 +311,7 @@ NEKOFS_API int64_t nekofs_ostream_Seek(NekoFSHandle oshandle, int64_t offset, Ne
 	{
 		return -1;
 	}
-	nekofs::SeekOrigin seekOrigin = nekofs::Int2SeekOrigin(origin);
-	if (seekOrigin == nekofs::SeekOrigin::Unknown)
+	if (!nekofs::checkSeekOrigin(origin))
 	{
 		return -1;
 	}
@@ -328,7 +326,7 @@ NEKOFS_API int64_t nekofs_ostream_Seek(NekoFSHandle oshandle, int64_t offset, Ne
 	}
 	if (stream)
 	{
-		return stream->seek(offset, seekOrigin);
+		return stream->seek(offset, static_cast<nekofs::SeekOrigin>(origin));
 	}
 	return -1;
 }

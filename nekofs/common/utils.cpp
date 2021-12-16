@@ -55,18 +55,9 @@ namespace nekofs {
 		logprint(level, message.c_str());
 	}
 
-	SeekOrigin Int2SeekOrigin(const NekoFSOrigin& value)
+	bool checkSeekOrigin(const NekoFSOrigin& value)
 	{
-		switch (value)
-		{
-		case NEKOFS_BEGIN:
-			return SeekOrigin::Begin;
-		case NEKOFS_CURRENT:
-			return SeekOrigin::Current;
-		case NEKOFS_END:
-			return SeekOrigin::End;
-		}
-		return SeekOrigin::Unknown;
+		return (value == NEKOFS_BEGIN) || (value == NEKOFS_CURRENT) || (value == NEKOFS_END);
 	}
 
 	int32_t istream_read(std::shared_ptr<IStream>& is, void* buf, const int32_t& size)

@@ -40,13 +40,9 @@ namespace nekofs {
 	{
 		return filesystem_->openIStream(getFullPath(filepath));
 	}
-	bool LayerFileSystem::fileExist(const std::string& filepath) const
+	FileType LayerFileSystem::getFileType(const std::string& path) const
 	{
-		return filesystem_->fileExist(getFullPath(filepath));
-	}
-	bool LayerFileSystem::dirExist(const std::string& dirpath) const
-	{
-		return filesystem_->dirExist(getFullPath(dirpath));
+		return filesystem_->getFileType(getFullPath(path));
 	}
 	int64_t LayerFileSystem::getSize(const std::string& filepath) const
 	{

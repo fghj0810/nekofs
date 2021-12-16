@@ -9,29 +9,28 @@
 namespace nekofs {
 	enum class LogType : int32_t
 	{
-		Unknown,
 		Info = NEKOFS_LOGINFO,
 		Warning = NEKOFS_LOGWARN,
-		Error = NEKOFS_LOGERR
+		Error = NEKOFS_LOGERR,
+		Unknown = -1,
 	};
 	enum class SeekOrigin : int32_t
 	{
-		Unknown,
-		Begin,
-		Current,
-		End,
+		Begin = NEKOFS_BEGIN,
+		Current = NEKOFS_CURRENT,
+		End = NEKOFS_END,
 	};
 	enum class FileSystemType
 	{
 		Layer,
 		Native,
 	};
-	enum class ItemType
+	enum class FileType : int32_t
 	{
-		None,
-		File,
-		Directory,
-		Unkonwn
+		None = NEKOFS_FT_NONE,
+		Regular = NEKOFS_FT_REGULAR,
+		Directory = NEKOFS_FT_DIRECTORY,
+		Unkonwn = NEKOFS_FT_UNKONWN
 	};
 
 	class FileHandle;
@@ -66,8 +65,7 @@ namespace nekofs {
 		virtual std::vector<std::string> getAllFiles(const std::string& dirpath) const = 0;
 		virtual std::unique_ptr<FileHandle> getFileHandle(const std::string& filepath) = 0;
 		virtual std::shared_ptr<IStream> openIStream(const std::string& filepath) = 0;
-		virtual bool fileExist(const std::string& filepath) const = 0;
-		virtual bool dirExist(const std::string& dirpath) const = 0;
+		virtual FileType getFileType(const std::string& path) const = 0;
 		virtual int64_t getSize(const std::string& filepath) const = 0;
 		virtual FileSystemType getFSType() const = 0;
 	};

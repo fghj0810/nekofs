@@ -60,16 +60,13 @@ namespace nekofs {
 		}
 		if (-1 == value)
 		{
-			if (origin != SeekOrigin::Unknown)
-			{
-				auto errmsg = getSysErrMsg();
-				std::stringstream ss;
-				ss << "NativeOStream::seek lseek error ! filepath = ";
-				ss << file_->getFilePath();
-				ss << ", err = ";
-				ss << errmsg;
-				logprint(LogType::Error, ss.str());
-			}
+			auto errmsg = getSysErrMsg();
+			std::stringstream ss;
+			ss << "NativeOStream::seek lseek error ! filepath = ";
+			ss << file_->getFilePath();
+			ss << ", err = ";
+			ss << errmsg;
+			logprint(LogType::Error, ss.str());
 		}
 		return value;
 	}

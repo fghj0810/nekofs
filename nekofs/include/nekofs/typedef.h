@@ -7,7 +7,8 @@ extern "C" {
 #endif // __cplusplus
 
 	typedef int32_t NekoFSOrigin;
-	typedef uint32_t NekoFSBool;
+	typedef int32_t NekoFSBool;
+	typedef int32_t NekoFSFileType;
 	typedef int32_t NekoFSHandle;
 	typedef void logdelegate(int32_t level, const char* u8message);
 
@@ -22,6 +23,11 @@ extern "C" {
 #define NEKOFS_LOGINFO  (1)
 #define NEKOFS_LOGWARN  (2)
 #define NEKOFS_LOGERR   (3)
+
+#define NEKOFS_FT_NONE       ((NekoFSFileType)0)
+#define NEKOFS_FT_REGULAR    ((NekoFSFileType)1)
+#define NEKOFS_FT_DIRECTORY  ((NekoFSFileType)1)
+#define NEKOFS_FT_UNKONWN    ((NekoFSFileType)-1)
 
 #define INVALID_NEKOFSHANDLE ((NekoFSHandle)-1)
 #define NEKOFS_TRUE ((NekoFSBool)1)

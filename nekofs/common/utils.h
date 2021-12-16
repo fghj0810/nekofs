@@ -7,7 +7,7 @@ namespace nekofs {
 	std::string getSysErrMsg();
 	void logprint(const LogType& level, const char* message);
 	void logprint(const LogType& level, const std::string& message);
-	SeekOrigin Int2SeekOrigin(const NekoFSOrigin& value);
+	bool checkSeekOrigin(const NekoFSOrigin& value);
 
 	//class FSID final : private noncopyable, private nonmovable
 	//{
