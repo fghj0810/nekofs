@@ -1,43 +1,81 @@
 ﻿#include "layerfilesmeta.h"
 #include "../common/error.h"
 #include "../common/utils.h"
-#include "../common/rapidjson.h"
 
 #include <algorithm>
 #include <sstream>
 
 namespace nekofs {
-	bool LayerFilesMeta::load(LayerFilesMeta& lfmeta, std::shared_ptr<IStream> is)
+	std::optional<LayerFilesMeta> LayerFilesMeta::load(std::shared_ptr<IStream> is)
 	{
-		lfmeta = LayerFilesMeta();
 		if (!is)
 		{
-			return false;
+			return std::nullopt;
 		}
 		JsonInputStream jis(is);
 		JSONDocument d;
 		d.ParseStream(jis);
 		if (d.HasParseError())
 		{
-			return false;
+			return std::nullopt;
 		}
-		if (!load_internal(lfmeta, &d))
-		{
-			lfmeta = LayerFilesMeta();
-			return false;
-		}
-		return true;
+		return load(&d);
 	}
-	bool LayerFilesMeta::load(LayerFilesMeta& lfmeta, const JSONValue* jsondoc)
+	std::optional<LayerFilesMeta> LayerFilesMeta::load(const JSONValue* jsondoc)
 	{
-		if (!load_internal(lfmeta, jsondoc))
+		LayerFilesMeta lfmeta;
 		{
-			lfmeta = LayerFilesMeta();
-			return false;
+			// files
+			auto files = jsondoc->FindMember(nekofs_kLayerFiles_Files);
+			if (files != jsondoc->MemberEnd() && !files->value.IsNull())
+			{
+				for (auto itr = files->value.MemberBegin(); itr != files->value.MemberEnd(); itr++)
+				{
+					std::string filename(itr->name.GetString());
+					LayerFilesMeta::FileMeta meta;
+					auto versionIt = itr->value.FindMember(nekofs_kLayerFiles_FilesVersion);
+					if (versionIt != itr->value.MemberEnd())
+					{
+						meta.setVersion(versionIt->value.GetUint());
+					}
+					auto sha256strIt = itr->value.FindMember(nekofs_kLayerFiles_FilesSHA256);
+					if (sha256strIt != itr->value.MemberEnd())
+					{
+						uint32_t v[8];
+						str_to_sha256(sha256strIt->value.GetString(), v);
+						meta.setSHA256(v);
+					}
+					auto sizeIt = itr->value.FindMember(nekofs_kLayerFiles_FilesSize);
+					if (sizeIt != itr->value.MemberEnd())
+					{
+						meta.setSize(sizeIt->value.GetInt64());
+					}
+					lfmeta.files_[filename] = meta;
+				}
+			}
+			else
+			{
+				return std::nullopt;
+			}
 		}
-		return true;
+		{
+			auto deletes = jsondoc->FindMember(nekofs_kLayerFiles_Deletes);
+			if (deletes != jsondoc->MemberEnd() && !deletes->value.IsNull())
+			{
+				for (auto itr = deletes->value.MemberBegin(); itr != deletes->value.MemberEnd(); itr++)
+				{
+					std::string filename(itr->name.GetString());
+					lfmeta.deletes_[filename] = itr->value.GetUint();
+				}
+			}
+			else
+			{
+				return std::nullopt;
+			}
+		}
+		return lfmeta;
 	}
-	bool LayerFilesMeta::save(const LayerFilesMeta& lfmeta, std::shared_ptr<OStream> os)
+	bool LayerFilesMeta::save(std::shared_ptr<OStream> os)
 	{
 		if (!os)
 		{
@@ -46,7 +84,7 @@ namespace nekofs {
 		JsonOutputStream jos(os);
 		JSONFileWriter writer(jos);
 		JSONDocument d(rapidjson::kObjectType);
-		if (!save(lfmeta, &d, d.GetAllocator()))
+		if (!save(&d, d.GetAllocator()))
 		{
 			return false;
 		}
@@ -64,12 +102,12 @@ namespace nekofs {
 		}
 		return true;
 	}
-	bool LayerFilesMeta::save(const LayerFilesMeta& lfmeta, JSONValue* jsondoc, JSONDocument::AllocatorType& allocator)
+	bool LayerFilesMeta::save(JSONValue* jsondoc, JSONDocument::AllocatorType& allocator)
 	{
 		{
 			// files
 			JSONValue files(rapidjson::kObjectType);
-			for (const auto& item : lfmeta.files_)
+			for (const auto& item : this->files_)
 			{
 				JSONValue meta(rapidjson::kObjectType);
 				JSONValue version(rapidjson::kNumberType);
@@ -90,7 +128,7 @@ namespace nekofs {
 		{
 			// deletes
 			JSONValue deletes(rapidjson::kObjectType);
-			for (const auto& item : lfmeta.deletes_)
+			for (const auto& item : this->deletes_)
 			{
 				JSONValue version(rapidjson::kNumberType);
 				version.SetUint(item.second);
@@ -136,55 +174,6 @@ namespace nekofs {
 			return it->second;
 		}
 		return std::nullopt;
-	}
-
-	bool LayerFilesMeta::load_internal(LayerFilesMeta& lfmeta, const JSONValue* jsondoc)
-	{
-		auto files = jsondoc->FindMember(nekofs_kLayerFiles_Files);
-		if (files != jsondoc->MemberEnd() && !files->value.IsNull())
-		{
-			for (auto itr = files->value.MemberBegin(); itr != files->value.MemberEnd(); itr++)
-			{
-				std::string filename(itr->name.GetString());
-				FileMeta meta;
-				auto versionIt = itr->value.FindMember(nekofs_kLayerFiles_FilesVersion);
-				if (versionIt != itr->value.MemberEnd())
-				{
-					meta.setVersion(versionIt->value.GetUint());
-				}
-				auto sha256strIt = itr->value.FindMember(nekofs_kLayerFiles_FilesSHA256);
-				if (sha256strIt != itr->value.MemberEnd())
-				{
-					uint32_t v[8];
-					str_to_sha256(sha256strIt->value.GetString(), v);
-					meta.setSHA256(v);
-				}
-				auto sizeIt = itr->value.FindMember(nekofs_kLayerFiles_FilesSize);
-				if (sizeIt != itr->value.MemberEnd())
-				{
-					meta.setSize(sizeIt->value.GetInt64());
-				}
-				lfmeta.files_[filename] = meta;
-			}
-		}
-		else
-		{
-			return false;
-		}
-		auto deletes = jsondoc->FindMember(nekofs_kLayerFiles_Deletes);
-		if (deletes != jsondoc->MemberEnd() && !deletes->value.IsNull())
-		{
-			for (auto itr = deletes->value.MemberBegin(); itr != deletes->value.MemberEnd(); itr++)
-			{
-				std::string filename(itr->name.GetString());
-				lfmeta.deletes_[filename] = itr->value.GetUint();
-			}
-		}
-		else
-		{
-			return false;
-		}
-		return true;
 	}
 
 

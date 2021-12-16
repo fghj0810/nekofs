@@ -13,7 +13,7 @@ namespace nekofs::tools {
 	class PrePare final
 	{
 	public:
-		static bool exec(const std::string& genpath);
+		static bool exec(const std::string& genpath, const std::string& versionfile, uint32_t versionOffset);
 	};
 }
 

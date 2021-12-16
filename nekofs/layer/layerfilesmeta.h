@@ -17,17 +17,14 @@ namespace nekofs {
 		class FileMeta;
 
 	public:
-		static bool load(LayerFilesMeta& lfmeta, std::shared_ptr<IStream> is);
-		static bool load(LayerFilesMeta& lfmeta, const JSONValue* jsondoc);
-		static bool save(const LayerFilesMeta& lfmeta, std::shared_ptr<OStream> os);
-		static bool save(const LayerFilesMeta& lfmeta, JSONValue* jsondoc, JSONDocument::AllocatorType& allocator);
+		static std::optional<LayerFilesMeta> load(std::shared_ptr<IStream> is);
+		static std::optional<LayerFilesMeta> load(const JSONValue* jsondoc);
+		bool save(std::shared_ptr<OStream> os);
+		bool save(JSONValue* jsondoc, JSONDocument::AllocatorType& allocator);
 		void setFileMeta(const std::string& filename, const FileMeta& meta);
 		std::optional<FileMeta> getFileMeta(const std::string& filename) const;
 		void setDeleteVersion(const std::string& filename, const uint32_t& version);
 		std::optional<uint32_t> getDeleteVersion(const std::string& filename) const;
-
-	private:
-		static bool load_internal(LayerFilesMeta& lfmeta, const JSONValue* jsondoc);
 
 	private:
 		std::map<std::string, FileMeta> files_;

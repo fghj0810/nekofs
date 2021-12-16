@@ -1,7 +1,9 @@
 ﻿#include "prepare.h"
+#include "../layer/layerversionmeta.h"
 #include "../layer/layerfilesmeta.h"
 #include "../layer/layerfilesystem.h"
 #include "../common/env.h"
+#include "../common/utils.h"
 #include "../common/sha256.h"
 #ifdef _WIN32
 #include "../native_win/nativefilesystem.h"
@@ -10,13 +12,31 @@
 #endif
 
 namespace nekofs::tools {
-	bool PrePare::exec(const std::string& genpath)
+	bool PrePare::exec(const std::string& genpath, const std::string& versionfile, uint32_t versionOffset)
 	{
 		auto nativefs = env::getInstance().getNativeFileSystem();
 		if (nativefs->fileExist(genpath + nekofs_PathSeparator + nekofs_kLayerFiles))
 		{
-			nativefs->removeFile(genpath + nekofs_PathSeparator + nekofs_kLayerFiles);
+			if (!nativefs->removeFile(genpath + nekofs_PathSeparator + nekofs_kLayerFiles))
+			{
+				return false;
+			}
 		}
+		auto lvm = nekofs::LayerVersionMeta::load(nativefs->openIStream(versionfile));
+		if (!lvm.has_value())
+		{
+			nekofs::logprint(nekofs::LogType::Error, u8"load version faild!");
+			return false;
+		}
+		lvm->setVersion(lvm->getVersion() + versionOffset);
+		if (nativefs->fileExist(genpath + nekofs_PathSeparator + nekofs_kLayerVersion))
+		{
+			if (!nativefs->removeFile(genpath + nekofs_PathSeparator + nekofs_kLayerVersion))
+			{
+				return false;
+			}
+		}
+
 		const uint32_t buffer_size = 8 * 1024;
 		char buffer[8 * 1024];
 		nekofs::LayerFilesMeta lfm;
@@ -42,12 +62,13 @@ namespace nekofs::tools {
 			uint32_t hash[8];
 			sum.readHash(hash);
 			nekofs::LayerFilesMeta::FileMeta meta;
-			meta.setVersion(0);
+			meta.setVersion(lvm->getVersion());
 			meta.setSHA256(hash);
 			meta.setSize(is->getLength());
 			lfm.setFileMeta(item, meta);
 		}
 		auto fos = nativefs->openOStream(genpath + nekofs_PathSeparator + nekofs_kLayerFiles);
-		return nekofs::LayerFilesMeta::save(lfm, fos);
+		auto vos = nativefs->openOStream(genpath + nekofs_PathSeparator + nekofs_kLayerVersion);
+		return lfm.save(fos) && lvm->save(vos);
 	}
 }

@@ -76,6 +76,8 @@ namespace nekofs {
 constexpr const char* nekofs_PathSeparator = u8"/";
 constexpr int32_t nekofs_MapBlockSizeBitOffset = 25;
 constexpr const char* nekofs_kLayerVersion = u8"version.json";
+constexpr const char* nekofs_kLayerVersion_FromVersion = u8"fromVersion";
+constexpr const char* nekofs_kLayerVersion_Version = u8"version";
 constexpr const char* nekofs_kLayerFiles = u8"files.json";
 constexpr const char* nekofs_kLayerFiles_Files = u8"files";
 constexpr const char* nekofs_kLayerFiles_FilesVersion = u8"version";

@@ -65,6 +65,8 @@ set(NEKOFS_LAYER
     layer/layerfilesystem.cpp
     layer/layerfilesmeta.h
     layer/layerfilesmeta.cpp
+    layer/layerversionmeta.h
+    layer/layerversionmeta.cpp
 )
 
 set(NEKOFS

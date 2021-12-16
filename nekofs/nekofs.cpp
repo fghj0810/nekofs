@@ -483,13 +483,18 @@ NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const ch
 #ifdef NEKOFS_TOOLS
 #include "tools/prepare.h"
 
-NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path)
+NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path, const char* u8versionpath, uint32_t offset)
 {
 	auto path = __normalrootpath(u8path);
 	if (path.empty())
 	{
 		return NEKOFS_FALSE;
 	}
-	return nekofs::tools::PrePare::exec(path) ? NEKOFS_TRUE : NEKOFS_FALSE;
+	auto vpath = __normalrootpath(u8versionpath);
+	if (vpath.empty())
+	{
+		return NEKOFS_FALSE;
+	}
+	return nekofs::tools::PrePare::exec(path, vpath, offset) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
 #endif

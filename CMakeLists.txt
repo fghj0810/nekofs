@@ -23,8 +23,4 @@ if (NEKOFS_TEST STREQUAL "ON")
     add_subdirectory("test/test_read")
     add_subdirectory("test/test_write")
     add_subdirectory("test/test_sha256")
-
-    if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
-        add_subdirectory("test/test_prepare")
-    endif ()
 endif ()
