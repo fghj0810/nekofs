@@ -44,6 +44,10 @@ static inline std::string __normalpath(const char* u8path)
 	}
 	return p.lexically_normal().generic_string();
 }
+static inline bool checkSeekOrigin(const NekoFSOrigin& value)
+{
+	return (value == NEKOFS_BEGIN) || (value == NEKOFS_CURRENT) || (value == NEKOFS_END);
+}
 
 NEKOFS_API void nekofs_SetLogDelegate(logdelegate* delegate)
 {
@@ -204,7 +208,7 @@ NEKOFS_API int64_t nekofs_istream_Seek(NekoFSHandle isHandle, int64_t offset, Ne
 	{
 		return -1;
 	}
-	if (!nekofs::checkSeekOrigin(origin))
+	if (!checkSeekOrigin(origin))
 	{
 		return -1;
 	}
@@ -311,7 +315,7 @@ NEKOFS_API int64_t nekofs_ostream_Seek(NekoFSHandle oshandle, int64_t offset, Ne
 	{
 		return -1;
 	}
-	if (!nekofs::checkSeekOrigin(origin))
+	if (!checkSeekOrigin(origin))
 	{
 		return -1;
 	}
