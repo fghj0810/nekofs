@@ -99,17 +99,17 @@ namespace nekofs {
 			else
 			{
 				std::stringstream ss;
-				ss << "NativeFileSystem::getSize strange file. is dir? ";
+				ss << u8"NativeFileSystem::getSize strange file. is dir? ";
 				ss << filepath;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 		}
 		else
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::getSize no such file! ";
+			ss << u8"NativeFileSystem::getSize no such file! ";
 			ss << filepath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 		}
 		return -1;
 	}
@@ -141,11 +141,11 @@ namespace nekofs {
 			else
 			{
 				std::stringstream ss;
-				ss << "NativeFileSystem::createDirectories error: path not a directory. dirpath = ";
+				ss << u8"NativeFileSystem::createDirectories error: path not a directory. dirpath = ";
 				ss << dirpath;
-				ss << ", curpath = ";
+				ss << u8", curpath = ";
 				ss << curpath;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 				return false;
 			}
 		}
@@ -155,11 +155,11 @@ namespace nekofs {
 			{
 				auto errmsg = getSysErrMsg();
 				std::stringstream ss;
-				ss << "NativeFileSystem::createDirectories mkdir error. dirpath = ";
+				ss << u8"NativeFileSystem::createDirectories mkdir error. dirpath = ";
 				ss << result[i - 1];
-				ss << ", err = ";
+				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 				return false;
 			}
 		}
@@ -172,25 +172,25 @@ namespace nekofs {
 		if (dirpath_type == FileType::None)
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::removeDirectories dir not exist. path = ";
+			ss << u8"NativeFileSystem::removeDirectories dir not exist. path = ";
 			ss << dirpath;
-			logprint(LogType::Warning, ss.str());
+			logwarn(ss.str());
 			return true;
 		}
 		if (dirpath_type != FileType::Directory)
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::removeDirectories not a dir path. path = ";
+			ss << u8"NativeFileSystem::removeDirectories not a dir path. path = ";
 			ss << dirpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (hasOpenFiles(dirpath))
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::removeDirectories unable to remove directories: some files in use. dirpath = ";
+			ss << u8"NativeFileSystem::removeDirectories unable to remove directories: some files in use. dirpath = ";
 			ss << dirpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		const int OtherType = 0;
@@ -242,9 +242,9 @@ namespace nekofs {
 			{
 				findOther = true;
 				std::stringstream ss;
-				ss << "NativeFileSystem::removeDirectories not dir or file. path = ";
+				ss << u8"NativeFileSystem::removeDirectories not dir or file. path = ";
 				ss << item.first;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 		}
 		if (!findOther)
@@ -257,11 +257,11 @@ namespace nekofs {
 					{
 						auto errmsg = getSysErrMsg();
 						std::stringstream ss;
-						ss << "NativeFileSystem::removeDirectories unlink error. filepath = ";
+						ss << u8"NativeFileSystem::removeDirectories unlink error. filepath = ";
 						ss << item.first;
-						ss << ", err = ";
+						ss << u8", err = ";
 						ss << errmsg;
-						logprint(LogType::Error, ss.str());
+						logerr(ss.str());
 						return false;
 					}
 				}
@@ -275,11 +275,11 @@ namespace nekofs {
 					{
 						auto errmsg = getSysErrMsg();
 						std::stringstream ss;
-						ss << "NativeFileSystem::removeDirectories rmdir error. dirpath = ";
+						ss << u8"NativeFileSystem::removeDirectories rmdir error. dirpath = ";
 						ss << item.first;
-						ss << ", err = ";
+						ss << u8", err = ";
 						ss << errmsg;
-						logprint(LogType::Error, ss.str());
+						logerr(ss.str());
 						return false;
 					}
 				}
@@ -295,17 +295,17 @@ namespace nekofs {
 		if (dirpath_type == FileType::None)
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::cleanEmptyDirectories dir not exist. path = ";
+			ss << u8"NativeFileSystem::cleanEmptyDirectories dir not exist. path = ";
 			ss << dirpath;
-			logprint(LogType::Warning, ss.str());
+			logwarn(ss.str());
 			return true;
 		}
 		if (dirpath_type != FileType::Directory)
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::cleanEmptyDirectories not a dir path. path = ";
+			ss << u8"NativeFileSystem::cleanEmptyDirectories not a dir path. path = ";
 			ss << dirpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		struct stat info{};
@@ -351,11 +351,11 @@ namespace nekofs {
 				{
 					auto errmsg = getSysErrMsg();
 					std::stringstream ss;
-					ss << "NativeFileSystem::cleanEmptyDirectories rmdir error. dirpath = ";
+					ss << u8"NativeFileSystem::cleanEmptyDirectories rmdir error. dirpath = ";
 					ss << item.first;
-					ss << ", err = ";
+					ss << u8", err = ";
 					ss << errmsg;
-					logprint(LogType::Error, ss.str());
+					logerr(ss.str());
 					return false;
 				}
 			}
@@ -380,38 +380,38 @@ namespace nekofs {
 		if (getFileType(srcpath) != FileType::Directory)
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::moveDirectory dir not exist. path = ";
+			ss << u8"NativeFileSystem::moveDirectory dir not exist. path = ";
 			ss << srcpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (hasOpenFiles(srcpath))
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::moveDirectory some files in use. path = ";
+			ss << u8"NativeFileSystem::moveDirectory some files in use. path = ";
 			ss << srcpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (getFileType(destpath) != FileType::None)
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::moveDirectory already exist. path = ";
+			ss << u8"NativeFileSystem::moveDirectory already exist. path = ";
 			ss << destpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (-1 == ::rename(srcpath.c_str(), destpath.c_str()))
 		{
 			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
-			ss << "NativeFileSystem::moveDirectory rename error. srcpath = ";
+			ss << u8"NativeFileSystem::moveDirectory rename error. srcpath = ";
 			ss << srcpath;
-			ss << ", destpath = ";
+			ss << u8", destpath = ";
 			ss << destpath;
-			ss << ", err = ";
+			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		return true;
@@ -422,37 +422,37 @@ namespace nekofs {
 		if (filePtrs_.find(filepath) != filePtrs_.end())
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::removeFile file in use. path = ";
+			ss << u8"NativeFileSystem::removeFile file in use. path = ";
 			ss << filepath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		auto filepath_type = getFileType(filepath);
 		if (filepath_type == FileType::None)
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::removeFile file not exist. path = ";
+			ss << u8"NativeFileSystem::removeFile file not exist. path = ";
 			ss << filepath;
-			logprint(LogType::Warning, ss.str());
+			logwarn(ss.str());
 			return true;
 		}
 		if (filepath_type != FileType::Regular)
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::removeFile not a file path. path = ";
+			ss << u8"NativeFileSystem::removeFile not a file path. path = ";
 			ss << filepath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (-1 == ::unlink(filepath.c_str()))
 		{
 			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
-			ss << "NativeFileSystem::removeFile unlink error. filepath = ";
+			ss << u8"NativeFileSystem::removeFile unlink error. filepath = ";
 			ss << filepath;
-			ss << ", err = ";
+			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		return true;
@@ -463,38 +463,38 @@ namespace nekofs {
 		if (filePtrs_.find(srcpath) != filePtrs_.end())
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::moveFile file in use. path = ";
+			ss << u8"NativeFileSystem::moveFile file in use. path = ";
 			ss << srcpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (getFileType(srcpath) != FileType::Regular)
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::moveFile file not exist. path = ";
+			ss << u8"NativeFileSystem::moveFile file not exist. path = ";
 			ss << srcpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (getFileType(destpath) != FileType::None)
 		{
 			std::stringstream ss;
-			ss << "NativeFileSystem::moveFile already exist. path = ";
+			ss << u8"NativeFileSystem::moveFile already exist. path = ";
 			ss << destpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (-1 == ::rename(srcpath.c_str(), destpath.c_str()))
 		{
 			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
-			ss << "NativeFileSystem::moveFile rename error. srcpath = ";
+			ss << u8"NativeFileSystem::moveFile rename error. srcpath = ";
 			ss << srcpath;
-			ss << ", destpath = ";
+			ss << u8", destpath = ";
 			ss << destpath;
-			ss << ", err = ";
+			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		return true;

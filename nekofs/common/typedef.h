@@ -7,13 +7,6 @@
 #include <vector>
 
 namespace nekofs {
-	enum class LogType : int32_t
-	{
-		Info = NEKOFS_LOGINFO,
-		Warning = NEKOFS_LOGWARN,
-		Error = NEKOFS_LOGERR,
-		Unknown = -1,
-	};
 	enum class SeekOrigin : int32_t
 	{
 		Begin = NEKOFS_BEGIN,
@@ -22,6 +15,7 @@ namespace nekofs {
 	};
 	enum class FileSystemType
 	{
+		Overlay,
 		Layer,
 		Native,
 	};
@@ -72,6 +66,7 @@ namespace nekofs {
 }
 
 constexpr const char* nekofs_PathSeparator = u8"/";
+constexpr const char* nekofs_kURIPrefix_Native = u8"Native:";
 constexpr int32_t nekofs_MapBlockSizeBitOffset = 25;
 constexpr const char* nekofs_kLayerVersion = u8"version.json";
 constexpr const char* nekofs_kLayerVersion_FromVersion = u8"fromVersion";

@@ -106,7 +106,7 @@ namespace nekofs {
 				std::stringstream ss;
 				ss << u8"NativeFileSystem::getSize strange file. is dir? ";
 				ss << filepath;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 		}
 		else
@@ -114,7 +114,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::getSize no such file! ";
 			ss << filepath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 		}
 		return -1;
 	}
@@ -150,7 +150,7 @@ namespace nekofs {
 				ss << dirpath;
 				ss << u8", curpath = ";
 				ss << curpath;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 				return false;
 			}
 		}
@@ -164,7 +164,7 @@ namespace nekofs {
 				ss << result[i - 1];
 				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 				return false;
 			}
 		}
@@ -179,7 +179,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::removeDirectories dir not exist. path = ";
 			ss << dirpath;
-			logprint(LogType::Warning, ss.str());
+			logwarn(ss.str());
 			return true;
 		}
 		if (dirpath_type != FileType::Directory)
@@ -187,7 +187,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::removeDirectories not a dir path. path = ";
 			ss << dirpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (hasOpenFiles(dirpath))
@@ -195,7 +195,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::removeDirectories unable to remove directories: some files in use. dirpath = ";
 			ss << dirpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		const int OtherType = 0;
@@ -249,7 +249,7 @@ namespace nekofs {
 				std::stringstream ss;
 				ss << u8"NativeFileSystem::removeDirectories not dir or file. path = ";
 				ss << item.first;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 		}
 		if (!findOther)
@@ -266,7 +266,7 @@ namespace nekofs {
 						ss << item.first;
 						ss << u8", err = ";
 						ss << errmsg;
-						logprint(LogType::Error, ss.str());
+						logerr(ss.str());
 						return false;
 					}
 				}
@@ -284,7 +284,7 @@ namespace nekofs {
 						ss << item.first;
 						ss << u8", err = ";
 						ss << errmsg;
-						logprint(LogType::Error, ss.str());
+						logerr(ss.str());
 						return false;
 					}
 				}
@@ -302,7 +302,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::cleanEmptyDirectories dir not exist. path = ";
 			ss << dirpath;
-			logprint(LogType::Warning, ss.str());
+			logwarn(ss.str());
 			return true;
 		}
 		if (dirpath_type != FileType::Directory)
@@ -310,7 +310,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::cleanEmptyDirectories not a dir path. path = ";
 			ss << dirpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		WIN32_FIND_DATA find_data{};
@@ -360,7 +360,7 @@ namespace nekofs {
 					ss << item.first;
 					ss << u8", err = ";
 					ss << errmsg;
-					logprint(LogType::Error, ss.str());
+					logerr(ss.str());
 					return false;
 				}
 			}
@@ -387,7 +387,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::moveDirectory dir not exist. path = ";
 			ss << srcpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (hasOpenFiles(srcpath))
@@ -395,7 +395,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::moveDirectory some files in use. path = ";
 			ss << srcpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (getFileType(destpath) != FileType::None)
@@ -403,7 +403,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::moveDirectory already exist. path = ";
 			ss << destpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (FALSE == MoveFile(u8_to_u16(srcpath).c_str(), u8_to_u16(destpath).c_str()))
@@ -416,7 +416,7 @@ namespace nekofs {
 			ss << destpath;
 			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		return true;
@@ -429,7 +429,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::removeFile file in use. path = ";
 			ss << filepath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		auto filepath_type = getFileType(filepath);
@@ -438,7 +438,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::removeFile file not exist. path = ";
 			ss << filepath;
-			logprint(LogType::Warning, ss.str());
+			logwarn(ss.str());
 			return true;
 		}
 		if (filepath_type != FileType::Regular)
@@ -446,7 +446,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::removeFile not a file path. path = ";
 			ss << filepath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (FALSE == DeleteFile(u8_to_u16(filepath).c_str()))
@@ -457,7 +457,7 @@ namespace nekofs {
 			ss << filepath;
 			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		return true;
@@ -470,7 +470,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::moveFile file in use. path = ";
 			ss << srcpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (getFileType(srcpath) != FileType::Regular)
@@ -478,7 +478,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::moveFile file not exist. path = ";
 			ss << srcpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (getFileType(destpath) != FileType::None)
@@ -486,7 +486,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFileSystem::moveFile already exist. path = ";
 			ss << destpath;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		if (FALSE == MoveFile(u8_to_u16(srcpath).c_str(), u8_to_u16(destpath).c_str()))
@@ -499,7 +499,7 @@ namespace nekofs {
 			ss << destpath;
 			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		return true;

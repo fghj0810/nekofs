@@ -29,30 +29,37 @@ std::string nekofs::getSysErrMsg()
 
 
 namespace nekofs {
-	void logprint(const LogType& level, const char* message)
+	static inline void logprint(const NEKOFSLogLevel& level, const char* message)
 	{
 		auto cb = env::getInstance().getLogDelegate();
 		if (cb != nullptr)
 		{
-			switch (level)
-			{
-			case nekofs::LogType::Info:
-				cb(NEKOFS_LOGINFO, message);
-				break;
-			case nekofs::LogType::Warning:
-				cb(NEKOFS_LOGWARN, message);
-				break;
-			case nekofs::LogType::Error:
-				cb(NEKOFS_LOGERR, message);
-				break;
-			default:
-				break;
-			}
+			cb(level, message);
 		}
 	}
-	void logprint(const LogType& level, const std::string& message)
+	void loginfo(const char* message)
 	{
-		logprint(level, message.c_str());
+		logprint(NEKOFS_LOGINFO, message);
+	}
+	void loginfo(const std::string& message)
+	{
+		logerr(message.c_str());
+	}
+	void logwarn(const char* message)
+	{
+		logprint(NEKOFS_LOGWARN, message);
+	}
+	void logwarn(const std::string& message)
+	{
+		logwarn(message.c_str());
+	}
+	void logerr(const char* message)
+	{
+		logprint(NEKOFS_LOGERR, message);
+	}
+	void logerr(const std::string& message)
+	{
+		logerr(message.c_str());
 	}
 
 	int32_t istream_read(std::shared_ptr<IStream>& is, void* buf, const int32_t& size)

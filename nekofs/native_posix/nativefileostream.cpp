@@ -32,11 +32,11 @@ namespace nekofs {
 		{
 			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
-			ss << "NativeOStream::write write error ! filepath = ";
+			ss << u8"NativeOStream::write write error ! filepath = ";
 			ss << file_->getFilePath();
-			ss << ", err = ";
+			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 		}
 		return ret;
 	}
@@ -62,11 +62,11 @@ namespace nekofs {
 		{
 			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
-			ss << "NativeOStream::seek lseek error ! filepath = ";
+			ss << u8"NativeOStream::seek lseek error ! filepath = ";
 			ss << file_->getFilePath();
-			ss << ", err = ";
+			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 		}
 		return value;
 	}
@@ -77,11 +77,11 @@ namespace nekofs {
 		{
 			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
-			ss << "NativeOStream::getPosition lseek error ! filepath = ";
+			ss << u8"NativeOStream::getPosition lseek error ! filepath = ";
 			ss << file_->getFilePath();
-			ss << ", err = ";
+			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 		}
 		return ret;
 	}
@@ -92,11 +92,11 @@ namespace nekofs {
 		{
 			auto errmsg = getSysErrMsg();
 			std::stringstream ss;
-			ss << "NativeOStream::getLength fstat error ! filepath = ";
+			ss << u8"NativeOStream::getLength fstat error ! filepath = ";
 			ss << file_->getFilePath();
-			ss << ", err = ";
+			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return -1;
 		}
 		return info.st_size;

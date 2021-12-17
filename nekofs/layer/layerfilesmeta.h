@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <memory>
 #include <map>
+#include <vector>
 #include <optional>
 
 namespace nekofs {
@@ -19,12 +20,15 @@ namespace nekofs {
 	public:
 		static std::optional<LayerFilesMeta> load(std::shared_ptr<IStream> is);
 		static std::optional<LayerFilesMeta> load(const JSONValue* jsondoc);
+		static LayerFilesMeta merge(const std::vector<LayerFilesMeta>& lfms);
 		bool save(std::shared_ptr<OStream> os);
 		bool save(JSONValue* jsondoc, JSONDocument::AllocatorType& allocator);
 		void setFileMeta(const std::string& filename, const FileMeta& meta);
 		std::optional<FileMeta> getFileMeta(const std::string& filename) const;
+		const std::map<std::string, FileMeta>& getFiles() const;
 		void setDeleteVersion(const std::string& filename, const uint32_t& version);
 		std::optional<uint32_t> getDeleteVersion(const std::string& filename) const;
+		const std::map<std::string, uint32_t>& getDeletes() const;
 
 	private:
 		std::map<std::string, FileMeta> files_;

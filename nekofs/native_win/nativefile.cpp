@@ -27,7 +27,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFile::openIStream file in use! filepath = ";
 			ss << filepath_;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return nullptr;
 		}
 		openReadFdInternal();
@@ -48,7 +48,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"NativeFile::openOStream file in use! filepath = ";
 			ss << filepath_;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return nullptr;
 		}
 		openWriteFdInternal();
@@ -143,7 +143,7 @@ namespace nekofs {
 				ss << filepath_;
 				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 			else
 			{
@@ -157,7 +157,7 @@ namespace nekofs {
 						ss << filepath_;
 						ss << u8", err = ";
 						ss << errmsg;
-						logprint(LogType::Error, ss.str());
+						logerr(ss.str());
 					}
 					if (FALSE == CloseHandle(readFd_))
 					{
@@ -167,7 +167,7 @@ namespace nekofs {
 						ss << filepath_;
 						ss << u8", err = ";
 						ss << errmsg;
-						logprint(LogType::Error, ss.str());
+						logerr(ss.str());
 					}
 					readFd_ = INVALID_HANDLE_VALUE;
 				}
@@ -189,7 +189,7 @@ namespace nekofs {
 								ss << filepath_;
 								ss << u8", err = ";
 								ss << errmsg;
-								logprint(LogType::Error, ss.str());
+								logerr(ss.str());
 							}
 							if (FALSE == CloseHandle(readFd_))
 							{
@@ -199,7 +199,7 @@ namespace nekofs {
 								ss << filepath_;
 								ss << u8", err = ";
 								ss << errmsg;
-								logprint(LogType::Error, ss.str());
+								logerr(ss.str());
 							}
 							readFd_ = INVALID_HANDLE_VALUE;
 							readFileSize_ = 0;
@@ -221,7 +221,7 @@ namespace nekofs {
 				ss << filepath_;
 				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 			readMapFd_ = NULL;
 		}
@@ -235,7 +235,7 @@ namespace nekofs {
 				ss << filepath_;
 				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 			readFd_ = INVALID_HANDLE_VALUE;
 		}
@@ -255,7 +255,7 @@ namespace nekofs {
 				ss << filepath_;
 				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 		}
 	}
@@ -271,7 +271,7 @@ namespace nekofs {
 				ss << filepath_;
 				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 			writeFd_ = INVALID_HANDLE_VALUE;
 		}

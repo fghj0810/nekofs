@@ -5,8 +5,12 @@
 
 namespace nekofs {
 	std::string getSysErrMsg();
-	void logprint(const LogType& level, const char* message);
-	void logprint(const LogType& level, const std::string& message);
+	void loginfo(const char* message);
+	void loginfo(const std::string& message);
+	void logwarn(const char* message);
+	void logwarn(const std::string& message);
+	void logerr(const char* message);
+	void logerr(const std::string& message);
 
 	int32_t istream_read(std::shared_ptr<IStream>& is, void* buf, const int32_t& size);
 	int32_t ostream_write(std::shared_ptr<OStream>& os, const void* buf, const int32_t& size);

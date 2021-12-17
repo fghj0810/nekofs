@@ -61,7 +61,7 @@ namespace nekofs {
 			ss << size_;
 			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 		}
 	}
 	void NativeFileBlock::munmap()
@@ -80,7 +80,7 @@ namespace nekofs {
 				ss << size_;
 				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 			lpBaseAddress_ = NULL;
 		}

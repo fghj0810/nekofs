@@ -73,7 +73,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"LayerVersionMeta::save error. code = ";
 			ss << (int32_t)ex.getErrCode();
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		return true;

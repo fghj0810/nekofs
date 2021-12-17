@@ -32,7 +32,7 @@ namespace nekofs {
 			ss << file_->getFilePath();
 			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 		}
 		return ret;
 	}
@@ -63,7 +63,7 @@ namespace nekofs {
 			ss << file_->getFilePath();
 			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return -1;
 		}
 		return position.QuadPart;
@@ -82,7 +82,7 @@ namespace nekofs {
 			ss << file_->getFilePath();
 			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return -1;
 		}
 		return position.QuadPart;
@@ -98,7 +98,7 @@ namespace nekofs {
 			ss << file_->getFilePath();
 			ss << u8", err = ";
 			ss << errmsg;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return -1;
 		}
 		return length.QuadPart;

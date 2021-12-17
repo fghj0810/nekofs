@@ -75,6 +75,26 @@ namespace nekofs {
 		}
 		return lfmeta;
 	}
+	LayerFilesMeta LayerFilesMeta::merge(const std::vector<LayerFilesMeta>& lfms)
+	{
+		LayerFilesMeta lfm;
+		if (!lfms.empty())
+		{
+			lfm = lfms[0];
+			for (size_t i = 1; i < lfms.size(); i++)
+			{
+				for (const auto& item : lfms[i].files_)
+				{
+					lfm.setFileMeta(item.first, item.second);
+				}
+				for (const auto& item : lfms[i].deletes_)
+				{
+					lfm.setDeleteVersion(item.first, item.second);
+				}
+			}
+		}
+		return lfm;
+	}
 	bool LayerFilesMeta::save(std::shared_ptr<OStream> os)
 	{
 		if (!os)
@@ -97,7 +117,7 @@ namespace nekofs {
 			std::stringstream ss;
 			ss << u8"LayerFilesMeta::save error. code = ";
 			ss << (int32_t)ex.getErrCode();
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return false;
 		}
 		return true;
@@ -157,6 +177,10 @@ namespace nekofs {
 		}
 		return std::nullopt;
 	}
+	const std::map<std::string, LayerFilesMeta::FileMeta>& LayerFilesMeta::getFiles() const
+	{
+		return files_;
+	}
 	void LayerFilesMeta::setDeleteVersion(const std::string& filename, const uint32_t& version)
 	{
 		auto it = files_.find(filename);
@@ -174,6 +198,10 @@ namespace nekofs {
 			return it->second;
 		}
 		return std::nullopt;
+	}
+	const std::map<std::string, uint32_t>& LayerFilesMeta::getDeletes() const
+	{
+		return deletes_;
 	}
 
 

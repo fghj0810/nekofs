@@ -12,7 +12,7 @@
 
 extern "C" {
 #ifdef _WIN32
-	static void default_nekofs_log(int32_t level, const char* u8str)
+	static void default_nekofs_log(NEKOFSLogLevel level, const char* u8str)
 	{
 		if (u8str != nullptr)
 		{
@@ -42,7 +42,7 @@ extern "C" {
 		}
 	}
 #else
-	static void default_nekofs_log(int32_t level, const char* u8str)
+	static void default_nekofs_log(NEKOFSLogLevel level, const char* u8str)
 	{
 		if (u8str != nullptr)
 		{
@@ -77,6 +77,10 @@ constexpr const char* helpmsg = "\n"
 
 int main(int argc, char** argv)
 {
+	for (int i = 0; i < argc; i++)
+	{
+		std::cout << argv[i] << std::endl;
+	}
 	setlog();
 	if (argc < 2)
 	{

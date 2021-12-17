@@ -6,11 +6,12 @@ extern "C" {
 #include <stdint.h>
 #endif // __cplusplus
 
+	typedef int32_t NEKOFSLogLevel;
 	typedef int32_t NekoFSOrigin;
 	typedef int32_t NekoFSBool;
 	typedef int32_t NekoFSFileType;
 	typedef int32_t NekoFSHandle;
-	typedef void logdelegate(int32_t level, const char* u8message);
+	typedef void logdelegate(NEKOFSLogLevel level, const char* u8message);
 
 #ifdef __cplusplus
 }
@@ -20,9 +21,9 @@ extern "C" {
 #define NEKOFS_CURRENT  ((NekoFSOrigin)2)
 #define NEKOFS_END      ((NekoFSOrigin)3)
 
-#define NEKOFS_LOGINFO  (1)
-#define NEKOFS_LOGWARN  (2)
-#define NEKOFS_LOGERR   (3)
+#define NEKOFS_LOGINFO  ((NEKOFSLogLevel)1)
+#define NEKOFS_LOGWARN  ((NEKOFSLogLevel)2)
+#define NEKOFS_LOGERR   ((NEKOFSLogLevel)3)
 
 #define NEKOFS_FT_NONE       ((NekoFSFileType)0)
 #define NEKOFS_FT_REGULAR    ((NekoFSFileType)1)

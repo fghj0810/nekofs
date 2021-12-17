@@ -30,9 +30,9 @@ namespace nekofs {
 		if (-1 != writeFd_)
 		{
 			std::stringstream ss;
-			ss << "NativeFile::openIStream file in use! filepath = ";
+			ss << u8"NativeFile::openIStream file in use! filepath = ";
 			ss << filepath_;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return nullptr;
 		}
 		openReadFdInternal();
@@ -51,9 +51,9 @@ namespace nekofs {
 		if (readStreamCount_ > 0 || -1 != writeFd_)
 		{
 			std::stringstream ss;
-			ss << "NativeFile::openOStream file in use! filepath = ";
+			ss << u8"NativeFile::openOStream file in use! filepath = ";
 			ss << filepath_;
-			logprint(LogType::Error, ss.str());
+			logerr(ss.str());
 			return nullptr;
 		}
 		openWriteFdInternal();
@@ -144,11 +144,11 @@ namespace nekofs {
 			{
 				auto errmsg = getSysErrMsg();
 				std::stringstream ss;
-				ss << "NativeFile::openReadFdInternal open error! filepath = ";
+				ss << u8"NativeFile::openReadFdInternal open error! filepath = ";
 				ss << filepath_;
-				ss << ", err = ";
+				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 			else
 			{
@@ -158,21 +158,21 @@ namespace nekofs {
 					{
 						auto errmsg = getSysErrMsg();
 						std::stringstream ss;
-						ss << "NativeOStream::openReadFdInternal fstat error ! filepath = ";
+						ss << u8"NativeOStream::openReadFdInternal fstat error ! filepath = ";
 						ss << filepath_;
-						ss << ", err = ";
+						ss << u8", err = ";
 						ss << errmsg;
-						logprint(LogType::Error, ss.str());
+						logerr(ss.str());
 					}
 					if (-1 == ::close(readFd_))
 					{
 						auto errmsg = getSysErrMsg();
 						std::stringstream ss;
-						ss << "NativeFile::openReadFdInternal close1 error! filepath = ";
+						ss << u8"NativeFile::openReadFdInternal close1 error! filepath = ";
 						ss << filepath_;
-						ss << ", err = ";
+						ss << u8", err = ";
 						ss << errmsg;
-						logprint(LogType::Error, ss.str());
+						logerr(ss.str());
 					}
 					readFd_ = -1;
 				}
@@ -194,11 +194,11 @@ namespace nekofs {
 			{
 				auto errmsg = getSysErrMsg();
 				std::stringstream ss;
-				ss << "NativeFile::closeReadFdInternal close error! filepath = ";
+				ss << u8"NativeFile::closeReadFdInternal close error! filepath = ";
 				ss << filepath_;
-				ss << ", err = ";
+				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 			readFd_ = -1;
 		}
@@ -214,11 +214,11 @@ namespace nekofs {
 			{
 				auto errmsg = getSysErrMsg();
 				std::stringstream ss;
-				ss << "NativeFile::openWriteFdInternal open error ! filepath = ";
+				ss << u8"NativeFile::openWriteFdInternal open error ! filepath = ";
 				ss << filepath_;
-				ss << ", err = ";
+				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 		}
 	}
@@ -230,11 +230,11 @@ namespace nekofs {
 			{
 				auto errmsg = getSysErrMsg();
 				std::stringstream ss;
-				ss << "NativeFile::closeWriteFdInternal close error ! filepath = ";
+				ss << u8"NativeFile::closeWriteFdInternal close error ! filepath = ";
 				ss << filepath_;
-				ss << ", err = ";
+				ss << u8", err = ";
 				ss << errmsg;
-				logprint(LogType::Error, ss.str());
+				logerr(ss.str());
 			}
 			writeFd_ = -1;
 		}

@@ -12,6 +12,8 @@ extern "C" {
 #endif // __cplusplus
 
 	NEKOFS_API void nekofs_SetLogDelegate(logdelegate* delegate);
+	NEKOFS_API void* nekofs_Alloc(size_t size);
+	NEKOFS_API void nekofs_Free(void* ptr);
 
 	NEKOFS_API NekoFSFileType nekofs_native_GetFileType(const char* u8path);
 	NEKOFS_API int64_t nekofs_native_GetFileSize(const char* u8filepath);
@@ -20,7 +22,7 @@ extern "C" {
 	NEKOFS_API NekoFSBool nekofs_native_CleanEmptyDirectory(const char* u8dirpath);
 	NEKOFS_API NekoFSHandle nekofs_native_OpenIStream(const char* u8filepath);
 	NEKOFS_API NekoFSHandle nekofs_native_OpenOStream(const char* u8filepath);
-	NEKOFS_API const char* nekofs_native_GetAllFiles(const char* u8dirpath);
+	NEKOFS_API int32_t nekofs_native_GetAllFiles(const char* u8dirpath, char** u8jsonPtr);
 
 	NEKOFS_API void nekofs_istream_Close(NekoFSHandle isHandle);
 	NEKOFS_API int32_t nekofs_istream_Read(NekoFSHandle isHandle, void* buffer, int32_t size);
@@ -36,9 +38,13 @@ extern "C" {
 
 	NEKOFS_API NekoFSBool nekofs_sha256_sumistream32(NekoFSHandle isHandle, uint32_t result[8]);
 
-	NEKOFS_API void nekofs_layer_Destroy(NekoFSHandle fsHandle);
-	NEKOFS_API NekoFSBool nekofs_layer_CreateNative(const char* u8dirpath);
+	NEKOFS_API void nekofs_layer_Close(NekoFSHandle fsHandle);
+	NEKOFS_API NekoFSFileType nekofs_layer_GetFileType(NekoFSHandle fsHandle, const char* u8filepath);
 	NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const char* u8filepath);
+
+	NEKOFS_API NekoFSHandle nekofs_overlay_Create();
+	NEKOFS_API int32_t nekofs_overlay_GetVersion(NekoFSHandle fsHandle, char** u8jsonPtr);
+	NEKOFS_API NekoFSBool nekofs_overlay_AddNaitvelayer(NekoFSHandle fsHandle, const char* u8dirpath);
 
 #ifdef NEKOFS_TOOLS
 	NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path, const char* u8versionpath, uint32_t offset);

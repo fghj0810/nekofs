@@ -14,13 +14,13 @@ namespace nekofs {
 		std::stringstream ss;
 		if (file_)
 		{
-			ss << "NativeFileHandle::print filepath = ";
+			ss << u8"NativeFileHandle::print filepath = ";
 			ss << file_->getFilePath();
 		}
 		else
 		{
-			ss << "NativeFileHandle::print no file!";
+			ss << u8"NativeFileHandle::print no file!";
 		}
-		logprint(LogType::Info, ss.str());
+		loginfo(ss.str());
 	}
 }

@@ -25,13 +25,13 @@ namespace nekofs::tools {
 		auto lvm = nekofs::LayerVersionMeta::load(nativefs->openIStream(versionfile));
 		if (!lvm.has_value())
 		{
-			nekofs::logprint(nekofs::LogType::Error, u8"load version faild!");
+			nekofs::logerr(u8"load version faild!");
 			return false;
 		}
 		lvm->setVersion(lvm->getVersion() + versionOffset);
 		if (lvm->getVersion() == 0)
 		{
-			nekofs::logprint(nekofs::LogType::Error, u8"lvm->getVersion() == 0");
+			nekofs::logerr(u8"lvm->getVersion() == 0");
 			return false;
 		}
 		if (auto ft = nativefs->getFileType(genpath + nekofs_PathSeparator + nekofs_kLayerVersion); ft != nekofs::FileType::None)

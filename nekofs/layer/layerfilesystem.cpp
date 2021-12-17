@@ -6,6 +6,8 @@
 #include "../native_posix/nativefilesystem.h"
 #endif
 
+#include <sstream>
+
 namespace nekofs {
 	std::shared_ptr<LayerFileSystem> LayerFileSystem::createNativeLayer(const std::string& dirpath)
 	{
@@ -21,6 +23,20 @@ namespace nekofs {
 			return currentpath_;
 		}
 		return currentpath_ + nekofs_PathSeparator + path;
+	}
+	std::string LayerFileSystem::getFileURI(const std::string& path) const
+	{
+		std::stringstream ss;
+		switch (filesystem_->getFSType())
+		{
+		case FileSystemType::Native:
+			ss << nekofs_kURIPrefix_Native;
+			break;
+		default:
+			return std::string();
+		}
+		ss << getFullPath(path);
+		return ss.str();
 	}
 
 
