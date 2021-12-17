@@ -44,7 +44,8 @@ namespace nekofs_tool {
 			std::cerr << "!std::filesystem::is_regular_file(" << versionpath << ")" << std::endl;
 			return -1;
 		}
-		genpath = get_utf8_str(genpath.c_str());
+		genpath = get_utf8_str(genpath);
+		versionpath = get_utf8_str(versionpath);
 		if (NEKOFS_FALSE == nekofs_tools_prepare(genpath.c_str(), versionpath.c_str(), FLAGS_offset))
 		{
 			std::cerr << "nekofs_tools_prepare error" << genpath << std::endl;

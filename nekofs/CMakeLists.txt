@@ -9,9 +9,9 @@ if (ANDROID_ABI AND ("${ANDROID_ABI}" STREQUAL "x86" OR "${ANDROID_ABI}" STREQUA
 endif ()
 
 if (WIN32)
-    MESSAGE(STATUS "Now is windows")
     add_definitions("-D_UNICODE" "-DUNICODE")
     remove_definitions("-D_MBCS")
+    add_definitions("-DNOMINMAX")
 
     set(NEKOFS_NATIVE
         native_win/nativefile.h

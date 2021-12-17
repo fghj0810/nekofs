@@ -1,15 +1,15 @@
 ﻿#pragma once
 #include "typedef.h"
 
+#define RAPIDJSON_NAMESPACE nekofs::rapidjson
 #define RAPIDJSON_NOMEMBERITERATORCLASS 1
-//#define DRAPIDJSON_NAMESPACE            nekofs::rapidjson
 
-#include "rapidjson/rapidjson.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/filewritestream.h"
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/prettywriter.h"
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/filereadstream.h>
+#include <rapidjson/filewritestream.h>
+#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/prettywriter.h>
 
 namespace nekofs {
 	class JsonInputStream;

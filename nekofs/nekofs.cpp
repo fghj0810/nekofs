@@ -176,12 +176,12 @@ NEKOFS_API int32_t nekofs_native_GetAllFiles(const char* u8dirpath, char** u8jso
 
 	nekofs::JSONStringBuffer jsonStrBuffer;
 	nekofs::JSONStringWriter writer(jsonStrBuffer);
-	nekofs::JSONDocument d(rapidjson::kArrayType);
-	rapidjson::Document::AllocatorType& allocator = d.GetAllocator();
+	nekofs::JSONDocument d(nekofs::rapidjson::kArrayType);
+	auto& allocator = d.GetAllocator();
 
 	for (const auto& item : allfiles)
 	{
-		d.PushBack(rapidjson::StringRef(item.c_str()), allocator);
+		d.PushBack(nekofs::rapidjson::StringRef(item.c_str()), allocator);
 	}
 
 	d.Accept(writer);
@@ -510,6 +510,44 @@ NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const ch
 	return handle;
 }
 
+NEKOFS_API int32_t nekofs_layer_GetAllFiles(NekoFSHandle fsHandle, const char* u8dirpath, char** u8jsonPtr)
+{
+	*u8jsonPtr = nullptr;
+	auto path = __normalpath(u8dirpath);
+	if (path.empty() && u8dirpath != nullptr && ::strcmp(u8dirpath, u8"") != 0)
+	{
+		return 0;
+	}
+	std::shared_ptr<const nekofs::FileSystem> fs;
+	{
+		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		auto it = g_filesystems_.find(fsHandle);
+		if (it != g_filesystems_.end())
+		{
+			fs = it->second;
+		}
+	}
+	if (fs)
+	{
+		auto allfiles = fs->getAllFiles(path);
+		std::sort(allfiles.begin(), allfiles.end());
+
+		nekofs::JSONStringBuffer jsonStrBuffer;
+		nekofs::JSONStringWriter writer(jsonStrBuffer);
+		nekofs::JSONDocument d(nekofs::rapidjson::kArrayType);
+		auto& allocator = d.GetAllocator();
+
+		for (const auto& item : allfiles)
+		{
+			d.PushBack(nekofs::rapidjson::StringRef(item.c_str()), allocator);
+		}
+
+		d.Accept(writer);
+		return copy_and_newString(jsonStrBuffer.GetString(), jsonStrBuffer.GetSize(), u8jsonPtr);
+	}
+	return 0;
+}
+
 NEKOFS_API NekoFSHandle nekofs_overlay_Create()
 {
 	NekoFSHandle handle = INVALID_NEKOFSHANDLE;
@@ -544,12 +582,44 @@ NEKOFS_API int32_t nekofs_overlay_GetVersion(NekoFSHandle fsHandle, char** u8jso
 		}
 		nekofs::JSONStringBuffer jsonStrBuffer;
 		nekofs::JSONStringWriter writer(jsonStrBuffer);
-		nekofs::JSONDocument d(rapidjson::kArrayType);
-		
+		nekofs::JSONDocument d(nekofs::rapidjson::kObjectType);
+
 		version->save(&d, d.GetAllocator());
 
 		d.Accept(writer);
 		return copy_and_newString(jsonStrBuffer.GetString(), jsonStrBuffer.GetSize(), u8jsonPtr);
+	}
+	return 0;
+}
+
+NEKOFS_API int32_t nekofs_overlay_GetFileURI(NekoFSHandle fsHandle, const char* u8filepath, char** u8pathPtr)
+{
+	*u8pathPtr = nullptr;
+	auto path = __normalpath(u8filepath);
+	if (path.empty())
+	{
+		return 0;
+	}
+	std::shared_ptr<const nekofs::OverlayFileSystem> fs;
+	{
+		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		auto it = g_filesystems_.find(fsHandle);
+		if (it != g_filesystems_.end())
+		{
+			if (fs->getFSType() == nekofs::FileSystemType::Overlay)
+			{
+				fs = std::static_pointer_cast<nekofs::OverlayFileSystem>(it->second);
+			}
+		}
+	}
+	if (fs)
+	{
+		auto uri = fs->getFileURI(path);
+		if (uri.empty())
+		{
+			return 0;
+		}
+		return copy_and_newString(uri.c_str(), uri.size(), u8pathPtr);
 	}
 	return 0;
 }
@@ -578,6 +648,26 @@ NEKOFS_API NekoFSBool nekofs_overlay_AddNaitvelayer(NekoFSHandle fsHandle, const
 		return fs->addNativeLayer(path) ? NEKOFS_TRUE : NEKOFS_FALSE;
 	}
 	return NEKOFS_FALSE;
+}
+
+NEKOFS_API void nekofs_overlay_RefreshFileList(NekoFSHandle fsHandle)
+{
+	std::shared_ptr<nekofs::OverlayFileSystem> fs;
+	{
+		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		auto it = g_filesystems_.find(fsHandle);
+		if (it != g_filesystems_.end())
+		{
+			if (fs->getFSType() == nekofs::FileSystemType::Overlay)
+			{
+				fs = std::static_pointer_cast<nekofs::OverlayFileSystem>(it->second);
+			}
+		}
+	}
+	if (fs)
+	{
+		return fs->refreshFileList();
+	}
 }
 
 #ifdef NEKOFS_TOOLS

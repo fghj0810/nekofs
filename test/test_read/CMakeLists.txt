@@ -5,9 +5,9 @@ project(test_read)
 set(CMAKE_CXX_STANDARD 17)
 
 if (WIN32)
-    MESSAGE(STATUS "Now is windows")
     add_definitions("-D_UNICODE" "-DUNICODE")
     remove_definitions("-D_MBCS")
+    add_definitions("-DNOMINMAX")
 endif ()
 
 
