@@ -127,34 +127,36 @@ namespace nekofs {
 		if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
 		return 0;
 	}
-	void str_to_sha256(const char* in, uint32_t out[8])
+	std::array<uint32_t, 8> str_to_sha256(const char* str)
 	{
-		for (size_t i = 0; i < 8; i++, in += 8)
+		std::array<uint32_t, 8> sha256;
+		for (size_t i = 0; i < sha256.size(); i++, str += 8)
 		{
-			out[i] = (out[i] << 4) | hextob(in[0]);
-			out[i] = (out[i] << 4) | hextob(in[1]);
-			out[i] = (out[i] << 4) | hextob(in[2]);
-			out[i] = (out[i] << 4) | hextob(in[3]);
-			out[i] = (out[i] << 4) | hextob(in[4]);
-			out[i] = (out[i] << 4) | hextob(in[5]);
-			out[i] = (out[i] << 4) | hextob(in[6]);
-			out[i] = (out[i] << 4) | hextob(in[7]);
+			sha256[i] = (sha256[i] << 4) | hextob(str[0]);
+			sha256[i] = (sha256[i] << 4) | hextob(str[1]);
+			sha256[i] = (sha256[i] << 4) | hextob(str[2]);
+			sha256[i] = (sha256[i] << 4) | hextob(str[3]);
+			sha256[i] = (sha256[i] << 4) | hextob(str[4]);
+			sha256[i] = (sha256[i] << 4) | hextob(str[5]);
+			sha256[i] = (sha256[i] << 4) | hextob(str[6]);
+			sha256[i] = (sha256[i] << 4) | hextob(str[7]);
 		}
+		return sha256;
 	}
-	std::string sha256_to_str(const uint32_t out[8])
+	std::string sha256_to_str(const std::array<uint32_t, 8>& sha256)
 	{
 		const char kh[16] = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
 		std::string str(64, 0);
-		for (size_t i = 0; i < 8; i++)
+		for (size_t i = 0; i < sha256.size(); i++)
 		{
-			str[0 + i * 8] = kh[(out[i] & 0xF0000000) >> 28];
-			str[1 + i * 8] = kh[(out[i] & 0x0F000000) >> 24];
-			str[2 + i * 8] = kh[(out[i] & 0x00F00000) >> 20];
-			str[3 + i * 8] = kh[(out[i] & 0x000F0000) >> 16];
-			str[4 + i * 8] = kh[(out[i] & 0x0000F000) >> 12];
-			str[5 + i * 8] = kh[(out[i] & 0x00000F00) >> 8];
-			str[6 + i * 8] = kh[(out[i] & 0x000000F0) >> 4];
-			str[7 + i * 8] = kh[(out[i] & 0x0000000F) >> 0];
+			str[0 + i * 8] = kh[(sha256[i] & 0xF0000000) >> 28];
+			str[1 + i * 8] = kh[(sha256[i] & 0x0F000000) >> 24];
+			str[2 + i * 8] = kh[(sha256[i] & 0x00F00000) >> 20];
+			str[3 + i * 8] = kh[(sha256[i] & 0x000F0000) >> 16];
+			str[4 + i * 8] = kh[(sha256[i] & 0x0000F000) >> 12];
+			str[5 + i * 8] = kh[(sha256[i] & 0x00000F00) >> 8];
+			str[6 + i * 8] = kh[(sha256[i] & 0x000000F0) >> 4];
+			str[7 + i * 8] = kh[(sha256[i] & 0x0000000F) >> 0];
 		}
 		return str;
 	}

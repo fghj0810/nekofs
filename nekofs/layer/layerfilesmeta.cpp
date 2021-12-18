@@ -41,9 +41,7 @@ namespace nekofs {
 					auto sha256strIt = itr->value.FindMember(nekofs_kLayerFiles_FilesSHA256);
 					if (sha256strIt != itr->value.MemberEnd())
 					{
-						uint32_t v[8];
-						str_to_sha256(sha256strIt->value.GetString(), v);
-						meta.setSHA256(v);
+						meta.setSHA256(str_to_sha256(sha256strIt->value.GetString()));
 					}
 					auto sizeIt = itr->value.FindMember(nekofs_kLayerFiles_FilesSize);
 					if (sizeIt != itr->value.MemberEnd())
@@ -213,11 +211,11 @@ namespace nekofs {
 	{
 		return version_;
 	}
-	void LayerFilesMeta::FileMeta::setSHA256(const uint32_t sha256[8])
+	void LayerFilesMeta::FileMeta::setSHA256(const std::array<uint32_t, 8>& sha256)
 	{
-		std::copy(sha256, sha256 + 8, sha256_);
+		sha256_ = sha256;
 	}
-	const uint32_t* LayerFilesMeta::FileMeta::getSHA256() const
+	const std::array<uint32_t, 8>& LayerFilesMeta::FileMeta::getSHA256() const
 	{
 		return sha256_;
 	}

@@ -12,6 +12,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -435,7 +436,8 @@ NEKOFS_API NekoFSBool nekofs_sha256_sumistream32(NekoFSHandle isHandle, uint32_t
 		if (actualRead >= 0)
 		{
 			sha256.final();
-			sha256.readHash(result);
+			const auto& hashResult = sha256.readHash();
+			std::copy(hashResult.begin(), hashResult.end(), result);
 			return NEKOFS_TRUE;
 		}
 	}

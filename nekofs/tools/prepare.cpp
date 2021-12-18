@@ -64,11 +64,10 @@ namespace nekofs::tools {
 				return false;
 			}
 			sum.final();
-			uint32_t hash[8];
-			sum.readHash(hash);
+
 			nekofs::LayerFilesMeta::FileMeta meta;
 			meta.setVersion(lvm->getVersion());
-			meta.setSHA256(hash);
+			meta.setSHA256(sum.readHash());
 			meta.setSize(is->getLength());
 			lfm.setFileMeta(item, meta);
 		}

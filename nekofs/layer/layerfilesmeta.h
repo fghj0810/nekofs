@@ -6,6 +6,7 @@
 #include "../common/rapidjson.h"
 
 #include <cstdint>
+#include <array>
 #include <memory>
 #include <map>
 #include <vector>
@@ -41,14 +42,14 @@ namespace nekofs {
 	public:
 		void setVersion(const uint32_t& version);
 		uint32_t getVersion() const;
-		void setSHA256(const uint32_t sha256[8]);
-		const uint32_t* getSHA256() const;
+		void setSHA256(const std::array<uint32_t, 8>& sha256);
+		const std::array<uint32_t, 8>& getSHA256() const;
 		void setSize(const int64_t& size);
 		int64_t getSize() const;
 
 	private:
 		uint32_t version_ = 0;
-		uint32_t sha256_[8] = { 0 };
+		std::array<uint32_t, 8> sha256_ = { 0 };
 		int64_t size_ = 0;
 	};
 }
