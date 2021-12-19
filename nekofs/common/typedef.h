@@ -35,6 +35,7 @@ namespace nekofs {
 	class FileHandle
 	{
 	public:
+		virtual ~FileHandle() = default;
 		virtual void print() const = 0;
 	};
 
