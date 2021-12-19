@@ -1,6 +1,6 @@
 [submodule "thirdparty/rapidjson"]
 	path = thirdparty/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
+	url = git@github.com:Tencent/rapidjson.git
 [submodule "thirdparty/gflags"]
 	path = thirdparty/gflags
-	url = https://github.com/gflags/gflags.git
+	url = git@github.com:gflags/gflags.git
