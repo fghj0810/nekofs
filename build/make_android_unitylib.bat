@@ -55,8 +55,8 @@ popd
 echo cmake build build_android_unitylib_x86_64
 cmake --build build_android_unitylib_x86_64 --config Release
 if !ERRORLEVEL! NEQ 0 ( exit /b !ERRORLEVEL! )
-if not exist plugin_unity\Android\Libs\x86 ( md plugin_unity\Android\Libs\x86 )
-copy /Y build_android_unitylib_x86_64\nekofs\libnekofs.so plugin_unity\Android\Libs\x86\libnekofs.so
+if not exist plugin_unity\Android\Libs\x86_64 ( md plugin_unity\Android\Libs\x86_64 )
+copy /Y build_android_unitylib_x86_64\nekofs\libnekofs.so plugin_unity\Android\Libs\x86_64\libnekofs.so
 
 echo "compile success"
 pause

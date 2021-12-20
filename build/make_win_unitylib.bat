@@ -1,19 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
 
-if not exist build_win32_unitylib ( md build_win32_unitylib )
-pushd build_win32_unitylib
-if !ERRORLEVEL! NEQ 0 ( exit /b !ERRORLEVEL! )
-echo cmake generate build_win32_unitylib
-cmake ../.. -G "Visual Studio 17 2022" -A Win32
-if !ERRORLEVEL! NEQ 0 ( exit /b !ERRORLEVEL! )
-popd
-echo cmake build build_win32_unitylib
-cmake --build build_win32_unitylib --config Release
-if !ERRORLEVEL! NEQ 0 ( exit /b !ERRORLEVEL! )
-if not exist plugin_unity\x86 ( md plugin_unity\x86 )
-copy /Y build_win32_unitylib\nekofs\Release\nekofs.dll plugin_unity\x86\nekofs.dll
-
 if not exist build_win64_unitylib ( md build_win64_unitylib )
 pushd build_win64_unitylib
 if !ERRORLEVEL! NEQ 0 ( exit /b !ERRORLEVEL! )

@@ -68,7 +68,7 @@ NEKOFS_API void nekofs_SetLogDelegate(logdelegate* delegate)
 	nekofs::env::getInstance().setLogDelegate(delegate);
 }
 
-NEKOFS_API void* nekofs_Alloc(size_t size)
+NEKOFS_API void* nekofs_Alloc(uint32_t size)
 {
 	return ::malloc(size);
 }

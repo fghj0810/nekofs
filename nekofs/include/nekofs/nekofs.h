@@ -12,7 +12,7 @@ extern "C" {
 #endif // __cplusplus
 
 	NEKOFS_API void nekofs_SetLogDelegate(logdelegate* delegate);
-	NEKOFS_API void* nekofs_Alloc(size_t size);
+	NEKOFS_API void* nekofs_Alloc(uint32_t size);
 	NEKOFS_API void nekofs_Free(void* ptr);
 
 	NEKOFS_API NekoFSFileType nekofs_native_GetFileType(const char* u8path);

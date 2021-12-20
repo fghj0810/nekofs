@@ -29,7 +29,7 @@ extern "C" {
 
 #define NEKOFS_FT_NONE       ((NekoFSFileType)0)
 #define NEKOFS_FT_REGULAR    ((NekoFSFileType)1)
-#define NEKOFS_FT_DIRECTORY  ((NekoFSFileType)1)
+#define NEKOFS_FT_DIRECTORY  ((NekoFSFileType)2)
 #define NEKOFS_FT_UNKONWN    ((NekoFSFileType)-1)
 
 #define INVALID_NEKOFSHANDLE ((NekoFSHandle)-1)
