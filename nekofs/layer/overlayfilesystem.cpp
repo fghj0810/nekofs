@@ -140,6 +140,15 @@ namespace nekofs {
 		lvm.setFromVersion(std::get<1>(layers_.front()).getFromVersion());
 		return lvm;
 	}
+	LayerFilesMeta OverlayFileSystem::getFiles() const
+	{
+		LayerFilesMeta lvf;
+		for (const auto& item : files_)
+		{
+			lvf.setFileMeta(item.first, std::get<2>(layers_[item.second.first]).getFileMeta(item.second.second).value());
+		}
+		return lvf;
+	}
 	std::string OverlayFileSystem::getFileURI(const std::string& filepath) const
 	{
 		auto it = files_.find(filepath);

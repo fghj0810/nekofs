@@ -32,6 +32,7 @@ namespace nekofs {
 		bool addNativeLayer(const std::string& dirpath);
 		void refreshFileList();
 		std::optional<LayerVersionMeta> getVersion() const;
+		LayerFilesMeta getFiles() const;
 		std::string getFileURI(const std::string& filepath) const;
 
 	private:
