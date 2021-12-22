@@ -54,7 +54,7 @@ static inline int32_t copy_and_newString(const char* src, size_t size, char** de
 	{
 		return 0;
 	}
-	*dest = static_cast<char*>(nekofs_Alloc(size));
+	*dest = static_cast<char*>(nekofs_Alloc(static_cast<uint32_t>(size)));
 	if (*dest == nullptr)
 	{
 		return 0;

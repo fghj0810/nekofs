@@ -1,9 +1,6 @@
 ﻿#pragma once
 #include "typedef.h"
 
-#define RAPIDJSON_NAMESPACE nekofs::rapidjson
-#define RAPIDJSON_NOMEMBERITERATORCLASS 1
-
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/filewritestream.h>

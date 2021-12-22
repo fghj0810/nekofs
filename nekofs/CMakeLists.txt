@@ -106,5 +106,6 @@ else ()
     )
 endif ()
 
+add_definitions("-DRAPIDJSON_NAMESPACE=nekofs::rapidjson" "-DRAPIDJSON_NOMEMBERITERATORCLASS=1" "-DRAPIDJSON_HAS_STDSTRING=1")
 target_include_directories(${PROJECT_NAME} PRIVATE ../thirdparty/rapidjson/include)
 target_include_directories(${PROJECT_NAME} PUBLIC include)

@@ -11,14 +11,17 @@
 #include "../native_posix/nativefilesystem.h"
 #endif
 
+#include <sstream>
+
 namespace nekofs::tools {
 	bool PrePare::exec(const std::string& genpath, const std::string& versionfile, uint32_t versionOffset)
 	{
 		auto nativefs = env::getInstance().getNativeFileSystem();
 		if (auto ft = nativefs->getFileType(genpath + nekofs_PathSeparator + nekofs_kLayerFiles); ft != nekofs::FileType::None)
 		{
-			if (nativefs->removeFile(genpath + nekofs_PathSeparator + nekofs_kLayerFiles))
+			if (!nativefs->removeFile(genpath + nekofs_PathSeparator + nekofs_kLayerFiles))
 			{
+				nekofs::logerr(u8"remove version.json faild!");
 				return false;
 			}
 		}
@@ -38,6 +41,7 @@ namespace nekofs::tools {
 		{
 			if (!nativefs->removeFile(genpath + nekofs_PathSeparator + nekofs_kLayerVersion))
 			{
+				nekofs::logerr(u8"remove files.json faild!");
 				return false;
 			}
 		}
@@ -61,6 +65,10 @@ namespace nekofs::tools {
 			} while (actualRead > 0);
 			if (actualRead < 0)
 			{
+				std::stringstream ss;
+				ss << u8"read stream error! filepath = ";
+				ss << genpath << nekofs_PathSeparator << item;
+				nekofs::logerr(ss.str());
 				return false;
 			}
 			sum.final();
