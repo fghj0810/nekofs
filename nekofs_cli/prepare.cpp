@@ -6,9 +6,11 @@
 #include <filesystem>
 #include <iostream>
 
-DEFINE_string(path, "", "prepare dir path");
-DEFINE_string(verfile, "", "version file path");
-DEFINE_int32(offset, 0, "version offet");
+namespace {
+	DEFINE_string(path, "", "prepare dir path");
+	DEFINE_string(verfile, "", "version file path");
+	DEFINE_int32(offset, 0, "version offet");
+}
 
 namespace nekofs_tool {
 	int prepare(const std::vector<std::string>& args)

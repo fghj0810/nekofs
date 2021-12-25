@@ -2,6 +2,8 @@
 #include "env.h"
 #include "utils.h"
 
+#include <mutex>
+
 #ifdef _WIN32
 #include <Windows.h>
 std::string nekofs::getSysErrMsg()
@@ -31,9 +33,11 @@ std::string nekofs::getSysErrMsg()
 namespace nekofs {
 	static inline void logprint(const NEKOFSLogLevel& level, const char* message)
 	{
+		static std::mutex mtx_log;
 		auto cb = env::getInstance().getLogDelegate();
 		if (cb != nullptr)
 		{
+			std::lock_guard lock(mtx_log);
 			cb(level, message);
 		}
 	}
@@ -43,7 +47,7 @@ namespace nekofs {
 	}
 	void loginfo(const std::string& message)
 	{
-		logerr(message.c_str());
+		loginfo(message.c_str());
 	}
 	void logwarn(const char* message)
 	{

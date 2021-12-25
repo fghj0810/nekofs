@@ -16,6 +16,8 @@ set (NEKOFS_CLI_SRC
     main.cpp
     prepare.h
     prepare.cpp
+    pack.h
+    pack.cpp
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS})

@@ -21,6 +21,7 @@ namespace nekofs {
 		int64_t seek(int64_t offset, const SeekOrigin& origin) override;
 		int64_t getPosition() const override;
 		int64_t getLength() const override;
+		std::shared_ptr<IStream> createNew() override;
 
 	private:
 		std::shared_ptr<NativeFileBlock> prepareBlock();

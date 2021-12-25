@@ -51,6 +51,7 @@ extern "C" {
 
 #ifdef NEKOFS_TOOLS
 	NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path, const char* u8versionpath, uint32_t offset);
+	NEKOFS_API NekoFSBool nekofs_tools_pack(const char* u8dirpath, const char* u8filepath);
 #endif // NEKOFS_TOOLS
 
 #ifdef __cplusplus

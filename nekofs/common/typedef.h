@@ -45,6 +45,7 @@ namespace nekofs {
 		virtual int64_t seek(int64_t offset, const SeekOrigin& origin) = 0;
 		virtual int64_t getPosition() const = 0;
 		virtual int64_t getLength() const = 0;
+		virtual std::shared_ptr<IStream> createNew() = 0;
 	};
 	class OStream {
 	public:

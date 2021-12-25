@@ -674,6 +674,7 @@ NEKOFS_API void nekofs_overlay_RefreshFileList(NekoFSHandle fsHandle)
 
 #ifdef NEKOFS_TOOLS
 #include "tools/prepare.h"
+#include "tools/pack.h"
 
 NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path, const char* u8versionpath, uint32_t offset)
 {
@@ -688,5 +689,19 @@ NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path, const char* u8ver
 		return NEKOFS_FALSE;
 	}
 	return nekofs::tools::PrePare::exec(path, vpath, offset) ? NEKOFS_TRUE : NEKOFS_FALSE;
+}
+NEKOFS_API NekoFSBool nekofs_tools_pack(const char* u8dirpath, const char* u8filepath)
+{
+	auto dpath = __normalrootpath(u8dirpath);
+	if (dpath.empty())
+	{
+		return NEKOFS_FALSE;
+	}
+	auto fpath = __normalrootpath(u8filepath);
+	if (fpath.empty())
+	{
+		return NEKOFS_FALSE;
+	}
+	return nekofs::tools::Pack::exec(dpath, fpath) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
 #endif

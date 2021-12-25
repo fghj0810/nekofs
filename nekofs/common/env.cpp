@@ -5,6 +5,7 @@
 #include "../native_posix/nativefilesystem.h"
 #endif
 
+#include <functional>
 
 namespace nekofs {
 	env env::instance_;
@@ -59,5 +60,92 @@ namespace nekofs {
 	std::shared_ptr<NativeFileSystem> env::getNativeFileSystem() const
 	{
 		return nativefilesystem_;
+	}
+	std::shared_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Buffer_Size>> env::newBufferBlockSize()
+	{
+		std::array<uint8_t, nekofs_kNekoData_LZ4_Buffer_Size>* rawPtr = nullptr;
+		{
+			std::lock_guard<std::mutex> lock(mutex_Buffer_BlockSize_);
+			if (!buffer_BlockSize_.empty())
+			{
+				rawPtr = buffer_BlockSize_.front();
+				buffer_BlockSize_.pop();
+			}
+		}
+		if (rawPtr == nullptr)
+		{
+			rawPtr = new std::array<uint8_t, nekofs_kNekoData_LZ4_Buffer_Size>();
+		}
+		return std::shared_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Buffer_Size>>(rawPtr, std::bind(&env::deleteBufferBlockSize, this, std::placeholders::_1));
+	}
+	std::shared_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>> env::newBufferCompressSize()
+	{
+		std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>* rawPtr = nullptr;
+		{
+			std::lock_guard<std::mutex> lock(mutex_Buffer_CompressSize_);
+			if (!buffer_CompressSize_.empty())
+			{
+				rawPtr = buffer_CompressSize_.front();
+				buffer_CompressSize_.pop();
+			}
+		}
+		if (rawPtr == nullptr)
+		{
+			rawPtr = new std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>();
+		}
+		return std::shared_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>>(rawPtr, std::bind(&env::deleteBufferCompressSize, this, std::placeholders::_1));
+	}
+	std::shared_ptr<std::array<uint8_t, 4 * 1024 * 1024>> env::newBuffer4M()
+	{
+		std::array<uint8_t, 4 * 1024 * 1024>* rawPtr = nullptr;
+		{
+			std::lock_guard<std::mutex> lock(mutex_Buffer_4M_);
+			if (!buffer_4M_.empty())
+			{
+				rawPtr = buffer_4M_.front();
+				buffer_4M_.pop();
+			}
+		}
+		if (rawPtr == nullptr)
+		{
+			rawPtr = new std::array<uint8_t, 4 * 1024 * 1024>();
+		}
+		return std::shared_ptr<std::array<uint8_t, 4 * 1024 * 1024>>(rawPtr, std::bind(&env::deleteBuffer4M, this, std::placeholders::_1));
+	}
+	void env::deleteBufferBlockSize(std::array<uint8_t, nekofs_kNekoData_LZ4_Buffer_Size>* buffer)
+	{
+		{
+			std::lock_guard<std::mutex> lock(mutex_Buffer_BlockSize_);
+			if (buffer_BlockSize_.size() < 32)
+			{
+				buffer_BlockSize_.push(buffer);
+				return;
+			}
+		}
+		delete buffer;
+	}
+	void env::deleteBufferCompressSize(std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>* buffer)
+	{
+		{
+			std::lock_guard<std::mutex> lock(mutex_Buffer_CompressSize_);
+			if (buffer_CompressSize_.size() < 32)
+			{
+				buffer_CompressSize_.push(buffer);
+				return;
+			}
+		}
+		delete buffer;
+	}
+	void env::deleteBuffer4M(std::array<uint8_t, 4 * 1024 * 1024>* buffer)
+	{
+		{
+			std::lock_guard<std::mutex> lock(mutex_Buffer_4M_);
+			if (buffer_4M_.size() < 2)
+			{
+				buffer_4M_.push(buffer);
+				return;
+			}
+		}
+		delete buffer;
 	}
 }

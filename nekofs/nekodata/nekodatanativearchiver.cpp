@@ -1,0 +1,482 @@
+﻿#include "nekodatanativearchiver.h"
+#include "../common/utils.h"
+#include "../common/sha256.h"
+#ifdef _WIN32
+#include "../native_win/nativefilesystem.h"
+#else
+#include "../native_posix/nativefilesystem.h"
+#endif
+
+#include <cstring>
+#include <sstream>
+#include <thread>
+#include <functional>
+
+namespace nekofs {
+	static inline bool write_buffer(std::shared_ptr<OStream>& os, const void* buffer, const int32_t& count)
+	{
+		return os && count >= 0 && ostream_write(os, buffer, count) == count;
+	}
+	static inline bool write_uint32(std::shared_ptr<OStream>& os, const uint32_t& value)
+	{
+		uint8_t tmp[4];
+		tmp[0] = static_cast<uint8_t>(value >> 24);
+		tmp[1] = static_cast<uint8_t>(value >> 16);
+		tmp[2] = static_cast<uint8_t>(value >> 8);
+		tmp[3] = static_cast<uint8_t>(value >> 0);
+		return os && ostream_write(os, tmp, 4) == 4;
+	}
+	static inline bool write_int32(std::shared_ptr<OStream>& os, const int32_t& value)
+	{
+		return write_uint32(os, static_cast<uint32_t>(value));
+	}
+	static inline bool write_uint64(std::shared_ptr<OStream>& os, const uint64_t& value)
+	{
+		uint8_t tmp[8];
+		tmp[0] = static_cast<uint8_t>(value >> 56);
+		tmp[1] = static_cast<uint8_t>(value >> 48);
+		tmp[2] = static_cast<uint8_t>(value >> 40);
+		tmp[3] = static_cast<uint8_t>(value >> 32);
+		tmp[4] = static_cast<uint8_t>(value >> 24);
+		tmp[5] = static_cast<uint8_t>(value >> 16);
+		tmp[6] = static_cast<uint8_t>(value >> 8);
+		tmp[7] = static_cast<uint8_t>(value >> 0);
+		return os && ostream_write(os, tmp, 8) == 8;
+	}
+	static inline bool write_int64(std::shared_ptr<OStream>& os, const int64_t& value)
+	{
+		return write_uint64(os, static_cast<uint64_t>(value));
+	}
+
+
+	NekodataNativeArchiver::FileTask::FileTask(const std::string& path, std::shared_ptr<IStream> is, int64_t index)
+	{
+		path_ = path;
+		is_ = is;
+		index_ = index;
+	}
+	void NekodataNativeArchiver::FileTask::setStatus(Status status)
+	{
+		std::lock_guard lock(mtx_);
+		status_ = status;
+	}
+	NekodataNativeArchiver::FileTask::Status NekodataNativeArchiver::FileTask::getStatus()
+	{
+		std::lock_guard lock(mtx_);
+		return status_;
+	}
+	int64_t NekodataNativeArchiver::FileTask::getIndex() const
+	{
+		return index_;
+	}
+	std::tuple<int64_t, int64_t> NekodataNativeArchiver::FileTask::getRange() const
+	{
+		return std::tuple<int64_t, int64_t>(index_ * nekofs_kNekoData_LZ4_Buffer_Size, std::min(is_->getLength(), (index_ + 1) * nekofs_kNekoData_LZ4_Buffer_Size));
+	}
+	const std::string& NekodataNativeArchiver::FileTask::getPath() const
+	{
+		return path_;
+	}
+	std::shared_ptr<IStream> NekodataNativeArchiver::FileTask::getIStream() const
+	{
+		return is_;
+	}
+	void NekodataNativeArchiver::FileTask::setBuffer(std::shared_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>> buffer)
+	{
+		compressBuffer_ = buffer;
+	}
+	std::shared_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>> NekodataNativeArchiver::FileTask::getBuffer() const
+	{
+		return compressBuffer_;
+	}
+	void NekodataNativeArchiver::FileTask::setCompressedSize(int32_t size)
+	{
+		compressedSize_ = size;
+	}
+	int32_t NekodataNativeArchiver::FileTask::getCompressedSize() const
+	{
+		return compressedSize_;
+	}
+	bool NekodataNativeArchiver::FileTask::isFinalTask() const
+	{
+		return std::get<1>(getRange()) >= is_->getLength();
+	}
+
+
+	NekodataNativeArchiver::~NekodataNativeArchiver()
+	{
+	}
+	void NekodataNativeArchiver::addFile(const std::string& filepath, std::shared_ptr<FileSystem> srcfs, const std::string& srcfilepath)
+	{
+		archiveFileList_[filepath] = std::make_pair(FileCategory::File, std::make_pair(srcfs, srcfilepath));
+	}
+	void NekodataNativeArchiver::addRawFile(const std::string& filepath, std::shared_ptr<IStream> is)
+	{
+		archiveFileList_[filepath] = std::make_pair(FileCategory::RawStream, is);
+	}
+	std::shared_ptr<NekodataNativeArchiver> NekodataNativeArchiver::addArchive(const std::string& filepath)
+	{
+		auto newArchiver = std::make_shared<NekodataNativeArchiver>();
+		archiveFileList_[filepath] = std::make_pair<FileCategory, std::any>(FileCategory::Archiver, newArchiver);
+		return newArchiver;
+	}
+	bool NekodataNativeArchiver::archive(std::shared_ptr<OStream> os)
+	{
+		os_ = os;
+		bool success = true;
+		success = success && os_;
+		success = success && archiveHeader();
+		success = success && archiveFiles();
+		success = success && archiveFooter();
+		return success;
+	}
+	bool NekodataNativeArchiver::archiveHeader()
+	{
+		constexpr const char* headStr = u8".nekodata";
+		return write_buffer(os_, headStr, static_cast<int32_t>(::strlen(headStr)));
+	}
+	bool NekodataNativeArchiver::archiveFiles()
+	{
+		const auto filesCount = archiveFileList_.size();
+		const size_t kThreadNum = 12;
+		std::vector<std::thread> t;
+		for (size_t i = 0; i < kThreadNum; i++)
+		{
+			t.push_back(std::thread(std::bind(&NekodataNativeArchiver::threadfunction, shared_from_this())));
+		}
+		while (true)
+		{
+			std::string taskpath;
+			std::pair<FileCategory, std::any> task;
+			{
+				std::lock_guard lock(mtx_archiveFileList_);
+				if (archiveFileList_.empty())
+				{
+					break;
+				}
+				taskpath = archiveFileList_.begin()->first;
+				task = archiveFileList_.begin()->second;
+			}
+			{
+				std::stringstream ss;
+				ss << u8"pack file ";
+				ss << u8"[" << files_.size() + 1 << u8"/" << filesCount << u8"] ";
+				ss << taskpath;
+				loginfo(ss.str());
+			}
+			if (task.first == FileCategory::Archiver)
+			{
+				std::shared_ptr<NekodataNativeArchiver> archiver = std::any_cast<std::shared_ptr<NekodataNativeArchiver>>(task.second);
+				archiver->archive(os_);
+				std::lock_guard lock(mtx_archiveFileList_);
+				archiveFileList_.erase(archiveFileList_.cbegin());
+				cond_getTask_.notify_all();
+			}
+			else if (task.first == FileCategory::File)
+			{
+				sha256sum hash;
+				NekodataFileMeta meta;
+				bool hasError = false;
+				{
+					std::pair<std::shared_ptr<FileSystem>, std::string> t = std::any_cast<std::pair<std::shared_ptr<FileSystem>, std::string>>(task.second);
+					auto size = t.first->getSize(t.second);
+					meta.setOriginalSize(size);
+					hasError = size < 0;
+				}
+				while (!hasError)
+				{
+					std::shared_ptr<FileTask> ftask;
+					{
+						std::unique_lock lock(mtx_taskList_);
+						while (!ftask && !hasError)
+						{
+							while (taskList_.empty())
+							{
+								cond_finishTask_.wait(lock);
+							}
+							if (taskList_.front()->getStatus() == FileTask::Status::Finish)
+							{
+								ftask = taskList_.front();
+								taskList_.pop();
+								cond_getTask_.notify_one();
+							}
+							else if (taskList_.front()->getStatus() == FileTask::Status::Error)
+							{
+								hasError = true;
+							}
+						}
+					}
+					if (ftask)
+					{
+						hash.update(&(*ftask->getBuffer())[0], ftask->getCompressedSize());
+						int32_t actualWrite = ostream_write(os_, &(*ftask->getBuffer())[0], ftask->getCompressedSize());
+						if (actualWrite != ftask->getCompressedSize())
+						{
+							hasError = true;
+							break;
+						}
+						meta.addBlock(ftask->getCompressedSize());
+						if (ftask->isFinalTask())
+						{
+							hash.final();
+							meta.setSHA256(hash.readHash());
+							std::lock_guard lock(mtx_archiveFileList_);
+							files_[ftask->getPath()] = meta;
+							archiveFileList_.erase(archiveFileList_.cbegin());
+							break;
+						}
+					}
+				}
+			}
+			else if (task.first == FileCategory::RawStream)
+			{
+				std::shared_ptr<IStream> rawis = std::any_cast<std::shared_ptr<IStream>>(task.second);
+				auto buffer = env::getInstance().newBuffer4M();
+				int32_t actualRead = 0;
+				int32_t actualWrite = 0;
+				do
+				{
+					actualWrite = 0;
+					actualRead = istream_read(rawis, &(*buffer)[0], static_cast<int32_t>(buffer->size()));
+					if (actualRead > 0)
+					{
+						actualWrite = ostream_write(os_, &(*buffer)[0], actualRead);
+					}
+				} while (actualRead > 0 && actualRead == actualWrite);
+				if (actualRead < 0 || actualRead != actualWrite)
+				{
+					// error
+					break;
+				}
+				else
+				{
+					std::lock_guard lock(mtx_archiveFileList_);
+					archiveFileList_.erase(archiveFileList_.cbegin());
+				}
+				cond_getTask_.notify_all();
+			}
+		}
+		for (size_t i = 0; i < kThreadNum; i++)
+		{
+			t[i].join();
+		}
+		t.clear();
+
+		return taskList_.empty() && archiveFileList_.empty();
+	}
+	bool NekodataNativeArchiver::archiveFooter()
+	{
+		auto curpos = os_->getPosition();
+		bool success = true;
+		for (const auto& item : files_)
+		{
+			success = success && write_uint32(os_, static_cast<uint32_t>(item.first.size()));
+			success = success && write_buffer(os_, item.first.c_str(), static_cast<int32_t>(item.first.size()));
+			success = success && write_int64(os_, item.second.getOriginalSize());
+			success = success && write_int64(os_, item.second.getBlocks().size());
+			if (success && !item.second.getBlocks().empty())
+			{
+				for (const auto& blockSize : item.second.getBlocks())
+				{
+					success = success && write_int32(os_, blockSize);
+				}
+			}
+		}
+		success = success && write_int64(os_, curpos);
+		return success;
+	}
+
+	void NekodataNativeArchiver::threadfunction()
+	{
+		bool needExit = false;
+		while (!needExit)
+		{
+			std::shared_ptr<FileTask> ftask;
+			{
+				std::unique_lock lock(mtx_taskList_);
+				std::pair<std::string, std::pair<FileCategory, std::any>> task;
+				while (task.first.empty() && !needExit)
+				{
+					if (taskList_.size() > 36)
+					{
+						cond_getTask_.wait(lock);
+					}
+					else if (taskList_.empty())
+					{
+						std::lock_guard lock(mtx_archiveFileList_);
+						if (archiveFileList_.empty())
+						{
+							needExit = true;
+							continue;
+						}
+						auto it = archiveFileList_.begin();
+						task = std::pair<std::string, std::pair<FileCategory, std::any>>(it->first, it->second);
+					}
+					else
+					{
+						if (taskList_.front()->getStatus() == FileTask::Status::Error)
+						{
+							needExit = true;
+							continue;
+						}
+						if (taskList_.back()->isFinalTask())
+						{
+							// get next ftask
+							std::lock_guard lock(mtx_archiveFileList_);
+							if (archiveFileList_.empty())
+							{
+								needExit = true;
+								continue;
+							}
+							else
+							{
+								auto it = archiveFileList_.find(taskList_.back()->getPath());
+								it++;
+								if (it != archiveFileList_.end())
+								{
+									task = std::pair<std::string, std::pair<FileCategory, std::any>>(it->first, it->second);
+								}
+								else
+								{
+									needExit = true;
+									continue;
+								}
+							}
+						}
+						else
+						{
+							std::lock_guard lock(mtx_archiveFileList_);
+							auto it = archiveFileList_.find(taskList_.back()->getPath());
+							task = std::pair<std::string, std::pair<FileCategory, std::any>>(it->first, it->second);
+						}
+					}
+					if (task.second.first != FileCategory::File || task.first.empty())
+					{
+						task.first.clear();
+						cond_getTask_.wait(lock);
+					}
+					else
+					{
+						// create filetask
+						std::pair<std::shared_ptr<FileSystem>, std::string> t = std::any_cast<std::pair<std::shared_ptr<FileSystem>, std::string>>(task.second.second);
+						if (taskList_.empty() || taskList_.back()->getPath() != task.first)
+						{
+							ftask = std::make_shared<FileTask>(task.first, t.first->openIStream(t.second), 0);
+						}
+						else
+						{
+							ftask = std::make_shared<FileTask>(task.first, t.first->openIStream(t.second), taskList_.back()->getIndex() + 1);
+						}
+						taskList_.push(ftask);
+					}
+				}
+				if (needExit)
+				{
+					continue;
+				}
+			}
+			auto blockBuffer = env::getInstance().newBufferBlockSize();
+			auto blockCompressBuffer = env::getInstance().newBufferCompressSize();
+			ftask->setBuffer(blockCompressBuffer);
+			LZ4_streamHC_t lz4Stream_body;
+			LZ4_resetStreamHC(&lz4Stream_body, LZ4HC_CLEVEL_MAX);
+			auto range = ftask->getRange();
+			int blockSize = static_cast<int>(std::get<1>(range) - std::get<0>(range));
+			if (blockSize > 0)
+			{
+				auto is = ftask->getIStream();
+				if (!is)
+				{
+					// error
+					std::stringstream ss;
+					ss << u8"sream is null. filepath = ";
+					ss << ftask->getPath();
+					logerr(ss.str());
+					ftask->setStatus(FileTask::Status::Error);
+					needExit = true;
+					continue;
+				}
+				if (is->seek(std::get<0>(range), SeekOrigin::Begin) != std::get<0>(range))
+				{
+					// error
+					std::stringstream ss;
+					ss << u8"sream seek error. filepath = ";
+					ss << ftask->getPath();
+					ss << u8", seekpos = ";
+					ss << std::get<0>(range);
+					logerr(ss.str());
+					ftask->setStatus(FileTask::Status::Error);
+					needExit = true;
+					continue;
+				}
+				int64_t actualRead = istream_read(is, &(*blockBuffer)[0], blockSize);
+				if (actualRead != blockSize)
+				{
+					// error
+					std::stringstream ss;
+					ss << u8"read stream error. filepath = ";
+					ss << ftask->getPath();
+					logerr(ss.str());
+					ftask->setStatus(FileTask::Status::Error);
+					needExit = true;
+					continue;
+				}
+				const int cmpBytes = LZ4_compress_HC_continue(&lz4Stream_body, (const char*)&(*blockBuffer)[0], (char*)&(*blockCompressBuffer)[0], blockSize, nekofs_kNekoData_LZ4_Compress_Buffer_Size);
+				if (cmpBytes <= 0)
+				{
+					// error
+					std::stringstream ss;
+					ss << u8"compress error. filepath = ";
+					ss << ftask->getPath();
+					logerr(ss.str());
+					ftask->setStatus(FileTask::Status::Error);
+					needExit = true;
+					continue;
+				}
+				ftask->setCompressedSize(cmpBytes);
+			}
+			else
+			{
+				ftask->setCompressedSize(0);
+			}
+			ftask->setStatus(FileTask::Status::Finish);
+			cond_finishTask_.notify_one();
+		}
+		loginfo("thread exit");
+	}
+
+
+	void NekodataFileMeta::setSHA256(const std::array<uint32_t, 8>& sha256)
+	{
+		sha256_ = sha256;
+	}
+	const std::array<uint32_t, 8>& NekodataFileMeta::getSHA256() const
+	{
+		return sha256_;
+	}
+	void NekodataFileMeta::setCompressedSize(int64_t compressedSize)
+	{
+		compressedSize_ = compressedSize;
+	}
+	int64_t NekodataFileMeta::getCompressedSize() const
+	{
+		return compressedSize_;
+	}
+	void NekodataFileMeta::setOriginalSize(int64_t originalSize)
+	{
+		originalSize_ = originalSize;
+	}
+	int64_t NekodataFileMeta::getOriginalSize() const
+	{
+		return originalSize_;
+	}
+	void NekodataFileMeta::addBlock(int32_t blockSize)
+	{
+		compressedSize_ += blockSize;
+		blocks_.push_back(blockSize);
+	}
+	const std::vector<int32_t>& NekodataFileMeta::getBlocks() const
+	{
+		return blocks_;
+	}
+}

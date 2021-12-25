@@ -58,6 +58,7 @@ set(NEKOFS_COMMON
     common/sha256.cpp
     common/rapidjson.h
     common/rapidjson.cpp
+    common/lz4.h
 )
 
 set(NEKOFS_LAYER
@@ -71,6 +72,20 @@ set(NEKOFS_LAYER
     layer/layerversionmeta.cpp
 )
 
+set(NEKOFS_NEKODATA
+    nekodata/nekodataostream.h
+    nekodata/nekodataostream.cpp
+    nekodata/nekodatanativearchiver.h
+    nekodata/nekodatanativearchiver.cpp
+)
+
+set(NEKOFS_LZ4
+    ../thirdparty/lz4/lib/lz4.h
+    ../thirdparty/lz4/lib/lz4.c
+    ../thirdparty/lz4/lib/lz4hc.h
+    ../thirdparty/lz4/lib/lz4hc.c
+)
+
 set(NEKOFS
     nekofs.cpp
     include/nekofs/nekofs.h
@@ -81,6 +96,8 @@ if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
     set(NEKOFS ${NEKOFS}
         tools/prepare.cpp
         tools/prepare.h
+        tools/pack.cpp
+        tools/pack.h
     )
     ADD_DEFINITIONS("-DNEKOFS_TOOLS")
 endif ()
@@ -88,6 +105,8 @@ endif ()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_NATIVE})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_COMMON})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_LAYER})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_NEKODATA})
+source_group(lz4 FILES ${NEKOFS_LZ4})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS})
 
 if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
@@ -95,6 +114,8 @@ if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
         ${NEKOFS_NATIVE}
         ${NEKOFS_COMMON}
         ${NEKOFS_LAYER}
+        ${NEKOFS_NEKODATA}
+        ${NEKOFS_LZ4}
         ${NEKOFS}
     )
 else ()
@@ -102,6 +123,8 @@ else ()
         ${NEKOFS_NATIVE}
         ${NEKOFS_COMMON}
         ${NEKOFS_LAYER}
+        ${NEKOFS_NEKODATA}
+        ${NEKOFS_LZ4}
         ${NEKOFS}
     )
 endif ()
@@ -109,3 +132,7 @@ endif ()
 add_definitions("-DRAPIDJSON_NAMESPACE=nekofs::rapidjson" "-DRAPIDJSON_NOMEMBERITERATORCLASS=1" "-DRAPIDJSON_HAS_STDSTRING=1")
 target_include_directories(${PROJECT_NAME} PRIVATE ../thirdparty/rapidjson/include)
 target_include_directories(${PROJECT_NAME} PUBLIC include)
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads)

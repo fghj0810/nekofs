@@ -77,6 +77,10 @@ namespace nekofs {
 	{
 		return fileSize_;
 	}
+	std::shared_ptr<IStream> NativeIStream::createNew()
+	{
+		return file_->openIStream();
+	}
 	std::shared_ptr<NativeFileBlock> NativeIStream::prepareBlock()
 	{
 		bool useCurrent = (block_ != nullptr && position_ >= block_->getOffset() && position_ < block_->getEndOffset());
