@@ -38,6 +38,10 @@ namespace nekofs {
 		ss << getFullPath(path);
 		return ss.str();
 	}
+	FileSystemType LayerFileSystem::getOriginalFSType() const
+	{
+		return filesystem_->getFSType();
+	}
 
 
 	std::string LayerFileSystem::getCurrentPath() const

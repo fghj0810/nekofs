@@ -1,4 +1,6 @@
 ﻿#include "nekodatanativearchiver.h"
+#include "nekodataostream.h"
+#include "../common/env.h"
 #include "../common/utils.h"
 #include "../common/sha256.h"
 #ifdef _WIN32
@@ -11,13 +13,14 @@
 #include <sstream>
 #include <thread>
 #include <functional>
+#include <filesystem>
 
 namespace nekofs {
-	static inline bool write_buffer(std::shared_ptr<OStream>& os, const void* buffer, const int32_t& count)
+	static inline bool write_buffer(std::shared_ptr<OStream> os, const void* buffer, const int32_t& count)
 	{
 		return os && count >= 0 && ostream_write(os, buffer, count) == count;
 	}
-	static inline bool write_uint32(std::shared_ptr<OStream>& os, const uint32_t& value)
+	static inline bool write_uint32(std::shared_ptr<OStream> os, const uint32_t& value)
 	{
 		uint8_t tmp[4];
 		tmp[0] = static_cast<uint8_t>(value >> 24);
@@ -26,11 +29,11 @@ namespace nekofs {
 		tmp[3] = static_cast<uint8_t>(value >> 0);
 		return os && ostream_write(os, tmp, 4) == 4;
 	}
-	static inline bool write_int32(std::shared_ptr<OStream>& os, const int32_t& value)
+	static inline bool write_int32(std::shared_ptr<OStream> os, const int32_t& value)
 	{
 		return write_uint32(os, static_cast<uint32_t>(value));
 	}
-	static inline bool write_uint64(std::shared_ptr<OStream>& os, const uint64_t& value)
+	static inline bool write_uint64(std::shared_ptr<OStream> os, const uint64_t& value)
 	{
 		uint8_t tmp[8];
 		tmp[0] = static_cast<uint8_t>(value >> 56);
@@ -43,7 +46,7 @@ namespace nekofs {
 		tmp[7] = static_cast<uint8_t>(value >> 0);
 		return os && ostream_write(os, tmp, 8) == 8;
 	}
-	static inline bool write_int64(std::shared_ptr<OStream>& os, const int64_t& value)
+	static inline bool write_int64(std::shared_ptr<OStream> os, const int64_t& value)
 	{
 		return write_uint64(os, static_cast<uint64_t>(value));
 	}
@@ -103,8 +106,30 @@ namespace nekofs {
 	}
 
 
-	NekodataNativeArchiver::~NekodataNativeArchiver()
+	NekodataNativeArchiver::NekodataNativeArchiver(const std::string& archiveFilename, int64_t volumeSize)
 	{
+		volumeSize >>= 20;
+		volumeSize <<= 20;
+		isStreamMode_ = false;
+		archiveFilename_ = archiveFilename;
+		volumeSize_ = volumeSize;
+		if (!str_EndWith(archiveFilename, nekofs_kNekodata_FileExtension))
+		{
+			archiveFilename_.append(nekofs_kNekodata_FileExtension);
+		}
+	}
+	NekodataNativeArchiver::NekodataNativeArchiver(const std::string& archiveFilename, std::shared_ptr<OStream> os, int64_t volumeSize)
+	{
+		volumeSize >>= 20;
+		volumeSize <<= 20;
+		isStreamMode_ = true;
+		rawOS_ = os;
+		archiveFilename_ = archiveFilename;
+		volumeSize_ = volumeSize;
+		if (!str_EndWith(archiveFilename, nekofs_kNekodata_FileExtension))
+		{
+			archiveFilename_.append(nekofs_kNekodata_FileExtension);
+		}
 	}
 	void NekodataNativeArchiver::addFile(const std::string& filepath, std::shared_ptr<FileSystem> srcfs, const std::string& srcfilepath)
 	{
@@ -114,37 +139,32 @@ namespace nekofs {
 	{
 		archiveFileList_[filepath] = std::make_pair(FileCategory::RawStream, is);
 	}
-	std::shared_ptr<NekodataNativeArchiver> NekodataNativeArchiver::addArchive(const std::string& filepath)
+	std::shared_ptr<NekodataNativeArchiver> NekodataNativeArchiver::addArchive(const std::string& filepath, int64_t volumeSize)
 	{
-		auto newArchiver = std::make_shared<NekodataNativeArchiver>();
+		auto newArchiver = std::make_shared<NekodataNativeArchiver>(filepath, os_, volumeSize);
 		archiveFileList_[filepath] = std::make_pair<FileCategory, std::any>(FileCategory::Archiver, newArchiver);
 		return newArchiver;
 	}
-	bool NekodataNativeArchiver::archive(std::shared_ptr<OStream> os)
+	bool NekodataNativeArchiver::archive()
 	{
-		os_ = os;
-		bool success = true;
-		success = success && os_;
-		success = success && archiveHeader();
-		success = success && archiveFiles();
-		success = success && archiveFooter();
-		return success;
+		os_ = std::make_shared<NekodataOStream>(shared_from_this(), volumeSize_);
+		return archiveFiles() && archiveCentralDirectory() && archiveFileFooters();
 	}
-	bool NekodataNativeArchiver::archiveHeader()
+	bool NekodataNativeArchiver::archiveFileHeader(std::shared_ptr<OStream> os)
 	{
-		constexpr const char* headStr = u8".nekodata";
-		return write_buffer(os_, headStr, static_cast<int32_t>(::strlen(headStr)));
+		return write_buffer(os, nekofs_kNekodata_FileHeader.data(), static_cast<int32_t>(nekofs_kNekodata_FileHeader.size()));
 	}
 	bool NekodataNativeArchiver::archiveFiles()
 	{
 		const auto filesCount = archiveFileList_.size();
 		const size_t kThreadNum = 12;
+		bool hasError = false;
 		std::vector<std::thread> t;
 		for (size_t i = 0; i < kThreadNum; i++)
 		{
 			t.push_back(std::thread(std::bind(&NekodataNativeArchiver::threadfunction, shared_from_this())));
 		}
-		while (true)
+		while (!hasError)
 		{
 			std::string taskpath;
 			std::pair<FileCategory, std::any> task;
@@ -167,7 +187,7 @@ namespace nekofs {
 			if (task.first == FileCategory::Archiver)
 			{
 				std::shared_ptr<NekodataNativeArchiver> archiver = std::any_cast<std::shared_ptr<NekodataNativeArchiver>>(task.second);
-				archiver->archive(os_);
+				archiver->archive();
 				std::lock_guard lock(mtx_archiveFileList_);
 				archiveFileList_.erase(archiveFileList_.cbegin());
 				cond_getTask_.notify_all();
@@ -176,7 +196,6 @@ namespace nekofs {
 			{
 				sha256sum hash;
 				NekodataFileMeta meta;
-				bool hasError = false;
 				{
 					std::pair<std::shared_ptr<FileSystem>, std::string> t = std::any_cast<std::pair<std::shared_ptr<FileSystem>, std::string>>(task.second);
 					auto size = t.first->getSize(t.second);
@@ -199,6 +218,11 @@ namespace nekofs {
 								ftask = taskList_.front();
 								taskList_.pop();
 								cond_getTask_.notify_one();
+								if (ftask->isFinalTask())
+								{
+									std::lock_guard lock(mtx_archiveFileList_);
+									archiveFileList_.erase(archiveFileList_.cbegin());
+								}
 							}
 							else if (taskList_.front()->getStatus() == FileTask::Status::Error)
 							{
@@ -220,9 +244,7 @@ namespace nekofs {
 						{
 							hash.final();
 							meta.setSHA256(hash.readHash());
-							std::lock_guard lock(mtx_archiveFileList_);
 							files_[ftask->getPath()] = meta;
-							archiveFileList_.erase(archiveFileList_.cbegin());
 							break;
 						}
 					}
@@ -256,15 +278,20 @@ namespace nekofs {
 				cond_getTask_.notify_all();
 			}
 		}
+		{
+			std::lock_guard lock(mtx_taskList_);
+			finish = true;
+		}
+		cond_getTask_.notify_all();
 		for (size_t i = 0; i < kThreadNum; i++)
 		{
 			t[i].join();
 		}
 		t.clear();
 
-		return taskList_.empty() && archiveFileList_.empty();
+		return !hasError && taskList_.empty() && archiveFileList_.empty();
 	}
-	bool NekodataNativeArchiver::archiveFooter()
+	bool NekodataNativeArchiver::archiveCentralDirectory()
 	{
 		auto curpos = os_->getPosition();
 		bool success = true;
@@ -285,6 +312,73 @@ namespace nekofs {
 		success = success && write_int64(os_, curpos);
 		return success;
 	}
+	bool NekodataNativeArchiver::archiveFileFooters()
+	{
+		bool success = true;
+		for (size_t i = 0; success && i < volumeOS_.size(); i++)
+		{
+			auto os = std::get<1>(volumeOS_[i]);
+			if (os->getLength() == volumeSize_)
+			{
+				success = success && os->seek(-12, SeekOrigin::End) == volumeSize_ - 12;
+			}
+			success = success && write_uint32(os_, static_cast<uint32_t>(i));
+			success = success && write_uint32(os_, static_cast<uint32_t>(volumeOS_.size()));
+			success = success && write_uint32(os_, static_cast<uint32_t>(volumeSize_ >> 20));
+		}
+		return success;
+	}
+	std::shared_ptr<NekodataVolumeOStream> NekodataNativeArchiver::getVolumeOStreamByDataPos(int64_t pos)
+	{
+		int64_t dataSizePerVolume = volumeSize_ - nekofs_kNekodata_FileHeader.size() - 12;
+		size_t index = pos / dataSizePerVolume;
+		if (pos - index * dataSizePerVolume > 0)
+		{
+			index++;
+		}
+		if (index == volumeOS_.size())
+		{
+			std::string filepath = "";
+			{
+				std::stringstream ss;
+				ss << archiveFilename_.substr(0, archiveFilename_.size() - nekofs_kNekodata_FileExtension.size());
+				ss << u8"." << index << nekofs_kNekodata_FileExtension;
+				filepath = ss.str();
+			}
+			if (index > 0 && std::get<1>(volumeOS_[index - 1])->getLength() < volumeSize_)
+			{
+				if (!std::get<1>(volumeOS_[index - 1])->fill())
+				{
+					return nullptr;
+				}
+			}
+			if (isStreamMode_)
+			{
+				volumeOS_.push_back(std::make_tuple(filepath, std::make_shared<NekodataVolumeOStream>(rawOS_, volumeSize_, index * dataSizePerVolume)));
+				if (!archiveFileHeader(std::get<1>(volumeOS_[index])))
+				{
+					return nullptr;
+				}
+			}
+			else
+			{
+				auto os = env::getInstance().getNativeFileSystem()->openOStream(filepath);
+				if (os)
+				{
+					volumeOS_.push_back(std::make_tuple(filepath, std::make_shared<NekodataVolumeOStream>(os, volumeSize_, index * dataSizePerVolume)));
+					if (!archiveFileHeader(std::get<1>(volumeOS_[index])))
+					{
+						return nullptr;
+					}
+				}
+				else
+				{
+					return nullptr;
+				}
+			}
+		}
+		return std::get<1>(volumeOS_[index]);
+	}
 
 	void NekodataNativeArchiver::threadfunction()
 	{
@@ -294,10 +388,11 @@ namespace nekofs {
 			std::shared_ptr<FileTask> ftask;
 			{
 				std::unique_lock lock(mtx_taskList_);
+				needExit = finish;
 				std::pair<std::string, std::pair<FileCategory, std::any>> task;
 				while (task.first.empty() && !needExit)
 				{
-					if (taskList_.size() > 36)
+					if (taskList_.size() > 36 && taskList_.front()->getStatus() != FileTask::Status::Error)
 					{
 						cond_getTask_.wait(lock);
 					}
@@ -369,6 +464,7 @@ namespace nekofs {
 						}
 						taskList_.push(ftask);
 					}
+					needExit = finish;
 				}
 				if (needExit)
 				{

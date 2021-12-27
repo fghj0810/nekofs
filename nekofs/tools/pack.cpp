@@ -26,17 +26,11 @@ namespace nekofs::tools {
 			return false;
 		}
 		auto allfiles = nativefs->getAllFiles(dirpath);
-		auto os = nativefs->openOStream(outpath);
-		if (!os)
-		{
-			nekofs::logerr(u8"create outputfile failed!");
-			return false;
-		}
-		auto archiver = std::make_shared<NekodataNativeArchiver>();
+		auto archiver = std::make_shared<NekodataNativeArchiver>(outpath);
 		for (const auto& item : allfiles)
 		{
 			archiver->addFile(item, nativefs, dirpath + nekofs_PathSeparator + item);
 		}
-		return archiver->archive(os);
+		return archiver->archive();
 	}
 }
