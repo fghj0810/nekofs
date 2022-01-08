@@ -73,10 +73,19 @@ set(NEKOFS_LAYER
 )
 
 set(NEKOFS_NEKODATA
+    nekodata/util.h
+    nekodata/nekodatafilemeta.h
+    nekodata/nekodatafilemeta.cpp
     nekodata/nekodataostream.h
     nekodata/nekodataostream.cpp
-    nekodata/nekodatanativearchiver.h
-    nekodata/nekodatanativearchiver.cpp
+    nekodata/nekodataarchiver.h
+    nekodata/nekodataarchiver.cpp
+    nekodata/nekodatafilesystem.h
+    nekodata/nekodatafilesystem.cpp
+    nekodata/nekodatafile.h
+    nekodata/nekodatafile.cpp
+    nekodata/nekodataistream.h
+    nekodata/nekodataistream.cpp
 )
 
 set(NEKOFS_LZ4
@@ -98,6 +107,8 @@ if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
         tools/prepare.h
         tools/pack.cpp
         tools/pack.h
+        tools/unpack.cpp
+        tools/unpack.h
     )
     ADD_DEFINITIONS("-DNEKOFS_TOOLS")
 endif ()

@@ -17,6 +17,7 @@ namespace nekofs {
 		NativeOStream(std::shared_ptr<NativeFile> file, HANDLE fd);
 
 	public:
+		int32_t read(void* buf, int32_t size) override;
 		int32_t write(const void* buf, int32_t size) override;
 		int64_t seek(int64_t offset, const SeekOrigin& origin) override;
 		int64_t getPosition() const override;

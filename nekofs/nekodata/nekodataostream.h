@@ -23,6 +23,7 @@ namespace nekofs {
 		bool fill();
 
 	public:
+		int32_t read(void* buf, int32_t size) override;
 		int32_t write(const void* buf, int32_t size) override;
 		int64_t seek(int64_t offset, const SeekOrigin& origin) override;
 		int64_t getPosition() const override;
@@ -30,10 +31,11 @@ namespace nekofs {
 
 	private:
 		std::shared_ptr<OStream> os_;
-		int64_t volumeSize_ = 1i64 << 62;
+		int64_t volumeSize_ = nekofs_kNekodata_MaxVolumeSize;
 		int64_t voldataBeginPos_ = 0;
 		int64_t position_ = 0;
 		int64_t length_ = 0;
+		int64_t rawBeginPos_ = 0;
 	};
 
 	class NekodataOStream final : public OStream, public std::enable_shared_from_this<NekodataOStream>
@@ -46,6 +48,7 @@ namespace nekofs {
 		NekodataOStream(std::shared_ptr<NekodataNativeArchiver> archiver, int64_t volumeSize);
 
 	public:
+		int32_t read(void* buf, int32_t size) override;
 		int32_t write(const void* buf, int32_t size) override;
 		int64_t seek(int64_t offset, const SeekOrigin& origin) override;
 		int64_t getPosition() const override;
@@ -56,7 +59,7 @@ namespace nekofs {
 
 	private:
 		std::shared_ptr<NekodataNativeArchiver> archiver_;
-		int64_t volumeSize_ = 1i64 << 62;
+		int64_t volumeSize_ = nekofs_kNekodata_MaxVolumeSize;
 		int64_t position_ = 0;
 		int64_t length_ = 0;
 		std::shared_ptr<NekodataVolumeOStream> os_;

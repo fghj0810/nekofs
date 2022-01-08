@@ -1,5 +1,5 @@
 ﻿#include "nekodataostream.h"
-#include "nekodatanativearchiver.h"
+#include "nekodataarchiver.h"
 #include "../common/utils.h"
 
 #include <sstream>
@@ -9,6 +9,42 @@ namespace nekofs {
 	{
 		archiver_ = archiver;
 		volumeSize_ = volumeSize;
+	}
+	int32_t NekodataOStream::read(void* buf, int32_t size)
+	{
+		if (size < 0)
+		{
+			return -1;
+		}
+		prepareVolumeOStream();
+		if (!os_)
+		{
+			return -1;
+		}
+		else
+		{
+			auto os_begin = os_->getVolDataBeginPos();
+			auto os_pos = os_->getPosition();
+			auto needpos = position_ - os_begin + nekofs_kNekodata_FileHeader.size();
+			if (needpos != os_pos && os_->seek(needpos, SeekOrigin::Begin) != needpos)
+			{
+				return -1;
+			}
+		}
+		if (position_ + size > os_->getVolDataEndPos_max())
+		{
+			size = static_cast<int32_t>(os_->getVolDataEndPos_max() - position_);
+		}
+		if (size == 0)
+		{
+			return 0;
+		}
+		auto readnum = os_->read(buf, size);
+		if (readnum > 0)
+		{
+			position_ += readnum;
+		}
+		return readnum;
 	}
 	int32_t NekodataOStream::write(const void* buf, int32_t size)
 	{
@@ -20,6 +56,16 @@ namespace nekofs {
 		if (!os_)
 		{
 			return -1;
+		}
+		else
+		{
+			auto os_begin = os_->getVolDataBeginPos();
+			auto os_pos = os_->getPosition();
+			auto needpos = position_ - os_begin + nekofs_kNekodata_FileHeader.size();
+			if (needpos != os_pos && os_->seek(needpos, SeekOrigin::Begin) != needpos)
+			{
+				return -1;
+			}
 		}
 		if (position_ + size > os_->getVolDataEndPos_max())
 		{
@@ -100,6 +146,7 @@ namespace nekofs {
 	NekodataVolumeOStream::NekodataVolumeOStream(std::shared_ptr<OStream> os, int64_t volumeSize, int64_t voldataBeginPos)
 	{
 		os_ = os;
+		rawBeginPos_ = os->getPosition();
 		volumeSize_ = volumeSize;
 		voldataBeginPos_ = voldataBeginPos;
 	}
@@ -129,6 +176,27 @@ namespace nekofs {
 		}
 		return true;
 	}
+	int32_t NekodataVolumeOStream::read(void* buf, int32_t size)
+	{
+		if (size < 0)
+		{
+			return -1;
+		}
+		if (position_ + size > length_)
+		{
+			size = static_cast<int32_t>(length_ - position_);
+		}
+		if (size == 0)
+		{
+			return 0;
+		}
+		auto readnum = os_->read(buf, size);
+		if (readnum > 0)
+		{
+			position_ += readnum;
+		}
+		return readnum;
+	}
 	int32_t NekodataVolumeOStream::write(const void* buf, int32_t size)
 	{
 		if (size < 0)
@@ -154,6 +222,7 @@ namespace nekofs {
 	int64_t NekodataVolumeOStream::seek(int64_t offset, const SeekOrigin& origin)
 	{
 		bool success = true;
+		int64_t pos = position_;
 		switch (origin)
 		{
 		case SeekOrigin::Begin:
@@ -189,6 +258,14 @@ namespace nekofs {
 			ss << position_;
 			logerr(ss.str());
 			return -1;
+		}
+		if (pos != position_)
+		{
+			if (os_->seek(rawBeginPos_ + position_, SeekOrigin::Begin) < 0)
+			{
+				position_ = pos;
+				return -1;
+			}
 		}
 		return position_;
 	}

@@ -48,7 +48,7 @@ namespace nekofs {
 	};
 
 
-	static inline std::wstring u8_to_u16(const std::string& u8str)
+	inline std::wstring u8_to_u16(const std::string& u8str)
 	{
 		if (!u8str.empty())
 		{
@@ -59,7 +59,7 @@ namespace nekofs {
 		}
 		return std::wstring();
 	}
-	static inline std::string u16_to_u8(const std::wstring& u16str)
+	inline std::string u16_to_u8(const std::wstring& u16str)
 	{
 		if (!u16str.empty())
 		{

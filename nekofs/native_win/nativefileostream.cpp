@@ -12,6 +12,30 @@ namespace nekofs {
 	}
 
 
+	int32_t NativeOStream::read(void* buf, int32_t size)
+	{
+		if (size < 0)
+		{
+			return -1;
+		}
+		if (size == 0)
+		{
+			return 0;
+		}
+		DWORD actulRead;
+		if (FALSE == ReadFile(fd_, buf, size, &actulRead, NULL))
+		{
+			auto errmsg = getSysErrMsg();
+			std::stringstream ss;
+			ss << u8"NativeOStream::read ReadFile error ! filepath = ";
+			ss << file_->getFilePath();
+			ss << u8", err = ";
+			ss << errmsg;
+			logerr(ss.str());
+			return  -1;
+		}
+		return actulRead;
+	}
 	int32_t NativeOStream::write(const void* buf, int32_t size)
 	{
 		if (size < 0)

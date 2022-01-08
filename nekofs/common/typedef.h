@@ -19,6 +19,7 @@ namespace nekofs {
 		Overlay,
 		Layer,
 		Native,
+		Nekodata,
 	};
 	enum class FileType : int32_t
 	{
@@ -50,6 +51,7 @@ namespace nekofs {
 	};
 	class OStream {
 	public:
+		virtual int32_t read(void* buf, int32_t size) = 0;
 		virtual int32_t write(const void* buf, int32_t size) = 0;
 		virtual int64_t seek(int64_t offset, const SeekOrigin& origin) = 0;
 		virtual int64_t getPosition() const = 0;
@@ -93,5 +95,8 @@ constexpr const char* nekofs_kLayerFiles_Deletes = u8"deletes";
 
 constexpr const std::string_view nekofs_kNekodata_FileExtension = u8".nekodata";
 constexpr const std::string_view nekofs_kNekodata_FileHeader = u8".nekodata";
-constexpr const int64_t nekofs_kNekodata_MaxVolumeSize = 1i64 << (20 + 31);
-constexpr const int64_t nekofs_kNekodata_DefalutVolumeSize = 1i64 << 20;
+constexpr const int32_t nekofs_kNekodata_FileHeaderSize = static_cast<int32_t>(nekofs_kNekodata_FileHeader.size());
+constexpr const int32_t nekofs_kNekodata_FileFooterSize = 12;
+constexpr const int32_t nekofs_kNekodata_VolumeFormatSize = nekofs_kNekodata_FileHeaderSize + nekofs_kNekodata_FileFooterSize;
+constexpr const int64_t nekofs_kNekodata_MaxVolumeSize = 1LL << (20 + 31);
+constexpr const int64_t nekofs_kNekodata_DefalutVolumeSize = 1LL << 20;

@@ -50,6 +50,7 @@ namespace nekofs_tool {
 			std::cerr << "nekofs_tools_pack error" << std::endl;
 			return -1;
 		}
+		//nekofs_tools_unpack(fpath.c_str(), u8"D:/test/111");
 		return 0;
 	}
 }

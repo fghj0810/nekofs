@@ -565,6 +565,7 @@ namespace nekofs {
 			auto rit = filePtrs_.find(filepath);
 			if (rit != filePtrs_.end())
 			{
+				std::swap(rawPtr, rit->second);
 				filePtrs_.erase(rit);
 				delete rawPtr;
 			}

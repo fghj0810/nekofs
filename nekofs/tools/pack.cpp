@@ -7,7 +7,7 @@
 #else
 #include "../native_posix/nativefilesystem.h"
 #endif
-#include "../nekodata/nekodatanativearchiver.h"
+#include "../nekodata/nekodataarchiver.h"
 
 #include <sstream>
 

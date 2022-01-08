@@ -2,6 +2,7 @@
 
 #include "../common/typedef.h"
 #include "../common/lz4.h"
+#include "nekodatafilemeta.h"
 
 #include <cstdint>
 #include <array>
@@ -17,24 +18,6 @@
 #include <atomic>
 
 namespace nekofs {
-	class NekodataFileMeta final
-	{
-	public:
-		void setSHA256(const std::array<uint32_t, 8>& sha256);
-		const std::array<uint32_t, 8>& getSHA256() const;
-		void setCompressedSize(int64_t compressedSize);
-		int64_t getCompressedSize() const;
-		void setOriginalSize(int64_t originalSize);
-		int64_t getOriginalSize() const;
-		void addBlock(int32_t blockSize);
-		const std::vector<int32_t>& getBlocks() const;
-
-	private:
-		std::array<uint32_t, 8> sha256_ = {};
-		int64_t compressedSize_ = 0;
-		int64_t originalSize_ = 0;
-		std::vector<int32_t> blocks_;
-	};
 	class NekodataOStream;
 	class NekodataVolumeOStream;
 
