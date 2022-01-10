@@ -12,14 +12,16 @@ endif ()
 ADD_DEFINITIONS("-DNEKOFS_TOOLS")
 
 set (NEKOFS_CLI_SRC
+    cmdparse.h
+    cmdparse.cpp
     common.h
     main.cpp
     prepare.h
     prepare.cpp
     pack.h
     pack.cpp
-    cmdparse.h
-    cmdparse.cpp
+    unpack.h
+    unpack.cpp
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS})

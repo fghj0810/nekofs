@@ -10,8 +10,8 @@ namespace nekofs_tool {
 	int pack(const std::vector<std::string>& args)
 	{
 		cmd::parser cp;
-		cp.addPos("packpath", true);
 		cp.addPos("outfile", true);
+		cp.addPos("packpath", true);
 		cp.addHelp();
 		try
 		{
@@ -27,8 +27,8 @@ namespace nekofs_tool {
 			std::cout << cp.useage() << std::endl;
 			std::exit(0);
 		}
-		std::string path = cp.getPos(0);
-		std::string out = cp.getPos(1);
+		std::string out = cp.getPos(0);
+		std::string path = cp.getPos(1);
 		if (path.empty())
 		{
 			std::cerr << "path.empty()   " << path << std::endl;
