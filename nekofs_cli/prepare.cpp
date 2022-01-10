@@ -1,46 +1,62 @@
 ﻿#include "prepare.h"
 #include "common.h"
+#include "cmdparse.h"
 
 #include <nekofs/nekofs.h>
-#include <gflags/gflags.h>
+
 #include <filesystem>
 #include <iostream>
-
-namespace {
-	DEFINE_string(path, "", "prepare dir path");
-	DEFINE_string(verfile, "", "version file path");
-	DEFINE_int32(offset, 0, "version offet");
-}
 
 namespace nekofs_tool {
 	int prepare(const std::vector<std::string>& args)
 	{
-		int argc = static_cast<int>(args.size());
-		char** argv = nullptr;
-		std::vector<char*> argv_t(args.size());
-		for (size_t i = 0; i < args.size(); i++)
+		cmd::parser cp;
+		cp.addString("verfile", 'v', "version file path", true, "");
+		cp.addInt("offset", '\0', "version offet", false, 0);
+		cp.addPos("path", true);
+		cp.addHelp();
+		try
 		{
-			argv_t[i] = const_cast<char*>(args[i].c_str());
+			cp.parse(args);
 		}
-		argv = &argv_t[0];
-		gflags::ParseCommandLineFlags(&argc, &argv, false);
-		if (FLAGS_path.empty())
+		catch (const std::exception& e)
 		{
-			std::cerr << "FLAGS_path.empty()   " << FLAGS_path << std::endl;
+			if (e.what() == cmd::kParseError)
+			{
+				std::cerr << cp.useage() << std::endl;
+				std::exit(-1);
+			}
+			else if (e.what() == cmd::kHelpError)
+			{
+				std::cout << cp.useage() << std::endl;
+				std::exit(0);
+			}
+		}
+		std::string verfile = cp.getString("verfile");
+		std::string path = cp.getPos(0);
+		int32_t offset = cp.getInt("offset");
+		if (path.empty())
+		{
+			std::cerr << "path.empty()   " << path << std::endl;
 			return -1;
 		}
-		if (FLAGS_verfile.empty())
+		if (verfile.empty())
 		{
-			std::cerr << "FLAGS_verfile.empty()   " << FLAGS_verfile << std::endl;
+			std::cerr << "FLAGS_verfile.empty()   " << verfile << std::endl;
 			return -1;
 		}
-		auto genpath = std::filesystem::absolute(FLAGS_path).lexically_normal().generic_string();
+		if (offset < 0)
+		{
+			std::cerr << "offset < 0   " << offset << std::endl;
+			return -1;
+		}
+		auto genpath = std::filesystem::absolute(path).lexically_normal().generic_string();
 		if (!std::filesystem::is_directory(genpath))
 		{
 			std::cerr << "!std::filesystem::is_directory(" << genpath << ")" << std::endl;
 			return -1;
 		}
-		auto versionpath = std::filesystem::absolute(FLAGS_verfile).lexically_normal().generic_string();
+		auto versionpath = std::filesystem::absolute(verfile).lexically_normal().generic_string();
 		if (!std::filesystem::is_regular_file(versionpath))
 		{
 			std::cerr << "!std::filesystem::is_regular_file(" << versionpath << ")" << std::endl;
@@ -48,7 +64,7 @@ namespace nekofs_tool {
 		}
 		genpath = get_utf8_str(genpath);
 		versionpath = get_utf8_str(versionpath);
-		if (NEKOFS_FALSE == nekofs_tools_prepare(genpath.c_str(), versionpath.c_str(), FLAGS_offset))
+		if (NEKOFS_FALSE == nekofs_tools_prepare(genpath.c_str(), versionpath.c_str(), offset))
 		{
 			std::cerr << "nekofs_tools_prepare error" << genpath << std::endl;
 			return -1;

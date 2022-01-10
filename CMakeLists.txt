@@ -11,7 +11,6 @@ option(NEKOFS_TEST "This is a option for test" OFF)
 # 包含子项目。
 add_subdirectory("nekofs")
 if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
-    add_subdirectory("thirdparty/gflags")
     add_subdirectory("nekofs_cli")
 endif ()
 

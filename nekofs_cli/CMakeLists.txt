@@ -18,6 +18,8 @@ set (NEKOFS_CLI_SRC
     prepare.cpp
     pack.h
     pack.cpp
+    cmdparse.h
+    cmdparse.cpp
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS})
@@ -25,4 +27,3 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS})
 add_executable(${PROJECT_NAME} ${NEKOFS_CLI_SRC})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE nekofs)
-target_link_libraries(${PROJECT_NAME} PRIVATE gflags::gflags)

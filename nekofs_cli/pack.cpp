@@ -1,44 +1,55 @@
 ﻿#include "pack.h"
 #include "common.h"
+#include "cmdparse.h"
 
 #include <nekofs/nekofs.h>
-#include <gflags/gflags.h>
 #include <filesystem>
 #include <iostream>
-
-DEFINE_string(packpath, "", "prepare dir path");
-DEFINE_string(packout, "", "nekodata file path");
 
 namespace nekofs_tool {
 	int pack(const std::vector<std::string>& args)
 	{
-		int argc = static_cast<int>(args.size());
-		char** argv = nullptr;
-		std::vector<char*> argv_t(args.size());
-		for (size_t i = 0; i < args.size(); i++)
+		cmd::parser cp;
+		cp.addPos("packpath", true);
+		cp.addPos("outfile", true);
+		cp.addHelp();
+		try
 		{
-			argv_t[i] = const_cast<char*>(args[i].c_str());
+			cp.parse(args);
 		}
-		argv = &argv_t[0];
-		gflags::ParseCommandLineFlags(&argc, &argv, false);
-		if (FLAGS_packpath.empty())
+		catch (const std::exception& e)
 		{
-			std::cerr << "FLAGS_packpath.empty()   " << FLAGS_packpath << std::endl;
+			if (e.what() == cmd::kParseError)
+			{
+				std::cerr << cp.useage() << std::endl;
+				std::exit(-1);
+			}
+			else if (e.what() == cmd::kHelpError)
+			{
+				std::cout << cp.useage() << std::endl;
+				std::exit(0);
+			}
+		}
+		std::string path = cp.getPos(0);
+		std::string out = cp.getPos(1);
+		if (path.empty())
+		{
+			std::cerr << "path.empty()   " << path << std::endl;
 			return -1;
 		}
-		auto dpath = std::filesystem::absolute(FLAGS_packpath).lexically_normal().generic_string();
+		if (out.empty())
+		{
+			std::cerr << "out.empty()   " << out << std::endl;
+			return -1;
+		}
+		auto dpath = std::filesystem::absolute(path).lexically_normal().generic_string();
 		if (!std::filesystem::is_directory(dpath))
 		{
 			std::cerr << "!std::filesystem::is_directory(" << dpath << ")" << std::endl;
 			return -1;
 		}
 		dpath = get_utf8_str(dpath);
-		if (FLAGS_packout.empty())
-		{
-			std::cerr << "FLAGS_packout.empty()   " << FLAGS_packout << std::endl;
-			return -1;
-		}
-		auto fpath = std::filesystem::absolute(FLAGS_packout).lexically_normal().generic_string();
+		auto fpath = std::filesystem::absolute(out).lexically_normal().generic_string();
 		if (std::filesystem::exists(fpath))
 		{
 			std::cerr << "std::filesystem::exists(" << fpath << ")" << std::endl;
@@ -50,7 +61,6 @@ namespace nekofs_tool {
 			std::cerr << "nekofs_tools_pack error" << std::endl;
 			return -1;
 		}
-		//nekofs_tools_unpack(fpath.c_str(), u8"D:/test/111");
 		return 0;
 	}
 }
