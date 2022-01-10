@@ -1,14 +1,25 @@
 ﻿#pragma once
 
+#include <exception>
 #include <map>
+#include <optional>
+#include <string>
 #include <tuple>
 #include <variant>
 #include <vector>
-#include <optional>
-#include <string_view>
 namespace cmd {
-	constexpr const std::string_view kParseError = "ParseError";
-	constexpr const std::string_view kHelpError = "Help";
+	class ParseException : std::exception
+	{
+	public:
+		ParseException() = default;
+		char const* what() const noexcept override;
+	};
+	class HelpException : std::exception
+	{
+	public:
+		HelpException() = default;
+		char const* what() const noexcept override;
+	};
 	class parser
 	{
 		enum class ArgType
@@ -20,7 +31,7 @@ namespace cmd {
 		};
 		typedef std::variant<int, std::string> ArgValue;
 	public:
-		bool parse(const std::vector<std::string>& args);
+		void parse(const std::vector<std::string>& args);
 		void addString(const std::string& name, const char& shortName, const std::string& desc, bool require, const std::string& defaultValue = "");
 		void addInt(const std::string& name, const char& shortName, const std::string& desc, bool require, const int& defaultValue = 0);
 		void addPos(const std::string& name, bool require);

@@ -1,13 +1,24 @@
 ﻿#include "cmdparse.h"
 
+#include <algorithm>
 #include <sstream>
 #include <charconv>
 namespace cmd {
-	bool parser::parse(const std::vector<std::string>& args)
+	char const* ParseException::what() const noexcept
+	{
+		return "ParseError";
+	}
+	char const* HelpException::what() const noexcept
+	{
+		return "Help";
+	}
+
+
+	void parser::parse(const std::vector<std::string>& args)
 	{
 		if (args.empty())
 		{
-			return false;
+			return;
 		}
 		programName_ = args[0];
 		for (size_t i = 1; i < args.size(); i++)
@@ -22,17 +33,17 @@ namespace cmd {
 					auto arg = getArgType(name);
 					if (!arg.has_value())
 					{
-						throw std::exception(kParseError.data());
+						throw ParseException();
 					}
 					if (*arg == ArgType::Help)
 					{
-						throw std::exception(kHelpError.data());
+						throw HelpException();
 					}
 					if (*arg != ArgType::None)
 					{
 						if (!setValue(name, item.substr(pos + 1)))
 						{
-							throw std::exception(kParseError.data());
+							throw ParseException();
 						}
 					}
 				}
@@ -42,17 +53,17 @@ namespace cmd {
 					auto arg = getArgType(name);
 					if (!arg.has_value())
 					{
-						throw std::exception(kParseError.data());
+						throw ParseException();
 					}
 					if (*arg == ArgType::Help)
 					{
-						throw std::exception(kHelpError.data());
+						throw HelpException();
 					}
 					if (*arg != ArgType::None)
 					{
 						if (i + 1 >= args.size() || !setValue(name, args[i + 1]))
 						{
-							throw std::exception(kParseError.data());
+							throw ParseException();
 						}
 						i++;
 					}
@@ -65,24 +76,24 @@ namespace cmd {
 					auto arg = getArgType(item[1]);
 					if (!arg.has_value())
 					{
-						throw std::exception(kParseError.data());
+						throw ParseException();
 					}
 					if (*arg == ArgType::Help)
 					{
-						throw std::exception(kHelpError.data());
+						throw HelpException();
 					}
 					if (*arg != ArgType::None)
 					{
 						if (i + 1 >= args.size() || !setValue(item[1], args[i + 1]))
 						{
-							throw std::exception(kParseError.data());
+							throw ParseException();
 						}
 						i++;
 					}
 				}
 				else
 				{
-					throw std::exception(kParseError.data());
+					throw ParseException();
 				}
 			}
 			else
@@ -172,6 +183,7 @@ namespace cmd {
 		{
 			return parse_pos_value[index];
 		}
+		return std::string();
 	}
 	std::string parser::useage() const
 	{

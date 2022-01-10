@@ -19,18 +19,15 @@ namespace nekofs_tool {
 		{
 			cp.parse(args);
 		}
-		catch (const std::exception& e)
+		catch (const cmd::ParseException&)
 		{
-			if (e.what() == cmd::kParseError)
-			{
-				std::cerr << cp.useage() << std::endl;
-				std::exit(-1);
-			}
-			else if (e.what() == cmd::kHelpError)
-			{
-				std::cout << cp.useage() << std::endl;
-				std::exit(0);
-			}
+			std::cerr << cp.useage() << std::endl;
+			std::exit(-1);
+		}
+		catch (const cmd::HelpException&)
+		{
+			std::cout << cp.useage() << std::endl;
+			std::exit(0);
 		}
 		std::string verfile = cp.getString("verfile");
 		std::string path = cp.getPos(0);
