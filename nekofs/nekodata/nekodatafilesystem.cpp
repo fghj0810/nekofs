@@ -144,6 +144,21 @@ namespace nekofs {
 		}
 		return nullptr;
 	}
+	bool NekodataFileSystem::verify()
+	{
+		for (const auto& item : rawFiles_)
+		{
+			if (item.second.second.getOriginalSize() > 0)
+			{
+				auto file = openFileInternal(item.first);
+				if (!file || !verifySHA256(file->openRawIStream(), item.second.second.getSHA256()))
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	int64_t NekodataFileSystem::getVolumeSzie() const
 	{
 		return volumeSize_;

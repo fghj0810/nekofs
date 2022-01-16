@@ -1,6 +1,7 @@
 ﻿#include "typedef.h"
 #include "env.h"
 #include "utils.h"
+#include "sha256.h"
 
 #include <mutex>
 
@@ -105,6 +106,31 @@ namespace nekofs {
 			str[7 + i * 8] = kh[(sha256[i] & 0x0000000F) >> 0];
 		}
 		return str;
+	}
+
+	bool verifySHA256(std::shared_ptr<IStream> is, const std::array<uint32_t, 8> sha256)
+	{
+		if (is)
+		{
+			nekofs::sha256sum hash;
+			auto buffer = env::getInstance().newBufferBlockSize();
+			const int32_t buffer_length = static_cast<int32_t>(buffer->size());
+			int32_t actualRead = 0;
+			do
+			{
+				actualRead = istream_read(is, buffer->data(), buffer_length);
+				if (actualRead > 0)
+				{
+					hash.update(buffer->data(), actualRead);
+				}
+			} while (actualRead == buffer_length);
+			if (actualRead >= 0)
+			{
+				hash.final();
+				return sha256 == hash.readHash();
+			}
+		}
+		return false;
 	}
 }
 

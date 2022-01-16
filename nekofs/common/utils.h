@@ -112,4 +112,6 @@ namespace nekofs {
 	{
 		return !endstr.empty() && str.size() > endstr.size() && str.rfind(endstr) == str.size() - endstr.size();
 	}
+
+	bool verifySHA256(std::shared_ptr<IStream> is, const std::array<uint32_t, 8> sha256);
 }

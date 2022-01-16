@@ -26,6 +26,13 @@ namespace nekofs::tools {
 			return false;
 		}
 		auto fs = NekodataFileSystem::createFromNative(filepath);
+		nekofs::loginfo(u8"verify nekodata ...");
+		if (!fs || !fs->verify())
+		{
+			nekofs::logerr(u8"verify nekodata ... failed");
+			return false;
+		}
+		nekofs::loginfo(u8"verify nekodata ... ok");
 		auto allfiles = fs->getAllFiles(u8"");
 		auto buffer = env::getInstance().newBuffer4M();
 		for (size_t i = 0; i < allfiles.size(); i++)

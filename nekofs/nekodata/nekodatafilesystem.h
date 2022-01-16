@@ -35,6 +35,7 @@ namespace nekofs {
 
 	public:
 		static std::shared_ptr<NekodataFileSystem> createFromNative(const std::string& filepath);
+		bool verify();
 		int64_t getVolumeSzie() const;
 		int64_t getVolumeDataSzie() const;
 

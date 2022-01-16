@@ -50,7 +50,7 @@ int main()
 	}
 	nekofs_overlay_RefreshFileList(overlayfs);
 	char* allfilesjson = nullptr;
-	auto jsonsize = nekofs_layer_GetAllFiles(overlayfs, u8"", &allfilesjson);
+	auto jsonsize = nekofs_filesystem_GetAllFiles(overlayfs, u8"", &allfilesjson);
 	std::string allfiles(allfilesjson, jsonsize);
 	if (jsonsize > 0)
 	{

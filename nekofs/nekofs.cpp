@@ -9,6 +9,7 @@
 #include "native_posix/nativefilesystem.h"
 #endif
 #include "layer/overlayfilesystem.h"
+#include "nekodata/nekodatafilesystem.h"
 
 #include <cstring>
 #include <algorithm>
@@ -22,7 +23,7 @@ std::mutex g_mtx_istreams_;
 std::unordered_map<NekoFSHandle, std::shared_ptr<nekofs::IStream>> g_istreams_;
 std::mutex g_mtx_ostreams_;
 std::unordered_map<NekoFSHandle, std::shared_ptr<nekofs::OStream>> g_ostreams_;
-std::mutex g_mtx_layerfs_;
+std::mutex g_mtx_fs_;
 std::unordered_map<NekoFSHandle, std::shared_ptr<nekofs::FileSystem>> g_filesystems_;
 
 static inline std::string __normalrootpath(const char* u8path)
@@ -444,13 +445,49 @@ NEKOFS_API NekoFSBool nekofs_sha256_sumistream32(NekoFSHandle isHandle, uint32_t
 	return NEKOFS_FALSE;
 }
 
-NEKOFS_API void nekofs_layer_Close(NekoFSHandle fsHandle)
+NEKOFS_API NekoFSHandle nekofs_nekodata_CreateFromNative(const char* u8filepath)
+{
+	auto path = __normalrootpath(u8filepath);
+	if (path.empty())
+	{
+		return INVALID_NEKOFSHANDLE;
+	}
+	auto nekodatafs = nekofs::NekodataFileSystem::createFromNative(path);
+	if (nekodatafs)
+	{
+		auto handle = nekofs::env::getInstance().genId();
+		std::lock_guard lock(g_mtx_fs_);
+		g_filesystems_[handle] = nekodatafs;
+		return handle;
+	}
+	return INVALID_NEKOFSHANDLE;
+}
+
+NEKOFS_API NekoFSBool nekofs_nekodata_Verify(NekoFSHandle fsHandle)
+{
+	std::shared_ptr<nekofs::NekodataFileSystem> fs;
+	{
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
+		auto it = g_filesystems_.find(fsHandle);
+		if (it != g_filesystems_.end() && it->second->getFSType() == nekofs::FileSystemType::Nekodata)
+		{
+			fs = std::static_pointer_cast<nekofs::NekodataFileSystem>(it->second);
+		}
+	}
+	if (fs && fs->verify())
+	{
+		return NEKOFS_TRUE;
+	}
+	return NEKOFS_FALSE;
+}
+
+NEKOFS_API void nekofs_filesystem_Close(NekoFSHandle fsHandle)
 {
 	if (INVALID_NEKOFSHANDLE == fsHandle)
 	{
 		return;
 	}
-	std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+	std::lock_guard<std::mutex> lock(g_mtx_fs_);
 	auto it = g_filesystems_.find(fsHandle);
 	if (it != g_filesystems_.end())
 	{
@@ -459,7 +496,7 @@ NEKOFS_API void nekofs_layer_Close(NekoFSHandle fsHandle)
 	}
 }
 
-NEKOFS_API NekoFSFileType nekofs_layer_GetFileType(NekoFSHandle fsHandle, const char* u8filepath)
+NEKOFS_API NekoFSFileType nekofs_filesystem_GetFileType(NekoFSHandle fsHandle, const char* u8filepath)
 {
 	auto path = __normalpath(u8filepath);
 	if (path.empty())
@@ -468,7 +505,7 @@ NEKOFS_API NekoFSFileType nekofs_layer_GetFileType(NekoFSHandle fsHandle, const 
 	}
 	std::shared_ptr<nekofs::FileSystem> fs;
 	{
-		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
 		auto it = g_filesystems_.find(fsHandle);
 		if (it != g_filesystems_.end())
 		{
@@ -482,7 +519,7 @@ NEKOFS_API NekoFSFileType nekofs_layer_GetFileType(NekoFSHandle fsHandle, const 
 	return NEKOFS_FT_NONE;
 }
 
-NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const char* u8filepath)
+NEKOFS_API NekoFSHandle nekofs_filesystem_OpenIStream(NekoFSHandle fsHandle, const char* u8filepath)
 {
 	auto path = __normalpath(u8filepath);
 	if (path.empty())
@@ -491,7 +528,7 @@ NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const ch
 	}
 	std::shared_ptr<nekofs::FileSystem> fs;
 	{
-		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
 		auto it = g_filesystems_.find(fsHandle);
 		if (it != g_filesystems_.end())
 		{
@@ -512,7 +549,7 @@ NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const ch
 	return handle;
 }
 
-NEKOFS_API int32_t nekofs_layer_GetAllFiles(NekoFSHandle fsHandle, const char* u8dirpath, char** u8jsonPtr)
+NEKOFS_API int32_t nekofs_filesystem_GetAllFiles(NekoFSHandle fsHandle, const char* u8dirpath, char** u8jsonPtr)
 {
 	*u8jsonPtr = nullptr;
 	auto path = __normalpath(u8dirpath);
@@ -522,7 +559,7 @@ NEKOFS_API int32_t nekofs_layer_GetAllFiles(NekoFSHandle fsHandle, const char* u
 	}
 	std::shared_ptr<const nekofs::FileSystem> fs;
 	{
-		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
 		auto it = g_filesystems_.find(fsHandle);
 		if (it != g_filesystems_.end())
 		{
@@ -555,7 +592,7 @@ NEKOFS_API NekoFSHandle nekofs_overlay_Create()
 	NekoFSHandle handle = INVALID_NEKOFSHANDLE;
 	auto overlayfs = std::make_shared<nekofs::OverlayFileSystem>();
 	handle = nekofs::env::getInstance().genId();
-	std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+	std::lock_guard<std::mutex> lock(g_mtx_fs_);
 	g_filesystems_[handle] = overlayfs;
 	return handle;
 }
@@ -565,7 +602,7 @@ NEKOFS_API int32_t nekofs_overlay_GetVersion(NekoFSHandle fsHandle, char** u8jso
 	*u8jsonPtr = nullptr;
 	std::shared_ptr<const nekofs::OverlayFileSystem> fs;
 	{
-		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
 		auto it = g_filesystems_.find(fsHandle);
 		if (it != g_filesystems_.end())
 		{
@@ -604,7 +641,7 @@ NEKOFS_API int32_t nekofs_overlay_GetFileURI(NekoFSHandle fsHandle, const char* 
 	}
 	std::shared_ptr<const nekofs::OverlayFileSystem> fs;
 	{
-		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
 		auto it = g_filesystems_.find(fsHandle);
 		if (it != g_filesystems_.end())
 		{
@@ -635,7 +672,7 @@ NEKOFS_API NekoFSBool nekofs_overlay_AddNaitvelayer(NekoFSHandle fsHandle, const
 	}
 	std::shared_ptr<nekofs::OverlayFileSystem> fs;
 	{
-		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
 		auto it = g_filesystems_.find(fsHandle);
 		if (it != g_filesystems_.end())
 		{
@@ -656,7 +693,7 @@ NEKOFS_API void nekofs_overlay_RefreshFileList(NekoFSHandle fsHandle)
 {
 	std::shared_ptr<nekofs::OverlayFileSystem> fs;
 	{
-		std::lock_guard<std::mutex> lock(g_mtx_layerfs_);
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
 		auto it = g_filesystems_.find(fsHandle);
 		if (it != g_filesystems_.end())
 		{

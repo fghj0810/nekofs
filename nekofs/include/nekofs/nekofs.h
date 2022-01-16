@@ -37,11 +37,13 @@ extern "C" {
 	NEKOFS_API int64_t nekofs_ostream_GetLength(NekoFSHandle oshandle);
 
 	NEKOFS_API NekoFSBool nekofs_sha256_sumistream32(NekoFSHandle isHandle, uint32_t result[8]);
+	NEKOFS_API NekoFSHandle nekofs_nekodata_CreateFromNative(const char* u8filepath);
+	NEKOFS_API NekoFSBool nekofs_nekodata_Verify(NekoFSHandle fsHandle);
 
-	NEKOFS_API void nekofs_layer_Close(NekoFSHandle fsHandle);
-	NEKOFS_API NekoFSFileType nekofs_layer_GetFileType(NekoFSHandle fsHandle, const char* u8filepath);
-	NEKOFS_API NekoFSHandle nekofs_layer_OpenIStream(NekoFSHandle fsHandle, const char* u8filepath);
-	NEKOFS_API int32_t nekofs_layer_GetAllFiles(NekoFSHandle fsHandle, const char* u8dirpath, char** u8jsonPtr);
+	NEKOFS_API void nekofs_filesystem_Close(NekoFSHandle fsHandle);
+	NEKOFS_API NekoFSFileType nekofs_filesystem_GetFileType(NekoFSHandle fsHandle, const char* u8filepath);
+	NEKOFS_API NekoFSHandle nekofs_filesystem_OpenIStream(NekoFSHandle fsHandle, const char* u8filepath);
+	NEKOFS_API int32_t nekofs_filesystem_GetAllFiles(NekoFSHandle fsHandle, const char* u8dirpath, char** u8jsonPtr);
 
 	NEKOFS_API NekoFSHandle nekofs_overlay_Create();
 	NEKOFS_API int32_t nekofs_overlay_GetVersion(NekoFSHandle fsHandle, char** u8jsonPtr);
