@@ -7,6 +7,17 @@
 #include <cstring>
 #include <string>
 #include <iostream>
+#include <string_view>
+
+inline bool str_EndWith(const std::string& str, const std::string& endstr)
+{
+	return !endstr.empty() && str.size() > endstr.size() && str.rfind(endstr) == str.size() - endstr.size();
+}
+
+inline bool str_EndWith(const std::string& str, const std::string_view& endstr)
+{
+	return !endstr.empty() && str.size() > endstr.size() && str.rfind(endstr) == str.size() - endstr.size();
+}
 
 inline std::string get_utf8_str(const std::string& str)
 {

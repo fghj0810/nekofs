@@ -12,7 +12,7 @@
 #include <sstream>
 
 namespace nekofs::tools {
-	bool Pack::exec(const std::string& dirpath, const std::string& outpath)
+	bool Pack::exec(const std::string& dirpath, const std::string& outpath, int64_t volumeSize)
 	{
 		auto nativefs = env::getInstance().getNativeFileSystem();
 		if (auto ft = nativefs->getFileType(dirpath); ft != nekofs::FileType::Directory)
@@ -26,7 +26,7 @@ namespace nekofs::tools {
 			return false;
 		}
 		auto allfiles = nativefs->getAllFiles(dirpath);
-		auto archiver = std::make_shared<NekodataNativeArchiver>(outpath);
+		auto archiver = std::make_shared<NekodataNativeArchiver>(outpath, volumeSize);
 		for (const auto& item : allfiles)
 		{
 			archiver->addFile(item, nativefs, dirpath + nekofs_PathSeparator + item);

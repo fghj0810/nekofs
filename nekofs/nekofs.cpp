@@ -728,8 +728,12 @@ NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path, const char* u8ver
 	}
 	return nekofs::tools::PrePare::exec(path, vpath, offset) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
-NEKOFS_API NekoFSBool nekofs_tools_pack(const char* u8dirpath, const char* u8filepath)
+NEKOFS_API NekoFSBool nekofs_tools_pack(const char* u8dirpath, const char* u8filepath, int64_t volumeSize)
 {
+	if (volumeSize > nekofs_kNekodata_MaxVolumeSize || volumeSize <= 1024)
+	{
+		return NEKOFS_FALSE;
+	}
 	auto dpath = __normalrootpath(u8dirpath);
 	if (dpath.empty())
 	{
@@ -740,7 +744,7 @@ NEKOFS_API NekoFSBool nekofs_tools_pack(const char* u8dirpath, const char* u8fil
 	{
 		return NEKOFS_FALSE;
 	}
-	return nekofs::tools::Pack::exec(dpath, fpath) ? NEKOFS_TRUE : NEKOFS_FALSE;
+	return nekofs::tools::Pack::exec(dpath, fpath, volumeSize) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
 NEKOFS_API NekoFSBool nekofs_tools_unpack(const char* u8filepath, const char* u8dirpath)
 {
