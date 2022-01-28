@@ -48,12 +48,12 @@ namespace nekofs_tool {
 			{
 				if (std::from_chars(&vsize[0], &vsize[vsize.size() - 2], volumeSize, 10).ptr != &vsize[vsize.size() - 2])
 				{
-					std::cerr << "ovolumesize error" << vsize << std::endl;
+					std::cerr << "volumesize error" << vsize << std::endl;
 					return -1;
 				}
 				if (volumeSize <= 0 || volumeSize > 1)
 				{
-					std::cerr << "ovolumesize error" << vsize << std::endl;
+					std::cerr << "volumesize error" << vsize << std::endl;
 					return -1;
 				}
 				volumeSize <<= 30;
@@ -62,12 +62,12 @@ namespace nekofs_tool {
 			{
 				if (std::from_chars(&vsize[0], &vsize[vsize.size() - 2], volumeSize, 10).ptr != &vsize[vsize.size() - 2])
 				{
-					std::cerr << "ovolumesize error" << vsize << std::endl;
+					std::cerr << "volumesize error" << vsize << std::endl;
 					return -1;
 				}
 				if (volumeSize <= 0 || volumeSize > (1 << 10))
 				{
-					std::cerr << "ovolumesize error" << vsize << std::endl;
+					std::cerr << "volumesize error" << vsize << std::endl;
 					return -1;
 				}
 				volumeSize <<= 20;
@@ -76,12 +76,12 @@ namespace nekofs_tool {
 			{
 				if (std::from_chars(&vsize[0], &vsize[vsize.size() - 2], volumeSize, 10).ptr != &vsize[vsize.size() - 2])
 				{
-					std::cerr << "ovolumesize error" << vsize << std::endl;
+					std::cerr << "volumesize error" << vsize << std::endl;
 					return -1;
 				}
 				if (volumeSize <= 0 || volumeSize > (1 << 20))
 				{
-					std::cerr << "ovolumesize error" << vsize << std::endl;
+					std::cerr << "volumesize error" << vsize << std::endl;
 					return -1;
 				}
 				volumeSize <<= 10;
@@ -90,12 +90,12 @@ namespace nekofs_tool {
 			{
 				if (std::from_chars(&vsize[0], &vsize[vsize.size()], volumeSize, 10).ptr != &vsize[vsize.size()])
 				{
-					std::cerr << "ovolumesize error" << vsize << std::endl;
+					std::cerr << "volumesize error" << vsize << std::endl;
 					return -1;
 				}
 				if (volumeSize <= 0 || volumeSize > (1 << 30))
 				{
-					std::cerr << "ovolumesize error" << vsize << std::endl;
+					std::cerr << "volumesize error" << vsize << std::endl;
 					return -1;
 				}
 			}
