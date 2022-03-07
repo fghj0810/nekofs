@@ -13,7 +13,7 @@ namespace nekofs::tools {
 	class Pack final
 	{
 	public:
-		static bool exec(const std::string& dirpath, const std::string& outpath);
+		static bool exec(const std::string& dirpath, const std::string& outpath, int64_t volumeSize);
 	};
 }
 
