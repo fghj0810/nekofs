@@ -60,6 +60,23 @@ namespace nekofs {
 				return std::nullopt;
 			}
 		}
+		// nekodatas
+		{
+			auto deletes = jsondoc->FindMember(nekofs_kLayerFiles_Nekodatas);
+			if (deletes != jsondoc->MemberEnd() && deletes->value.IsArray())
+			{
+				for (auto itr = deletes->value.Begin(); itr != deletes->value.End(); itr++)
+				{
+					std::string filename(itr->GetString(), itr->GetStringLength());
+					lfmeta.nekodatas_.insert(filename);
+				}
+			}
+			else
+			{
+				return std::nullopt;
+			}
+		}
+		// deletes
 		{
 			auto deletes = jsondoc->FindMember(nekofs_kLayerFiles_Deletes);
 			if (deletes != jsondoc->MemberEnd() && !deletes->value.IsNull())
@@ -93,6 +110,42 @@ namespace nekofs {
 				{
 					lfm.setDeleteVersion(item.first, item.second);
 				}
+				for (const auto& item : lfms[i].nekodatas_)
+				{
+					lfm.addNekodata(item);
+				}
+			}
+		}
+		return lfm;
+	}
+	LayerFilesMeta LayerFilesMeta::makediff(const LayerFilesMeta& lfms_earlier, const LayerFilesMeta& lfms_latest, const uint32_t latestVersion)
+	{
+		LayerFilesMeta lfm = lfms_latest;
+		for (const auto& item : lfms_earlier.nekodatas_)
+		{
+			lfm.addNekodata(item);
+		}
+		for (const auto& item : lfms_earlier.files_)
+		{
+			auto meta_latest = lfms_latest.getFileMeta(item.first);
+			if (!meta_latest.has_value())
+			{
+				lfm.setDeleteVersion(item.first, latestVersion);
+			}
+			else if (meta_latest->getSHA256() == item.second.getSHA256() && meta_latest->getSize() == item.second.getSize())
+			{
+				lfm.files_.erase(item.first);
+			}
+			else
+			{
+				lfm.files_[item.first].setVersion(std::max(meta_latest->getVersion(), item.second.getVersion()));
+			}
+		}
+		for (const auto& item : lfms_earlier.deletes_)
+		{
+			if (lfms_latest.files_.find(item.first) != lfms_latest.files_.end())
+			{
+				lfm.deletes_[item.first] = std::max(item.second, lfm.deletes_[item.first]);
 			}
 		}
 		return lfm;
@@ -143,7 +196,15 @@ namespace nekofs {
 			}
 			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerFiles_Files), files, allocator);
 		}
-
+		{
+			// nekodatas
+			JSONValue nekodatas(rapidjson::kArrayType);
+			for (const auto& item : this->nekodatas_)
+			{
+				nekodatas.PushBack(rapidjson::StringRef(item), allocator);
+			}
+			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerFiles_Nekodatas), nekodatas, allocator);
+		}
 		{
 			// deletes
 			JSONValue deletes(rapidjson::kObjectType);
@@ -179,6 +240,14 @@ namespace nekofs {
 	{
 		return files_;
 	}
+	void LayerFilesMeta::addNekodata(const std::string& filename)
+	{
+		nekodatas_.insert(filename);
+	}
+	const std::set<std::string>& LayerFilesMeta::getNekodatas() const
+	{
+		return nekodatas_;
+	}
 	void LayerFilesMeta::setDeleteVersion(const std::string& filename, const uint32_t& version)
 	{
 		auto it = files_.find(filename);
@@ -186,7 +255,11 @@ namespace nekofs {
 		{
 			files_.erase(it);
 		}
-		deletes_[filename] = version;
+		// 设置version为0 代表删除
+		if (version > 0)
+		{
+			deletes_[filename] = version;
+		}
 	}
 	std::optional<uint32_t> LayerFilesMeta::getDeleteVersion(const std::string& filename) const
 	{

@@ -75,7 +75,11 @@ namespace nekofs {
 			return nullptr;
 		}
 		auto nativefs = env::getInstance().getNativeFileSystem();
-		auto is = nativefs->openIStream(filepath);
+		return create(nativefs, filepath);
+	}
+	std::shared_ptr<NekodataFileSystem> NekodataFileSystem::create(std::shared_ptr<FileSystem> fs, const std::string& filepath)
+	{
+		auto is = fs->openIStream(filepath);
 		if (!is || is->getLength() <= 8 + nekofs_kNekodata_VolumeFormatSize || is->seek(-nekofs_kNekodata_FileFooterSize, SeekOrigin::End) != is->getLength() - nekofs_kNekodata_FileFooterSize)
 		{
 			return nullptr;
@@ -105,7 +109,7 @@ namespace nekofs {
 				ss << filepath.substr(0, filepath.size() - nekofs_kNekodata_FileExtension.size());
 				ss << u8"." << i;
 				ss << nekofs_kNekodata_FileExtension;
-				auto is_tmp = nativefs->openIStream(ss.str());
+				auto is_tmp = fs->openIStream(ss.str());
 				if (!is_tmp || is_tmp->getLength() != volumeSize || is_tmp->seek(-nekofs_kNekodata_FileFooterSize, SeekOrigin::End) != is_tmp->getLength() - nekofs_kNekodata_FileFooterSize)
 				{
 					return nullptr;
@@ -123,7 +127,7 @@ namespace nekofs {
 			ss << filepath.substr(0, filepath.size() - nekofs_kNekodata_FileExtension.size());
 			ss << u8"." << totalVolumes - 1;
 			ss << nekofs_kNekodata_FileExtension;
-			auto is_tmp = nativefs->openIStream(ss.str());
+			auto is_tmp = fs->openIStream(ss.str());
 			if (!is_tmp || is_tmp->getLength() > volumeSize || is_tmp->getLength() <= nekofs_kNekodata_VolumeFormatSize || is_tmp->seek(-nekofs_kNekodata_FileFooterSize, SeekOrigin::End) != is_tmp->getLength() - nekofs_kNekodata_FileFooterSize)
 			{
 				return nullptr;

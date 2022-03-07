@@ -91,6 +91,7 @@ constexpr const char* nekofs_kLayerFiles_Files = u8"files";
 constexpr const char* nekofs_kLayerFiles_FilesVersion = u8"version";
 constexpr const char* nekofs_kLayerFiles_FilesSHA256 = u8"sha256";
 constexpr const char* nekofs_kLayerFiles_FilesSize = u8"size";
+constexpr const char* nekofs_kLayerFiles_Nekodatas = u8"nekodatas";
 constexpr const char* nekofs_kLayerFiles_Deletes = u8"deletes";
 
 constexpr const std::string_view nekofs_kNekodata_FileExtension = u8".nekodata";

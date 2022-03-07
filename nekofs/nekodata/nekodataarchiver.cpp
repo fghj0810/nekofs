@@ -100,6 +100,10 @@ namespace nekofs {
 	{
 		archiveFileList_[filepath] = std::make_pair(FileCategory::File, std::make_pair(srcfs, srcfilepath));
 	}
+	void NekodataNativeArchiver::addFile(const std::string& filepath, const void* buffer, uint32_t length)
+	{
+		archiveFileList_[filepath] = std::make_pair(FileCategory::Buffer, std::make_pair(buffer, length));
+	}
 	void NekodataNativeArchiver::addRawFile(const std::string& filepath, std::shared_ptr<IStream> is)
 	{
 		archiveFileList_[filepath] = std::make_pair(FileCategory::RawStream, is);
@@ -266,10 +270,60 @@ namespace nekofs {
 					}
 				}
 			}
+			else if (task.first == FileCategory::Buffer)
+			{
+				sha256sum hash;
+				NekodataFileMeta meta;
+				meta.setBeginPos(os_->getPosition());
+				auto blockCompressBuffer = env::getInstance().newBufferCompressSize();
+				std::unique_ptr<LZ4_streamHC_t, std::function<void(LZ4_streamHC_t*)>> lz4Stream_body((LZ4_streamHC_t*)::malloc(sizeof(LZ4_streamHC_t)), [](LZ4_streamHC_t* p) {::free(p); });
+				LZ4_resetStreamHC(lz4Stream_body.get(), LZ4HC_CLEVEL_MAX);
+				std::pair<const void*, uint32_t> buffer = std::any_cast<std::pair<const void*, uint32_t>>(task.second);
+				meta.setOriginalSize(buffer.second);
+				int64_t remains = buffer.second;
+				const char* blockBuffer = (const char*)buffer.first;
+				while (remains > 0)
+				{
+					int blockSize = (int)std::min(remains, (int64_t)nekofs_kNekoData_LZ4_Buffer_Size);
+					remains -= blockSize;
+					const int cmpBytes = LZ4_compress_HC_continue(lz4Stream_body.get(), blockBuffer, (char*)&(*blockCompressBuffer)[0], blockSize, nekofs_kNekoData_LZ4_Compress_Buffer_Size);
+					if (cmpBytes <= 0)
+					{
+						// error
+						std::stringstream ss;
+						ss << u8"FileCategory::Buffer compress error. filepath = ";
+						ss << taskpath;
+						logerr(ss.str());
+						hasError = true;
+						break;
+					}
+					int32_t actualWrite = ostream_write(os_, blockCompressBuffer->data(), cmpBytes);
+					if (actualWrite != cmpBytes)
+					{
+						std::stringstream ss;
+						ss << u8"FileCategory::Buffer ostream_write error. filepath = ";
+						ss << taskpath;
+						ss << u8", cmpBytes = " << cmpBytes;
+						logerr(ss.str());
+						hasError = true;
+						break;
+					}
+					hash.update(blockCompressBuffer->data(), cmpBytes);
+					meta.addBlock(cmpBytes);
+					blockBuffer += blockSize;
+				}
+				hash.final();
+				meta.setSHA256(hash.readHash());
+				files_[taskpath] = meta;
+				std::lock_guard lock(mtx_archiveFileList_);
+				archiveFileList_.erase(archiveFileList_.cbegin());
+				cond_getTask_.notify_all();
+			}
 			else if (task.first == FileCategory::RawStream)
 			{
 				sha256sum hash;
 				NekodataFileMeta meta;
+				meta.setBeginPos(os_->getPosition());
 				std::shared_ptr<IStream> rawis = std::any_cast<std::shared_ptr<IStream>>(task.second);
 				auto buffer = env::getInstance().newBuffer4M();
 				int32_t actualRead = 0;

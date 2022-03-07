@@ -109,6 +109,8 @@ if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
         tools/pack.h
         tools/unpack.cpp
         tools/unpack.h
+        tools/mkldiff.cpp
+        tools/mkldiff.h
     )
     ADD_DEFINITIONS("-DNEKOFS_TOOLS")
 endif ()

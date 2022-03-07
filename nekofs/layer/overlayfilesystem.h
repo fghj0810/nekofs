@@ -30,6 +30,7 @@ namespace nekofs {
 
 	public:
 		bool addNativeLayer(const std::string& dirpath);
+		bool addNativeLayer(std::shared_ptr<LayerFileSystem> fs);
 		void refreshFileList();
 		std::optional<LayerVersionMeta> getVersion() const;
 		LayerFilesMeta getFiles() const;

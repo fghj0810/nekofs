@@ -11,9 +11,29 @@
 namespace nekofs {
 	std::shared_ptr<LayerFileSystem> LayerFileSystem::createNativeLayer(const std::string& dirpath)
 	{
+		return createLayer(env::getInstance().getNativeFileSystem(), dirpath);
+	}
+	std::shared_ptr<LayerFileSystem> LayerFileSystem::createLayer(std::shared_ptr<FileSystem> fs, const std::string& dirpath)
+	{
 		auto lfs = std::make_shared<LayerFileSystem>();
-		lfs->filesystem_ = env::getInstance().getNativeFileSystem();
-		lfs->currentpath_ = dirpath;
+		if (fs->getFSType() == FileSystemType::Layer)
+		{
+			auto tmpfs = std::static_pointer_cast<LayerFileSystem>(fs);
+			lfs->filesystem_ = tmpfs->filesystem_;
+			if (tmpfs->currentpath_.empty())
+			{
+				lfs->currentpath_ = dirpath;
+			}
+			else
+			{
+				lfs->currentpath_ = tmpfs->currentpath_ + nekofs_PathSeparator + dirpath;
+			}
+		}
+		else
+		{
+			lfs->filesystem_ = fs;
+			lfs->currentpath_ = dirpath;
+		}
 		return lfs;
 	}
 	std::string LayerFileSystem::getFullPath(const std::string& path) const

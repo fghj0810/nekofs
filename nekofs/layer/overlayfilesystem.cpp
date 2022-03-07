@@ -70,6 +70,10 @@ namespace nekofs {
 	bool OverlayFileSystem::addNativeLayer(const std::string& dirpath)
 	{
 		auto fs = LayerFileSystem::createNativeLayer(dirpath);
+		return addNativeLayer(fs);
+	}
+	bool OverlayFileSystem::addNativeLayer(std::shared_ptr<LayerFileSystem> fs)
+	{
 		auto version = LayerVersionMeta::load(fs->openIStream(nekofs_kLayerVersion));
 		auto files = LayerFilesMeta::load(fs->openIStream(nekofs_kLayerFiles));
 		if (!version)
@@ -127,7 +131,6 @@ namespace nekofs {
 				files_.erase(f.first);
 			}
 		}
-
 	}
 	std::optional<LayerVersionMeta> OverlayFileSystem::getVersion() const
 	{

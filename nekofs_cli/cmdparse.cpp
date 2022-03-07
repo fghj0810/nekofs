@@ -353,7 +353,7 @@ namespace cmd {
 				parse_options_value[name] = value;
 				break;
 			case ArgType::Int:
-				if (std::from_chars(&value[0], &value[value.size() - 1], ivalue, 10).ptr != &value[value.size() - 1])
+				if (std::from_chars(&value[0], &value[value.size()], ivalue, 10).ptr != &value[value.size()])
 				{
 					return false;
 				}

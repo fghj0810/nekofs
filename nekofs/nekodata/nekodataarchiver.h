@@ -32,6 +32,7 @@ namespace nekofs {
 		enum class FileCategory
 		{
 			File,
+			Buffer,
 			RawStream,
 			Archiver
 		};
@@ -75,6 +76,7 @@ namespace nekofs {
 		NekodataNativeArchiver(const std::string& archiveFilename, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize);
 		NekodataNativeArchiver(const std::string& archiveFilename, std::shared_ptr<OStream> os, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize);
 		void addFile(const std::string& filepath, std::shared_ptr<FileSystem> srcfs, const std::string& srcfilepath);
+		void addFile(const std::string& filepath, const void* buffer, uint32_t length);
 		void addRawFile(const std::string& filepath, std::shared_ptr<IStream> is);
 		std::shared_ptr<NekodataNativeArchiver> addArchive(const std::string& filepath, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize);
 		bool archive();

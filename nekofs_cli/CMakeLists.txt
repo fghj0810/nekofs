@@ -22,6 +22,8 @@ set (NEKOFS_CLI_SRC
     pack.cpp
     unpack.h
     unpack.cpp
+    mkldiff.h
+    mkldiff.cpp
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS})
