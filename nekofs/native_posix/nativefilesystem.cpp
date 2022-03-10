@@ -119,6 +119,58 @@ namespace nekofs {
 	}
 
 
+	std::vector<std::string> NativeFileSystem::getFiles(const std::string& dirpath) const
+	{
+		std::vector<std::string> result;
+		if (dirpath.empty())
+		{
+			return result;
+		}
+		DIR* d = ::opendir(dirpath.c_str());
+		if (NULL != d)
+		{
+			for (struct dirent* dir = ::readdir(d); NULL != dir; dir = ::readdir(d))
+			{
+				if (::strcmp(dir->d_name, ".") == 0 || ::strcmp(dir->d_name, "..") == 0)
+				{
+					continue;
+				}
+				else if (dir->d_type == DT_REG)
+				{
+					result.push_back(dir->d_name);
+					continue;
+				}
+			}
+			::closedir(d);
+		}
+		return result;
+	}
+	std::vector<std::string> NativeFileSystem::getDirs(const std::string& dirpath) const
+	{
+		std::vector<std::string> result;
+		if (dirpath.empty())
+		{
+			return result;
+		}
+		DIR* d = ::opendir(dirpath.c_str());
+		if (NULL != d)
+		{
+			for (struct dirent* dir = ::readdir(d); NULL != dir; dir = ::readdir(d))
+			{
+				if (::strcmp(dir->d_name, ".") == 0 || ::strcmp(dir->d_name, "..") == 0)
+				{
+					continue;
+				}
+				if (dir->d_type == DT_DIR)
+				{
+					result.push_back(dir->d_name);
+					continue;
+				}
+			}
+			::closedir(d);
+		}
+		return result;
+	}
 	bool NativeFileSystem::createDirectories(const std::string& dirpath)
 	{
 		std::vector<std::string> result;
