@@ -18,7 +18,7 @@ namespace nekofs {
 		bool need = is_ == nullptr || voldataRange.first > (beginPos_ + position_) || voldataRange.second <= (beginPos_ + position_);
 		if (need)
 		{
-			auto index = (beginPos_ + position_) / fs_->getVolumeDataSzie();
+			int64_t index = (beginPos_ + position_) / fs_->getVolumeDataSzie();
 			is_ = fs_->getVolumeIStream(static_cast<size_t>(index));
 			voldataRange.first = index * fs_->getVolumeDataSzie();
 			voldataRange.second = voldataRange.first + is_->getLength() - nekofs_kNekodata_VolumeFormatSize;

@@ -26,23 +26,44 @@ std::unordered_map<NekoFSHandle, std::shared_ptr<nekofs::OStream>> g_ostreams_;
 std::mutex g_mtx_fs_;
 std::unordered_map<NekoFSHandle, std::shared_ptr<nekofs::FileSystem>> g_filesystems_;
 
+
+// 传入 utf8 字符串，返回utf8字符串
 static inline std::string __normalrootpath(const char* u8path)
 {
+#ifdef _WIN32
+	std::filesystem::path p(nekofs::u8_to_u16(u8path));
+#else
 	std::filesystem::path p(u8path);
+#endif
 	if (!p.has_root_path())
 	{
 		return std::string();
 	}
+#ifdef _WIN32
+	return nekofs::u16_to_u8(p.lexically_normal().generic_wstring());
+#else
 	return p.lexically_normal().generic_string();
+#endif
 }
+
+// 传入 utf8 字符串，返回utf8字符串
 static inline std::string __normalpath(const char* u8path)
 {
+#ifdef _WIN32
+	std::filesystem::path p(nekofs::u8_to_u16(u8path));
+#else
 	std::filesystem::path p(u8path);
+#endif
 	if (p.has_root_path())
 	{
 		return std::string();
 	}
+
+#ifdef _WIN32
+	return nekofs::u16_to_u8(p.lexically_normal().generic_wstring());
+#else
 	return p.lexically_normal().generic_string();
+#endif
 }
 static inline bool checkSeekOrigin(const NekoFSOrigin& value)
 {

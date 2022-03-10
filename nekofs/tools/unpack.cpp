@@ -50,7 +50,7 @@ namespace nekofs::tools {
 			{
 				return false;
 			}
-			auto totalLength = os->getLength();
+			int64_t totalLength = os->getLength();
 			int32_t actualRead = 0;
 			int32_t actualWrite = 0;
 			do

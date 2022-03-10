@@ -73,15 +73,15 @@ namespace nekofs {
 			std::mutex mtx_;
 		};
 	public:
-		NekodataNativeArchiver(const std::string& archiveFilename, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize);
-		NekodataNativeArchiver(const std::string& archiveFilename, std::shared_ptr<OStream> os, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize);
+		NekodataNativeArchiver(const std::string& archiveFilename, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize, bool streamMode = false);
 		void addFile(const std::string& filepath, std::shared_ptr<FileSystem> srcfs, const std::string& srcfilepath);
 		void addFile(const std::string& filepath, const void* buffer, uint32_t length);
 		void addRawFile(const std::string& filepath, std::shared_ptr<IStream> is);
-		std::shared_ptr<NekodataNativeArchiver> addArchive(const std::string& filepath, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize);
+		std::shared_ptr<NekodataNativeArchiver> addArchive(const std::string& filepath);
 		bool archive();
 
 	private:
+		bool archive(std::shared_ptr<OStream> os, const std::string& progressInfo);
 		bool archiveFileHeader(std::shared_ptr<OStream> os);
 		bool archiveFiles();
 		bool archiveCentralDirectory();
@@ -98,6 +98,7 @@ namespace nekofs {
 		int64_t volumeSize_ = nekofs_kNekodata_MaxVolumeSize;
 		bool isStreamMode_ = false;
 		std::shared_ptr<OStream> rawOS_;
+		std::string progressInfo_;
 		std::shared_ptr<NekodataOStream> os_;
 		std::vector<std::tuple<std::string, std::shared_ptr<NekodataVolumeOStream>>> volumeOS_;
 		std::map<std::string, std::pair<FileCategory, std::any>> archiveFileList_;

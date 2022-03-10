@@ -357,13 +357,13 @@ namespace nekofs {
 		if (nekodata_readUint64(is, value))
 		{
 			blockNum = static_cast<int64_t>(value);
-			return blockNum > 0;
+			return blockNum >= 0;
 		}
 		return false;
 	}
 	inline bool nekodata_writeBlockNum(std::shared_ptr<OStream> os, const int64_t& blockNum)
 	{
-		if (blockNum > 0)
+		if (blockNum >= 0)
 		{
 			return nekodata_writeUint64(os, static_cast<uint64_t>(blockNum));
 		}

@@ -14,6 +14,9 @@ namespace nekofs::tools {
 	{
 	public:
 		static bool exec(const std::string& genpath, const std::string& versionfile, uint32_t versionOffset);
+
+	private:
+		static bool prepareDir(const std::string& genpath, uint32_t currentVersion);
 	};
 }
 

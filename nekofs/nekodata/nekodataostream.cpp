@@ -23,9 +23,9 @@ namespace nekofs {
 		}
 		else
 		{
-			auto os_begin = os_->getVolDataBeginPos();
-			auto os_pos = os_->getPosition();
-			auto needpos = position_ - os_begin + nekofs_kNekodata_FileHeader.size();
+			int64_t os_begin = os_->getVolDataBeginPos();
+			int64_t os_pos = os_->getPosition();
+			int64_t needpos = position_ - os_begin + nekofs_kNekodata_FileHeaderSize;
 			if (needpos != os_pos && os_->seek(needpos, SeekOrigin::Begin) != needpos)
 			{
 				return -1;
@@ -39,7 +39,7 @@ namespace nekofs {
 		{
 			return 0;
 		}
-		auto readnum = os_->read(buf, size);
+		int32_t readnum = os_->read(buf, size);
 		if (readnum > 0)
 		{
 			position_ += readnum;
@@ -59,9 +59,9 @@ namespace nekofs {
 		}
 		else
 		{
-			auto os_begin = os_->getVolDataBeginPos();
-			auto os_pos = os_->getPosition();
-			auto needpos = position_ - os_begin + nekofs_kNekodata_FileHeader.size();
+			int64_t os_begin = os_->getVolDataBeginPos();
+			int64_t os_pos = os_->getPosition();
+			int64_t needpos = position_ - os_begin + nekofs_kNekodata_FileHeaderSize;
 			if (needpos != os_pos && os_->seek(needpos, SeekOrigin::Begin) != needpos)
 			{
 				return -1;
@@ -75,7 +75,7 @@ namespace nekofs {
 		{
 			return 0;
 		}
-		auto writenum = os_->write(buf, size);
+		int32_t writenum = os_->write(buf, size);
 		if (writenum > 0)
 		{
 			position_ += writenum;
@@ -156,7 +156,7 @@ namespace nekofs {
 	}
 	int64_t NekodataVolumeOStream::getVolDataEndPos_max() const
 	{
-		return voldataBeginPos_ + volumeSize_ - 12 - nekofs_kNekodata_FileHeader.size();
+		return voldataBeginPos_ + volumeSize_ - nekofs_kNekodata_VolumeFormatSize;
 	}
 	bool NekodataVolumeOStream::fill()
 	{
@@ -190,7 +190,7 @@ namespace nekofs {
 		{
 			return 0;
 		}
-		auto readnum = os_->read(buf, size);
+		int32_t readnum = os_->read(buf, size);
 		if (readnum > 0)
 		{
 			position_ += readnum;
@@ -211,7 +211,7 @@ namespace nekofs {
 		{
 			return 0;
 		}
-		auto writenum = os_->write(buf, size);
+		int32_t writenum = os_->write(buf, size);
 		if (writenum > 0)
 		{
 			position_ += writenum;
@@ -250,7 +250,7 @@ namespace nekofs {
 		if (!success)
 		{
 			std::stringstream ss;
-			ss << u8"NekodataOStream::seek error ! offset = ";
+			ss << u8"NekodataVolumeOStream::seek error ! offset = ";
 			ss << offset;
 			ss << u8", origin = ";
 			ss << static_cast<int32_t>(origin);

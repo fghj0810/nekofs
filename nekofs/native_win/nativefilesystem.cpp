@@ -124,6 +124,60 @@ namespace nekofs {
 	}
 
 
+	std::vector<std::string> NativeFileSystem::getFiles(const std::string& dirpath) const
+	{
+		std::vector<std::string> result;
+		if (dirpath.empty())
+		{
+			return result;
+		}
+		WIN32_FIND_DATA find_data{};
+		HANDLE findHandle = FindFirstFile((u8_to_u16(dirpath) + L"/*").c_str(), &find_data);
+		if (INVALID_HANDLE_VALUE != findHandle)
+		{
+			do
+			{
+				if (::wcscmp(find_data.cFileName, L".") == 0 || ::wcscmp(find_data.cFileName, L"..") == 0)
+				{
+					continue;
+				}
+				if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0)
+				{
+					result.push_back(u16_to_u8(find_data.cFileName));
+					continue;
+				}
+			} while (TRUE == FindNextFile(findHandle, &find_data));
+			FindClose(findHandle);
+		}
+		return result;
+	}
+	std::vector<std::string> NativeFileSystem::getDirs(const std::string& dirpath) const
+	{
+		std::vector<std::string> result;
+		if (dirpath.empty())
+		{
+			return result;
+		}
+		WIN32_FIND_DATA find_data{};
+		HANDLE findHandle = FindFirstFile((u8_to_u16(dirpath) + L"/*").c_str(), &find_data);
+		if (INVALID_HANDLE_VALUE != findHandle)
+		{
+			do
+			{
+				if (::wcscmp(find_data.cFileName, L".") == 0 || ::wcscmp(find_data.cFileName, L"..") == 0)
+				{
+					continue;
+				}
+				if ((find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+				{
+					result.push_back(u16_to_u8(find_data.cFileName));
+					continue;
+				}
+			} while (TRUE == FindNextFile(findHandle, &find_data));
+			FindClose(findHandle);
+		}
+		return result;
+	}
 	bool NativeFileSystem::createDirectories(const std::string& dirpath)
 	{
 		std::vector<std::string> result;
@@ -134,7 +188,7 @@ namespace nekofs {
 			auto type = getFileType(curpath);
 			if (type == FileType::None) {
 				result.push_back(curpath);
-				if (std::filesystem::path tmp(curpath); tmp.parent_path() == tmp.root_path())
+				if (std::filesystem::path tmp(u8_to_u16(curpath)); tmp.parent_path() == tmp.root_path())
 				{
 					break;
 				}

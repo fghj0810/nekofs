@@ -62,7 +62,7 @@ namespace nekofs {
 	}
 	void NativeFile::createParentDirectory()
 	{
-		std::filesystem::path p(filepath_);
+		std::filesystem::path p(u8_to_u16(filepath_));
 		if (p.parent_path() == p.root_path())
 		{
 			return;
@@ -246,7 +246,7 @@ namespace nekofs {
 		if (INVALID_HANDLE_VALUE == writeFd_)
 		{
 			createParentDirectory();
-			writeFd_ = CreateFile(u8_to_u16(filepath_).c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+			writeFd_ = CreateFile(u8_to_u16(filepath_).c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 			if (INVALID_HANDLE_VALUE == writeFd_)
 			{
 				auto errmsg = getSysErrMsg();

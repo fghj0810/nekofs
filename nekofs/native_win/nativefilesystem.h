@@ -27,6 +27,8 @@ namespace nekofs {
 		FileSystemType getFSType() const override;
 
 	public:
+		std::vector<std::string> getFiles(const std::string& dirpath) const;
+		std::vector<std::string> getDirs(const std::string& dirpath) const;
 		bool createDirectories(const std::string& dirpath);
 		bool removeDirectories(const std::string& dirpath);
 		bool cleanEmptyDirectories(const std::string& dirpath);

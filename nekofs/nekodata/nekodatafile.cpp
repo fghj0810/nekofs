@@ -27,7 +27,14 @@ namespace nekofs {
 	}
 	std::shared_ptr<IStream> NekodataFile::openRawIStream()
 	{
-		return fs_->openRawIStream(meta_->getBeginPos(), meta_->getCompressedSize());
+		if (meta_->getCompressedSize() > 0)
+		{
+			return fs_->openRawIStream(meta_->getBeginPos(), meta_->getCompressedSize());
+		}
+		else
+		{
+			return fs_->openRawIStream(meta_->getBeginPos(), meta_->getOriginalSize());
+		}
 	}
 	const std::string& NekodataFile::getFilePath() const
 	{
