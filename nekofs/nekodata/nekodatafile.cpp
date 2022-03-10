@@ -57,6 +57,12 @@ namespace nekofs {
 			block = blocks_[index].second.lock();
 			if (!block)
 			{
+				/*
+				* 获取不到，就创建一个。
+				* 两种情况会获取不到：
+				* 1. 从来没有解压过，标记为BlockStatus::None
+				* 2. 曾经解压过，block没有强引用就释放了，标记为BlockStatus::Decompressed
+				*/
 				if (blocks_[index].first != BlockStatus::Error)
 				{
 					blocks_[index].first = BlockStatus::None;
@@ -71,12 +77,14 @@ namespace nekofs {
 			}
 			else
 			{
-				while (blocks_[index].first != BlockStatus::None)
+				// 如果正在解压就等等
+				while (blocks_[index].first == BlockStatus::None)
 				{
 					cond_.wait(lock);
 				}
 				if (blocks_[index].first == BlockStatus::Decompressed)
 				{
+					// 解压成功，返回解压的数据
 					return block;
 				}
 				else
@@ -116,7 +124,7 @@ namespace nekofs {
 			else
 			{
 				blocks_[index].first = BlockStatus::Error;
-				blocks_[index].second.reset();
+				blocks_[index].second.reset(); // 设置解压错误标记，这块数据以后也不用尝试解压了
 				block.reset();
 			}
 		}

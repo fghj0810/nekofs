@@ -2,7 +2,7 @@
 #include "prepare.h"
 #include "pack.h"
 #include "unpack.h"
-#include "mkldiff.h"
+#include "mkdiff.h"
 
 #include <nekofs/nekofs.h>
 #ifdef _WIN32
@@ -18,7 +18,7 @@ constexpr const char* helpmsg = "\n"
 "    prepare\n"
 "    pack\n"
 "    unpack\n"
-"    mkldiff\n"
+"    mkdiff\n"
 "    help\n"
 "\n";
 
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 		}
 		return nekofs_tool::unpack(args);
 	}
-	if (::strcmp("mkldiff", argv[1]) == 0)
+	if (::strcmp("mkdiff", argv[1]) == 0)
 	{
 		std::vector<std::string> args(argc - 1);
 		args[0] = std::string(argv[0]) + " " + std::string(argv[1]);

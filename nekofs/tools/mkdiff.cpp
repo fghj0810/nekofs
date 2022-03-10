@@ -1,4 +1,4 @@
-﻿#include "mkldiff.h"
+﻿#include "mkdiff.h"
 #include "../common/env.h"
 #include "../common/utils.h"
 #include "../common/sha256.h"
@@ -16,7 +16,7 @@
 #include <sstream>
 
 namespace nekofs::tools {
-	bool MKLDiff::exec(const std::string& filepath, const std::string& earlierfile, const std::string& latestfile)
+	bool MKDiff::exec(const std::string& earlierfile, const std::string& latestfile, const std::string& filepath, int64_t volumeSize)
 	{
 		auto nativefs = env::getInstance().getNativeFileSystem();
 		// 检查文件是否已存在，如果存在就报错退出
@@ -48,19 +48,20 @@ namespace nekofs::tools {
 		}
 		auto earlierfs = NekodataFileSystem::createFromNative(earlierfile);
 		auto latestfs = NekodataFileSystem::createFromNative(latestfile);
-		nekofs::loginfo(u8"verify earlierfile ...");
+		nekofs::loginfo(u8"verify " + earlierfile + u8" ...");
 		if (!earlierfs || !earlierfs->verify())
 		{
-			nekofs::logerr(u8"verify earlierfile ... failed");
+			nekofs::logerr(u8"verify " + earlierfile + u8" ... failed");
 			return false;
 		}
-		nekofs::loginfo(u8"verify latestfile ...");
+		nekofs::loginfo(u8"verify " + earlierfile + u8" ... ok");
+		nekofs::loginfo(u8"verify " + latestfile + u8" ...");
 		if (!latestfs || !latestfs->verify())
 		{
-			nekofs::logerr(u8"verify latestfile ... failed");
+			nekofs::logerr(u8"verify " + latestfile + u8" ... failed");
 			return false;
 		}
-		nekofs::loginfo(u8"verify nekodata ... ok");
+		nekofs::loginfo(u8"verify " + latestfile + u8" ... ok");
 
 		auto vm_earlier = nekofs::LayerVersionMeta::load(earlierfs->openIStream(nekofs_kLayerVersion));
 		auto vm_latest = nekofs::LayerVersionMeta::load(latestfs->openIStream(nekofs_kLayerVersion));
@@ -98,20 +99,20 @@ namespace nekofs::tools {
 		// versionmeta和filesmeta都没有问题。准备对比差异。
 		auto lfm = nekofs::LayerFilesMeta::makediff(fm_earlier.value(), fm_latest.value(), vm_latest->getVersion());
 
-		nekofs::JSONStringBuffer jsonStrBuffer_lvm;
-		JSONStringWriter jsonString_lvm(jsonStrBuffer_lvm);
+		auto jsonStrBuffer_lvm = newJsonBuffer();
+		JSONStringWriter jsonString_lvm(*jsonStrBuffer_lvm);
 		JSONDocument d_lvm(rapidjson::kObjectType);
 		lvm.save(&d_lvm, d_lvm.GetAllocator());
 		d_lvm.Accept(jsonString_lvm);
-		nekofs::JSONStringBuffer jsonStrBuffer_lfm;
-		JSONStringWriter jsonString_lfm(jsonStrBuffer_lfm);
+		auto jsonStrBuffer_lfm = newJsonBuffer();
+		JSONStringWriter jsonString_lfm(*jsonStrBuffer_lfm);
 		JSONDocument d_lfm(rapidjson::kObjectType);
 		lfm.save(&d_lfm, d_lfm.GetAllocator());
 		d_lfm.Accept(jsonString_lfm);
 
-		auto archiver = std::make_shared<NekodataNativeArchiver>(filepath);
-		archiver->addFile(nekofs_kLayerVersion, jsonStrBuffer_lvm.GetString(), (uint32_t)jsonStrBuffer_lvm.GetSize());
-		archiver->addFile(nekofs_kLayerFiles, jsonStrBuffer_lfm.GetString(), (uint32_t)jsonStrBuffer_lfm.GetSize());
+		auto archiver = std::make_shared<NekodataNativeArchiver>(filepath, volumeSize);
+		archiver->addFile(nekofs_kLayerVersion, jsonStrBuffer_lvm->GetString(), (uint32_t)jsonStrBuffer_lvm->GetSize());
+		archiver->addFile(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), (uint32_t)jsonStrBuffer_lfm->GetSize());
 		const auto& files = lfm.getFiles();
 		for (const auto& item : files)
 		{
@@ -132,10 +133,10 @@ namespace nekofs::tools {
 
 		return archiver->archive();
 	}
-	bool MKLDiff::diffLayer(std::shared_ptr<NekodataNativeArchiver> archiver, std::shared_ptr<NekodataFileSystem> earlierfs, std::shared_ptr<NekodataFileSystem> latestfs, uint32_t latestVersion)
+	bool MKDiff::diffLayer(std::shared_ptr<NekodataNativeArchiver> archiver, std::shared_ptr<NekodataFileSystem> earlierfs, std::shared_ptr<NekodataFileSystem> latestfs, uint32_t latestVersion)
 	{
-		auto fm_earlier = nekofs::LayerFilesMeta::load(earlierfs->openIStream(nekofs_kLayerFiles));
-		auto fm_latest = nekofs::LayerFilesMeta::load(latestfs->openIStream(nekofs_kLayerFiles));
+		auto fm_earlier = earlierfs ? nekofs::LayerFilesMeta::load(earlierfs->openIStream(nekofs_kLayerFiles)) : std::nullopt;
+		auto fm_latest = latestfs ? nekofs::LayerFilesMeta::load(latestfs->openIStream(nekofs_kLayerFiles)) : std::nullopt;
 		if (!fm_earlier.has_value())
 		{
 			fm_earlier = nekofs::LayerFilesMeta();
@@ -145,13 +146,13 @@ namespace nekofs::tools {
 			fm_latest = nekofs::LayerFilesMeta();
 		}
 		auto lfm = nekofs::LayerFilesMeta::makediff(fm_earlier.value(), fm_latest.value(), latestVersion);
-		nekofs::JSONStringBuffer jsonStrBuffer_lfm;
-		JSONStringWriter jsonString_lfm(jsonStrBuffer_lfm);
+		auto jsonStrBuffer_lfm = newJsonBuffer();
+		JSONStringWriter jsonString_lfm(*jsonStrBuffer_lfm);
 		JSONDocument d_lfm(rapidjson::kObjectType);
 		lfm.save(&d_lfm, d_lfm.GetAllocator());
 		d_lfm.Accept(jsonString_lfm);
 
-		archiver->addFile(nekofs_kLayerVersion, jsonStrBuffer_lfm.GetString(), (uint32_t)jsonStrBuffer_lfm.GetSize());
+		archiver->addFile(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), (uint32_t)jsonStrBuffer_lfm->GetSize());
 
 		const auto& files = lfm.getFiles();
 		for (const auto& item : files)
@@ -171,5 +172,11 @@ namespace nekofs::tools {
 			}
 		}
 		return true;
+	}
+	std::shared_ptr<JSONStringBuffer> MKDiff::newJsonBuffer()
+	{
+		auto buffer = std::make_shared<JSONStringBuffer>();
+		jsonBuffer_.push_back(buffer);
+		return buffer;
 	}
 }

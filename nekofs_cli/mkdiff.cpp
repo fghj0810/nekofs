@@ -1,4 +1,4 @@
-﻿#include "mkldiff.h"
+﻿#include "mkdiff.h"
 #include "common.h"
 #include "cmdparse.h"
 
@@ -10,6 +10,7 @@ namespace nekofs_tool {
 	int mkldiff(const std::vector<std::string>& args)
 	{
 		cmd::parser cp;
+		cp.addString("volumesize", '\0', "volume size (max:3PB)", false, "1MB");
 		cp.addPos("filename(.nekodata)", true);
 		cp.addPos("earlierfile(.nekodata)", true);
 		cp.addPos("latestfile(.nekodata)", true);
@@ -46,6 +47,13 @@ namespace nekofs_tool {
 			std::cerr << "latestfile.empty()   " << latestfile << std::endl;
 			return -1;
 		}
+		auto vsize = cp.getString("volumesize");
+		int64_t volumeSize = getVolumeSizeFromString(vsize);
+		if (volumeSize <= 0)
+		{
+			std::cerr << "volumesize error" << vsize << std::endl;
+			return -1;
+		}
 		filename = std::filesystem::absolute(filename).lexically_normal().generic_string();
 		if (std::filesystem::exists(filename))
 		{
@@ -67,7 +75,7 @@ namespace nekofs_tool {
 			return -1;
 		}
 		latestfile = get_utf8_str(latestfile);
-		if (NEKOFS_FALSE == nekofs_tools_mkldiff(filename.c_str(), earlierfile.c_str(), latestfile.c_str()))
+		if (NEKOFS_FALSE == nekofs_tools_mkldiff(earlierfile.c_str(), latestfile.c_str(), filename.c_str(), volumeSize))
 		{
 			std::cerr << "nekofs_tools_pack error" << std::endl;
 			return -1;

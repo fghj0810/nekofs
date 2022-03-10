@@ -734,7 +734,7 @@ NEKOFS_API void nekofs_overlay_RefreshFileList(NekoFSHandle fsHandle)
 #include "tools/prepare.h"
 #include "tools/pack.h"
 #include "tools/unpack.h"
-#include "tools/mkldiff.h"
+#include "tools/mkdiff.h"
 
 NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path, const char* u8versionpath, uint32_t offset)
 {
@@ -782,8 +782,12 @@ NEKOFS_API NekoFSBool nekofs_tools_unpack(const char* u8filepath, const char* u8
 	}
 	return nekofs::tools::Unpack::exec(fpath, dpath) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
-NEKOFS_API NekoFSBool nekofs_tools_mkldiff(const char* u8filepath, const char* u8earlierfile, const char* u8latestfile)
+NEKOFS_API NekoFSBool nekofs_tools_mkldiff(const char* u8earlierfile, const char* u8latestfile, const char* u8filepath, int64_t volumeSize)
 {
+	if (volumeSize > nekofs_kNekodata_MaxVolumeSize || volumeSize <= 1024)
+	{
+		return NEKOFS_FALSE;
+	}
 	auto filepath = __normalrootpath(u8filepath);
 	if (filepath.empty())
 	{
@@ -799,6 +803,7 @@ NEKOFS_API NekoFSBool nekofs_tools_mkldiff(const char* u8filepath, const char* u
 	{
 		return NEKOFS_FALSE;
 	}
-	return nekofs::tools::MKLDiff::exec(filepath, earlierfile, latestfile) ? NEKOFS_TRUE : NEKOFS_FALSE;
+	nekofs::tools::MKDiff mkdiff;
+	return mkdiff.exec(earlierfile, latestfile, filepath, volumeSize) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
 #endif

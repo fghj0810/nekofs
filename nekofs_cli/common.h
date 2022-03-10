@@ -8,6 +8,7 @@
 #include <string>
 #include <iostream>
 #include <string_view>
+#include <charconv>
 
 inline bool str_EndWith(const std::string& str, const std::string& endstr)
 {
@@ -108,4 +109,81 @@ extern "C" {
 	{
 		nekofs_SetLogDelegate(default_nekofs_log);
 	}
+}
+
+inline int64_t getVolumeSizeFromString(const std::string& vsize)
+{
+	int64_t volumeSize = 0;
+	if (str_EndWith(vsize, std::string("PB")))
+	{
+		if (std::from_chars(&vsize[0], &vsize[vsize.size() - 2], volumeSize, 10).ptr != &vsize[vsize.size() - 2])
+		{
+			return -1;
+		}
+		if (volumeSize <= 0 || volumeSize > (1ll << 1))
+		{
+			return -1;
+		}
+		volumeSize <<= 50;
+	}
+	else if (str_EndWith(vsize, std::string("TB")))
+	{
+		if (std::from_chars(&vsize[0], &vsize[vsize.size() - 2], volumeSize, 10).ptr != &vsize[vsize.size() - 2])
+		{
+			return -1;
+		}
+		if (volumeSize <= 0 || volumeSize > (1ll << 11))
+		{
+			return -1;
+		}
+		volumeSize <<= 40;
+	}
+	else if (str_EndWith(vsize, std::string("GB")))
+	{
+		if (std::from_chars(&vsize[0], &vsize[vsize.size() - 2], volumeSize, 10).ptr != &vsize[vsize.size() - 2])
+		{
+			return -1;
+		}
+		if (volumeSize <= 0 || volumeSize > (1ll << 21))
+		{
+			return -1;
+		}
+		volumeSize <<= 30;
+	}
+	else if (str_EndWith(vsize, std::string("MB")))
+	{
+		if (std::from_chars(&vsize[0], &vsize[vsize.size() - 2], volumeSize, 10).ptr != &vsize[vsize.size() - 2])
+		{
+			return -1;
+		}
+		if (volumeSize <= 0 || volumeSize > (1ll << 31))
+		{
+			return -1;
+		}
+		volumeSize <<= 20;
+	}
+	else if (str_EndWith(vsize, std::string("KB")))
+	{
+		if (std::from_chars(&vsize[0], &vsize[vsize.size() - 2], volumeSize, 10).ptr != &vsize[vsize.size() - 2])
+		{
+			return -1;
+		}
+		if (volumeSize <= 0 || volumeSize > (1ll << 41))
+		{
+			return -1;
+		}
+		volumeSize <<= 10;
+	}
+	else
+	{
+		if (std::from_chars(&vsize[0], &vsize[vsize.size()], volumeSize, 10).ptr != &vsize[vsize.size()])
+		{
+			return -1;
+		}
+		if (volumeSize <= 0 || volumeSize > (1ll << 51))
+		{
+			return -1;
+		}
+	}
+	return volumeSize;
 }

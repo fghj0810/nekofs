@@ -27,13 +27,13 @@ namespace nekofs::tools {
 			return false;
 		}
 		auto fs = NekodataFileSystem::createFromNative(filepath);
-		nekofs::loginfo(u8"verify nekodata ...");
+		nekofs::loginfo(u8"verify " + filepath + u8" ...");
 		if (!fs || !fs->verify())
 		{
-			nekofs::logerr(u8"verify nekodata ... failed");
+			nekofs::logerr(u8"verify " + filepath + u8" ... failed");
 			return false;
 		}
-		nekofs::loginfo(u8"verify nekodata ... ok");
+		nekofs::loginfo(u8"verify " + filepath + u8" ... ok");
 		auto lfm = nekofs::LayerFilesMeta::load(fs->openIStream(nekofs_kLayerFiles));
 		if (lfm.has_value())
 		{
