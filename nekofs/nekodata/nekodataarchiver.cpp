@@ -91,7 +91,7 @@ namespace nekofs {
 		fileInfo.length = srcfs->getSize(srcfilepath);
 		archiveFileList_[filepath] = std::make_pair(FileCategory::File, fileInfo);
 	}
-	void NekodataNativeArchiver::addFile(const std::string& filepath, const void* buffer, uint32_t length)
+	void NekodataNativeArchiver::addBuffer(const std::string& filepath, const void* buffer, uint32_t length)
 	{
 		ArchiveInfo_Buffer bufferInfo;
 		bufferInfo.buffer = buffer;
@@ -308,7 +308,6 @@ namespace nekofs {
 				meta.setBeginPos(os_->getPosition());
 				auto blockCompressBuffer = env::getInstance().newBufferCompressSize();
 				std::unique_ptr<LZ4_streamHC_t, std::function<void(LZ4_streamHC_t*)>> lz4Stream_body((LZ4_streamHC_t*)::malloc(sizeof(LZ4_streamHC_t)), [](LZ4_streamHC_t* p) {::free(p); });
-				LZ4_resetStreamHC(lz4Stream_body.get(), LZ4HC_CLEVEL_MAX);
 				const ArchiveInfo_Buffer& buffer = std::any_cast<const ArchiveInfo_Buffer&>(task->second);
 				meta.setOriginalSize(buffer.length);
 				int64_t remains = buffer.length;
@@ -317,6 +316,7 @@ namespace nekofs {
 				{
 					int blockSize = (int)std::min(remains, (int64_t)nekofs_kNekoData_LZ4_Buffer_Size);
 					remains -= blockSize;
+					LZ4_resetStreamHC(lz4Stream_body.get(), LZ4HC_CLEVEL_MAX);
 					const int cmpBytes = LZ4_compress_HC_continue(lz4Stream_body.get(), blockBuffer, (char*)&(*blockCompressBuffer)[0], blockSize, nekofs_kNekoData_LZ4_Compress_Buffer_Size);
 					if (cmpBytes <= 0)
 					{

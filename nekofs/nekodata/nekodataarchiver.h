@@ -87,7 +87,7 @@ namespace nekofs {
 	public:
 		NekodataNativeArchiver(const std::string& archiveFilename, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize, bool streamMode = false);
 		void addFile(const std::string& filepath, std::shared_ptr<FileSystem> srcfs, const std::string& srcfilepath);
-		void addFile(const std::string& filepath, const void* buffer, uint32_t length);
+		void addBuffer(const std::string& filepath, const void* buffer, uint32_t length);
 		void addRawFile(const std::string& filepath, std::shared_ptr<IStream> is);
 		std::shared_ptr<NekodataNativeArchiver> addArchive(const std::string& filepath);
 		bool archive();

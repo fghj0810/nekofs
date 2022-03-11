@@ -14,7 +14,8 @@ namespace nekofs {
 
 	typedef rapidjson::GenericStringBuffer<rapidjson::UTF8<>>  JSONStringBuffer;
 	typedef rapidjson::GenericStringStream<rapidjson::UTF8<>>  JSONStringStream;
-	typedef rapidjson::Writer<rapidjson::GenericStringBuffer<rapidjson::UTF8<>>, rapidjson::UTF8<>, rapidjson::UTF8<>>  JSONStringWriter;
+	typedef rapidjson::Writer<JSONStringBuffer, rapidjson::UTF8<>, rapidjson::UTF8<>>  JSONStringWriter;
+	typedef rapidjson::PrettyWriter<JSONStringBuffer, rapidjson::UTF8<>, rapidjson::UTF8<>>  JSONStringPrettyWriter;
 	typedef rapidjson::PrettyWriter<JsonOutputStream, rapidjson::UTF8<>, rapidjson::UTF8<>>  JSONFileWriter;
 	typedef rapidjson::GenericDocument<rapidjson::UTF8<>> JSONDocument;
 	typedef rapidjson::GenericValue<rapidjson::UTF8<>> JSONValue;

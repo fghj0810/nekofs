@@ -54,7 +54,11 @@ namespace nekofs::tools {
 		for (const auto& item : dirs)
 		{
 			lfm.addNekodata(item + nekofs_kNekodata_FileExtension.data());
-			prepareDir(genpath + nekofs_PathSeparator + item, lvm->getVersion());
+			if (!prepareDir(genpath + nekofs_PathSeparator + item, lvm->getVersion()))
+			{
+				nekofs::logerr(u8"prepareDir " + genpath + nekofs_PathSeparator + item + u8" faild!");
+				return false;
+			}
 		}
 		for (const auto& item : files)
 		{

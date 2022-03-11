@@ -100,19 +100,19 @@ namespace nekofs::tools {
 		auto lfm = nekofs::LayerFilesMeta::makediff(fm_earlier.value(), fm_latest.value(), vm_latest->getVersion());
 
 		auto jsonStrBuffer_lvm = newJsonBuffer();
-		JSONStringWriter jsonString_lvm(*jsonStrBuffer_lvm);
+		JSONStringPrettyWriter jsonString_lvm(*jsonStrBuffer_lvm);
 		JSONDocument d_lvm(rapidjson::kObjectType);
 		lvm.save(&d_lvm, d_lvm.GetAllocator());
 		d_lvm.Accept(jsonString_lvm);
 		auto jsonStrBuffer_lfm = newJsonBuffer();
-		JSONStringWriter jsonString_lfm(*jsonStrBuffer_lfm);
+		JSONStringPrettyWriter jsonString_lfm(*jsonStrBuffer_lfm);
 		JSONDocument d_lfm(rapidjson::kObjectType);
 		lfm.save(&d_lfm, d_lfm.GetAllocator());
 		d_lfm.Accept(jsonString_lfm);
 
 		auto archiver = std::make_shared<NekodataNativeArchiver>(filepath, volumeSize);
-		archiver->addFile(nekofs_kLayerVersion, jsonStrBuffer_lvm->GetString(), (uint32_t)jsonStrBuffer_lvm->GetSize());
-		archiver->addFile(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), (uint32_t)jsonStrBuffer_lfm->GetSize());
+		archiver->addBuffer(nekofs_kLayerVersion, jsonStrBuffer_lvm->GetString(), (uint32_t)jsonStrBuffer_lvm->GetSize());
+		archiver->addBuffer(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), (uint32_t)jsonStrBuffer_lfm->GetSize());
 		const auto& files = lfm.getFiles();
 		for (const auto& item : files)
 		{
@@ -147,12 +147,12 @@ namespace nekofs::tools {
 		}
 		auto lfm = nekofs::LayerFilesMeta::makediff(fm_earlier.value(), fm_latest.value(), latestVersion);
 		auto jsonStrBuffer_lfm = newJsonBuffer();
-		JSONStringWriter jsonString_lfm(*jsonStrBuffer_lfm);
+		JSONStringPrettyWriter jsonString_lfm(*jsonStrBuffer_lfm);
 		JSONDocument d_lfm(rapidjson::kObjectType);
 		lfm.save(&d_lfm, d_lfm.GetAllocator());
 		d_lfm.Accept(jsonString_lfm);
 
-		archiver->addFile(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), (uint32_t)jsonStrBuffer_lfm->GetSize());
+		archiver->addBuffer(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), (uint32_t)jsonStrBuffer_lfm->GetSize());
 
 		const auto& files = lfm.getFiles();
 		for (const auto& item : files)

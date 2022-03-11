@@ -142,7 +142,7 @@ namespace nekofs {
 		}
 		try
 		{
-			d.Accept(writer);
+			return d.Accept(writer);
 		}
 		catch (const FSException& ex)
 		{

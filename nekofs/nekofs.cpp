@@ -192,7 +192,6 @@ NEKOFS_API int32_t nekofs_native_GetAllFiles(const char* u8dirpath, char** u8jso
 	auto path = __normalrootpath(u8dirpath);
 	if (path.empty())
 	{
-		return 0;
 	}
 	auto allfiles = nekofs::env::getInstance().getNativeFileSystem()->getAllFiles(path);
 	std::sort(allfiles.begin(), allfiles.end());
@@ -207,8 +206,11 @@ NEKOFS_API int32_t nekofs_native_GetAllFiles(const char* u8dirpath, char** u8jso
 		d.PushBack(nekofs::rapidjson::StringRef(item.c_str()), allocator);
 	}
 
-	d.Accept(writer);
-	return copy_and_newString(jsonStrBuffer.GetString(), jsonStrBuffer.GetSize(), u8jsonPtr);
+	if (d.Accept(writer))
+	{
+		return copy_and_newString(jsonStrBuffer.GetString(), jsonStrBuffer.GetSize(), u8jsonPtr);
+	}
+	return 0;
 }
 
 NEKOFS_API void nekofs_istream_Close(NekoFSHandle isHandle)
@@ -602,8 +604,10 @@ NEKOFS_API int32_t nekofs_filesystem_GetAllFiles(NekoFSHandle fsHandle, const ch
 			d.PushBack(nekofs::rapidjson::StringRef(item.c_str()), allocator);
 		}
 
-		d.Accept(writer);
-		return copy_and_newString(jsonStrBuffer.GetString(), jsonStrBuffer.GetSize(), u8jsonPtr);
+		if (d.Accept(writer))
+		{
+			return copy_and_newString(jsonStrBuffer.GetString(), jsonStrBuffer.GetSize(), u8jsonPtr);
+		}
 	}
 	return 0;
 }
@@ -646,8 +650,10 @@ NEKOFS_API int32_t nekofs_overlay_GetVersion(NekoFSHandle fsHandle, char** u8jso
 
 		version->save(&d, d.GetAllocator());
 
-		d.Accept(writer);
-		return copy_and_newString(jsonStrBuffer.GetString(), jsonStrBuffer.GetSize(), u8jsonPtr);
+		if (d.Accept(writer))
+		{
+			return copy_and_newString(jsonStrBuffer.GetString(), jsonStrBuffer.GetSize(), u8jsonPtr);
+		}
 	}
 	return 0;
 }
