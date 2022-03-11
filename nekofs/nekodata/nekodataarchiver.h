@@ -31,17 +31,30 @@ namespace nekofs {
 	public:
 		enum class FileCategory
 		{
+			None,
 			File,
 			Buffer,
 			RawStream,
 			Archiver
 		};
-		class FileTask final
+		struct ArchiveInfo_File final
 		{
-			FileTask(const FileTask&) = delete;
-			FileTask(FileTask&&) = delete;
-			FileTask& operator=(const FileTask&) = delete;
-			FileTask& operator=(FileTask&&) = delete;
+			std::shared_ptr<FileSystem> fs;
+			std::string filepath;
+			int64_t length = 0;
+			int64_t compressIndex = 0;
+		};
+		struct ArchiveInfo_Buffer final
+		{
+			const void* buffer;
+			int64_t length = 0;
+		};
+		class FileBlockTask final
+		{
+			FileBlockTask(const FileBlockTask&) = delete;
+			FileBlockTask(FileBlockTask&&) = delete;
+			FileBlockTask& operator=(const FileBlockTask&) = delete;
+			FileBlockTask& operator=(FileBlockTask&&) = delete;
 		public:
 			enum class Status {
 				None,
@@ -49,7 +62,7 @@ namespace nekofs {
 				Error
 			};
 		public:
-			FileTask(const std::string& path, std::shared_ptr<IStream> is, int64_t index);
+			FileBlockTask(const std::string& path, std::shared_ptr<IStream> is, int64_t index);
 			void setStatus(Status status);
 			Status getStatus();
 			int64_t getIndex() const;
@@ -103,7 +116,7 @@ namespace nekofs {
 		std::map<std::string, std::pair<FileCategory, std::any>> archiveFileList_;
 		std::mutex mtx_archiveFileList_;
 		std::map<std::string, NekodataFileMeta> files_;
-		std::queue<std::shared_ptr<FileTask>> taskList_;
+		std::queue<std::shared_ptr<FileBlockTask>> taskList_;
 		std::mutex mtx_taskList_;
 		std::condition_variable cond_getTask_;
 		std::condition_variable cond_finishTask_;

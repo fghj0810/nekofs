@@ -17,55 +17,55 @@
 #include <filesystem>
 
 namespace nekofs {
-	NekodataNativeArchiver::FileTask::FileTask(const std::string& path, std::shared_ptr<IStream> is, int64_t index)
+	NekodataNativeArchiver::FileBlockTask::FileBlockTask(const std::string& path, std::shared_ptr<IStream> is, int64_t index)
 	{
 		path_ = path;
 		is_ = is;
 		index_ = index;
 	}
-	void NekodataNativeArchiver::FileTask::setStatus(Status status)
+	void NekodataNativeArchiver::FileBlockTask::setStatus(Status status)
 	{
 		std::lock_guard lock(mtx_);
 		status_ = status;
 	}
-	NekodataNativeArchiver::FileTask::Status NekodataNativeArchiver::FileTask::getStatus()
+	NekodataNativeArchiver::FileBlockTask::Status NekodataNativeArchiver::FileBlockTask::getStatus()
 	{
 		std::lock_guard lock(mtx_);
 		return status_;
 	}
-	int64_t NekodataNativeArchiver::FileTask::getIndex() const
+	int64_t NekodataNativeArchiver::FileBlockTask::getIndex() const
 	{
 		return index_;
 	}
-	std::tuple<int64_t, int64_t> NekodataNativeArchiver::FileTask::getRange() const
+	std::tuple<int64_t, int64_t> NekodataNativeArchiver::FileBlockTask::getRange() const
 	{
 		return std::tuple<int64_t, int64_t>(index_ * nekofs_kNekoData_LZ4_Buffer_Size, std::min(is_->getLength(), (index_ + 1) * nekofs_kNekoData_LZ4_Buffer_Size));
 	}
-	const std::string& NekodataNativeArchiver::FileTask::getPath() const
+	const std::string& NekodataNativeArchiver::FileBlockTask::getPath() const
 	{
 		return path_;
 	}
-	std::shared_ptr<IStream> NekodataNativeArchiver::FileTask::getIStream() const
+	std::shared_ptr<IStream> NekodataNativeArchiver::FileBlockTask::getIStream() const
 	{
 		return is_;
 	}
-	void NekodataNativeArchiver::FileTask::setBuffer(std::shared_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>> buffer)
+	void NekodataNativeArchiver::FileBlockTask::setBuffer(std::shared_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>> buffer)
 	{
 		compressBuffer_ = buffer;
 	}
-	std::shared_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>> NekodataNativeArchiver::FileTask::getBuffer() const
+	std::shared_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>> NekodataNativeArchiver::FileBlockTask::getBuffer() const
 	{
 		return compressBuffer_;
 	}
-	void NekodataNativeArchiver::FileTask::setCompressedSize(int32_t size)
+	void NekodataNativeArchiver::FileBlockTask::setCompressedSize(int32_t size)
 	{
 		compressedSize_ = size;
 	}
-	int32_t NekodataNativeArchiver::FileTask::getCompressedSize() const
+	int32_t NekodataNativeArchiver::FileBlockTask::getCompressedSize() const
 	{
 		return compressedSize_;
 	}
-	bool NekodataNativeArchiver::FileTask::isFinalTask() const
+	bool NekodataNativeArchiver::FileBlockTask::isFinalTask() const
 	{
 		return std::get<1>(getRange()) >= is_->getLength();
 	}
@@ -85,11 +85,18 @@ namespace nekofs {
 	}
 	void NekodataNativeArchiver::addFile(const std::string& filepath, std::shared_ptr<FileSystem> srcfs, const std::string& srcfilepath)
 	{
-		archiveFileList_[filepath] = std::make_pair(FileCategory::File, std::make_pair(srcfs, srcfilepath));
+		ArchiveInfo_File fileInfo;
+		fileInfo.fs = srcfs;
+		fileInfo.filepath = srcfilepath;
+		fileInfo.length = srcfs->getSize(srcfilepath);
+		archiveFileList_[filepath] = std::make_pair(FileCategory::File, fileInfo);
 	}
 	void NekodataNativeArchiver::addFile(const std::string& filepath, const void* buffer, uint32_t length)
 	{
-		archiveFileList_[filepath] = std::make_pair(FileCategory::Buffer, std::make_pair(buffer, length));
+		ArchiveInfo_Buffer bufferInfo;
+		bufferInfo.buffer = buffer;
+		bufferInfo.length = length;
+		archiveFileList_[filepath] = std::make_pair(FileCategory::Buffer, bufferInfo);
 	}
 	void NekodataNativeArchiver::addRawFile(const std::string& filepath, std::shared_ptr<IStream> is)
 	{
@@ -141,7 +148,7 @@ namespace nekofs {
 		{
 			std::string pack_progress;
 			std::string taskpath;
-			std::pair<FileCategory, std::any> task;
+			std::pair<FileCategory, std::any>* task = nullptr;
 			{
 				std::lock_guard lock(mtx_archiveFileList_);
 				if (archiveFileList_.empty())
@@ -149,7 +156,7 @@ namespace nekofs {
 					break;
 				}
 				taskpath = archiveFileList_.begin()->first;
-				task = archiveFileList_.begin()->second;
+				task = &archiveFileList_.begin()->second;
 			}
 			{
 				std::stringstream ss;
@@ -168,9 +175,9 @@ namespace nekofs {
 				ss << pack_progress;
 				loginfo(ss.str());
 			}
-			if (task.first == FileCategory::Archiver)
+			if (task->first == FileCategory::Archiver)
 			{
-				std::shared_ptr<NekodataNativeArchiver> archiver = std::any_cast<std::shared_ptr<NekodataNativeArchiver>>(task.second);
+				std::shared_ptr<NekodataNativeArchiver> archiver = std::any_cast<std::shared_ptr<NekodataNativeArchiver>>(task->second);
 				int64_t beginPos = os_->getPosition();
 				if (archiver->archive(os_, pack_progress))
 				{
@@ -222,40 +229,48 @@ namespace nekofs {
 				}
 				cond_getTask_.notify_all();
 			}
-			else if (task.first == FileCategory::File)
+			else if (task->first == FileCategory::File)
 			{
 				sha256sum hash;
 				NekodataFileMeta meta;
 				meta.setBeginPos(os_->getPosition());
-				{
-					std::pair<std::shared_ptr<FileSystem>, std::string> t = std::any_cast<std::pair<std::shared_ptr<FileSystem>, std::string>>(task.second);
-					int64_t size = t.first->getSize(t.second);
-					meta.setOriginalSize(size);
-					hasError = size < 0;
-				}
+				const ArchiveInfo_File& fileInfo = std::any_cast<const ArchiveInfo_File&>(task->second);
+				meta.setOriginalSize(fileInfo.length);
+				hasError = fileInfo.length < 0;
 				while (!hasError)
 				{
-					std::shared_ptr<FileTask> ftask;
+					// 文件大小如果为0，不需要压缩。
+					if (fileInfo.length == 0)
 					{
+						hash.final();
+						meta.setSHA256(hash.readHash());
+						files_[taskpath] = meta;
+						std::lock_guard lock(mtx_archiveFileList_);
+						archiveFileList_.erase(archiveFileList_.cbegin());
+						break;
+					}
+					// 写文件
+					std::shared_ptr<FileBlockTask> ftask;
+					{
+						// 获取FileBlockTask
 						std::unique_lock lock(mtx_taskList_);
 						while (!ftask && !hasError)
 						{
-							while (taskList_.empty() || taskList_.front()->getStatus() == FileTask::Status::None)
+							while (taskList_.empty() || taskList_.front()->getStatus() == FileBlockTask::Status::None)
 							{
 								cond_finishTask_.wait(lock);
 							}
-							if (taskList_.front()->getStatus() == FileTask::Status::Finish)
+							if (taskList_.front()->getStatus() == FileBlockTask::Status::Finish)
 							{
 								ftask = taskList_.front();
 								taskList_.pop();
-								cond_getTask_.notify_one();
 								if (ftask->isFinalTask())
 								{
 									std::lock_guard lock(mtx_archiveFileList_);
 									archiveFileList_.erase(archiveFileList_.cbegin());
 								}
 							}
-							else if (taskList_.front()->getStatus() == FileTask::Status::Error)
+							else if (taskList_.front()->getStatus() == FileBlockTask::Status::Error)
 							{
 								hasError = true;
 							}
@@ -263,10 +278,12 @@ namespace nekofs {
 					}
 					if (ftask)
 					{
+						cond_getTask_.notify_one();
 						hash.update(&(*ftask->getBuffer())[0], ftask->getCompressedSize());
 						int32_t actualWrite = ostream_write(os_, &(*ftask->getBuffer())[0], ftask->getCompressedSize());
 						if (actualWrite != ftask->getCompressedSize())
 						{
+							// 写文件发生错误，中止流程。
 							hasError = true;
 							break;
 						}
@@ -284,7 +301,7 @@ namespace nekofs {
 					}
 				}
 			}
-			else if (task.first == FileCategory::Buffer)
+			else if (task->first == FileCategory::Buffer)
 			{
 				sha256sum hash;
 				NekodataFileMeta meta;
@@ -292,10 +309,10 @@ namespace nekofs {
 				auto blockCompressBuffer = env::getInstance().newBufferCompressSize();
 				std::unique_ptr<LZ4_streamHC_t, std::function<void(LZ4_streamHC_t*)>> lz4Stream_body((LZ4_streamHC_t*)::malloc(sizeof(LZ4_streamHC_t)), [](LZ4_streamHC_t* p) {::free(p); });
 				LZ4_resetStreamHC(lz4Stream_body.get(), LZ4HC_CLEVEL_MAX);
-				std::pair<const void*, uint32_t> buffer = std::any_cast<std::pair<const void*, uint32_t>>(task.second);
-				meta.setOriginalSize(buffer.second);
-				int64_t remains = buffer.second;
-				const char* blockBuffer = (const char*)buffer.first;
+				const ArchiveInfo_Buffer& buffer = std::any_cast<const ArchiveInfo_Buffer&>(task->second);
+				meta.setOriginalSize(buffer.length);
+				int64_t remains = buffer.length;
+				const char* blockBuffer = (const char*)buffer.buffer;
 				while (remains > 0)
 				{
 					int blockSize = (int)std::min(remains, (int64_t)nekofs_kNekoData_LZ4_Buffer_Size);
@@ -333,12 +350,12 @@ namespace nekofs {
 				archiveFileList_.erase(archiveFileList_.cbegin());
 				cond_getTask_.notify_all();
 			}
-			else if (task.first == FileCategory::RawStream)
+			else if (task->first == FileCategory::RawStream)
 			{
 				sha256sum hash;
 				NekodataFileMeta meta;
 				meta.setBeginPos(os_->getPosition());
-				std::shared_ptr<IStream> rawis = std::any_cast<std::shared_ptr<IStream>>(task.second);
+				std::shared_ptr<IStream> rawis = std::any_cast<std::shared_ptr<IStream>>(task->second);
 				auto buffer = env::getInstance().newBuffer4M();
 				int32_t actualRead = 0;
 				int32_t actualWrite = 0;
@@ -481,91 +498,83 @@ namespace nekofs {
 		return std::get<1>(volumeOS_[index]);
 	}
 
+	/*
+	* 压缩文件块的线程。做如下几步操作：
+	* 1. 查询哪个文件需要压缩，并且获取待压缩区间
+	* 2. 根据压缩区间去读取文件，并进行压缩
+	* 3. 标记该文件块已压缩，将压缩后的数据放入队列中
+	*
+	* 如果压缩过程中出现错误，或者没有待压缩的文件，线程自动退出。
+	*/
 	void NekodataNativeArchiver::threadfunction()
 	{
 		bool needExit = false;
 		while (!needExit)
 		{
-			std::shared_ptr<FileTask> ftask;
+			std::shared_ptr<FileBlockTask> ftask;
 			{
 				std::unique_lock lock(mtx_taskList_);
 				needExit = finish;
-				std::pair<std::string, std::pair<FileCategory, std::any>> task;
-				while (task.first.empty() && !needExit)
+				while (!needExit)
 				{
-					if (taskList_.size() > 36 && taskList_.front()->getStatus() != FileTask::Status::Error)
+					if (!taskList_.empty() && taskList_.front()->getStatus() == FileBlockTask::Status::Error)
 					{
-						cond_getTask_.wait(lock);
+						needExit = true;
+						continue;
 					}
-					else if (taskList_.empty())
+					if (taskList_.size() > 36)
+					{
+						/*
+						* 队列已满
+						*/
+						cond_getTask_.wait(lock);
+						needExit = finish;
+						continue;
+					}
+					// 从archiveFile列表获取压缩任务。
+					FileCategory fileCaetgory = FileCategory::None;
 					{
 						std::lock_guard lock(mtx_archiveFileList_);
-						if (archiveFileList_.empty())
-						{
-							needExit = true;
-							continue;
-						}
 						auto it = archiveFileList_.begin();
-						task = std::pair<std::string, std::pair<FileCategory, std::any>>(it->first, it->second);
-					}
-					else
-					{
-						if (taskList_.front()->getStatus() == FileTask::Status::Error)
+						while (it != archiveFileList_.end())
 						{
-							needExit = true;
-							continue;
-						}
-						if (taskList_.back()->isFinalTask())
-						{
-							// get next ftask
-							std::lock_guard lock(mtx_archiveFileList_);
-							if (archiveFileList_.empty())
+							fileCaetgory = it->second.first;
+							if (fileCaetgory != FileCategory::File)
 							{
-								needExit = true;
+								// 暂无文件需要压缩
+								break;
+							}
+							ArchiveInfo_File& fileInfo = std::any_cast<ArchiveInfo_File&>(it->second.second);
+							if (fileInfo.compressIndex >= fileInfo.length)
+							{
+								// 此文件的压缩已全部完成。也可能是文件大小为0，不需要压缩
+								it++;
 								continue;
 							}
 							else
 							{
-								auto it = archiveFileList_.find(taskList_.back()->getPath());
-								it++;
-								if (it != archiveFileList_.end())
-								{
-									task = std::pair<std::string, std::pair<FileCategory, std::any>>(it->first, it->second);
-								}
-								else
-								{
-									needExit = true;
-									continue;
-								}
+								// 查询到压缩任务
+								ftask = std::make_shared<FileBlockTask>(it->first, fileInfo.fs->openIStream(fileInfo.filepath), fileInfo.compressIndex / nekofs_kNekoData_LZ4_Buffer_Size);
+								fileInfo.compressIndex = std::min(fileInfo.length, fileInfo.compressIndex + nekofs_kNekoData_LZ4_Buffer_Size);
+								taskList_.push(ftask);
+								break;
 							}
 						}
-						else
+						if (it == archiveFileList_.end())
 						{
-							std::lock_guard lock(mtx_archiveFileList_);
-							auto it = archiveFileList_.find(taskList_.back()->getPath());
-							task = std::pair<std::string, std::pair<FileCategory, std::any>>(it->first, it->second);
+							// 没有文件需要压缩，线程退出
+							needExit = true;
+							continue;
 						}
 					}
-					if (task.second.first != FileCategory::File || task.first.empty())
+					if (fileCaetgory != FileCategory::File)
 					{
-						task.first.clear();
+						// 暂无文件需要压缩
 						cond_getTask_.wait(lock);
+						needExit = finish;
+						continue;
 					}
-					else
-					{
-						// create filetask
-						std::pair<std::shared_ptr<FileSystem>, std::string> t = std::any_cast<std::pair<std::shared_ptr<FileSystem>, std::string>>(task.second.second);
-						if (taskList_.empty() || taskList_.back()->getPath() != task.first)
-						{
-							ftask = std::make_shared<FileTask>(task.first, t.first->openIStream(t.second), 0);
-						}
-						else
-						{
-							ftask = std::make_shared<FileTask>(task.first, t.first->openIStream(t.second), taskList_.back()->getIndex() + 1);
-						}
-						taskList_.push(ftask);
-					}
-					needExit = finish;
+					break;
 				}
 				if (needExit)
 				{
@@ -589,7 +598,7 @@ namespace nekofs {
 					ss << u8"sream is null. filepath = ";
 					ss << ftask->getPath();
 					logerr(ss.str());
-					ftask->setStatus(FileTask::Status::Error);
+					ftask->setStatus(FileBlockTask::Status::Error);
 					needExit = true;
 					continue;
 				}
@@ -602,7 +611,7 @@ namespace nekofs {
 					ss << u8", seekpos = ";
 					ss << std::get<0>(range);
 					logerr(ss.str());
-					ftask->setStatus(FileTask::Status::Error);
+					ftask->setStatus(FileBlockTask::Status::Error);
 					needExit = true;
 					continue;
 				}
@@ -614,7 +623,7 @@ namespace nekofs {
 					ss << u8"read stream error. filepath = ";
 					ss << ftask->getPath();
 					logerr(ss.str());
-					ftask->setStatus(FileTask::Status::Error);
+					ftask->setStatus(FileBlockTask::Status::Error);
 					needExit = true;
 					continue;
 				}
@@ -626,7 +635,7 @@ namespace nekofs {
 					ss << u8"compress error. filepath = ";
 					ss << ftask->getPath();
 					logerr(ss.str());
-					ftask->setStatus(FileTask::Status::Error);
+					ftask->setStatus(FileBlockTask::Status::Error);
 					needExit = true;
 					continue;
 				}
@@ -636,7 +645,7 @@ namespace nekofs {
 			{
 				ftask->setCompressedSize(0);
 			}
-			ftask->setStatus(FileTask::Status::Finish);
+			ftask->setStatus(FileBlockTask::Status::Finish);
 			cond_finishTask_.notify_one();
 		}
 		//loginfo("thread exit");
