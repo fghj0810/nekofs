@@ -45,7 +45,6 @@ namespace nekofs {
 		public:
 			enum class Status {
 				None,
-				InProgress,
 				Finish,
 				Error
 			};

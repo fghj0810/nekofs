@@ -38,6 +38,9 @@ namespace nekofs {
 		int64_t rawBeginPos_ = 0;
 	};
 
+	/*
+	* nekodata写数据流。不包含分卷的头尾信息。
+	*/
 	class NekodataOStream final : public OStream, public std::enable_shared_from_this<NekodataOStream>
 	{
 		NekodataOStream(const NekodataOStream&) = delete;

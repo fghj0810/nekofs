@@ -18,11 +18,18 @@ namespace nekofs {
 		bool need = is_ == nullptr || voldataRange.first > (beginPos_ + position_) || voldataRange.second <= (beginPos_ + position_);
 		if (need)
 		{
+			// 计算出在哪个分卷
 			int64_t index = (beginPos_ + position_) / fs_->getVolumeDataSzie();
+			// 获取分卷IStream
 			is_ = fs_->getVolumeIStream(static_cast<size_t>(index));
+
+			// 计算分卷包含数据的区间
 			voldataRange.first = index * fs_->getVolumeDataSzie();
 			voldataRange.second = voldataRange.first + is_->getLength() - nekofs_kNekodata_VolumeFormatSize;
+
+			// 将分卷IStream的position移到正确的位置
 			int64_t offset = (beginPos_ + position_) - voldataRange.first;
+			// 当前的offset不好含分卷头长度，需要加上。
 			offset += nekofs_kNekodata_FileHeaderSize;
 			is_->seek(offset, SeekOrigin::Begin);
 		}
@@ -129,7 +136,9 @@ namespace nekofs {
 		bool need = block_ == nullptr || blockBeginPos_ > position_ || blockEndPos_ <= position_;
 		if (need)
 		{
+			// 计算压缩块索引
 			int64_t index = position_ / nekofs_kNekoData_LZ4_Buffer_Size;
+			// 获取解压后的块
 			block_ = file_->getBlock(index);
 			blockBeginPos_ = index * nekofs_kNekoData_LZ4_Buffer_Size;
 			blockEndPos_ = std::min(file_->getFileSize(), nekofs_kNekoData_LZ4_Buffer_Size + blockBeginPos_);

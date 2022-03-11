@@ -84,13 +84,10 @@ namespace nekofs {
 				}
 				if (blocks_[index].first == BlockStatus::Decompressed)
 				{
-					// 解压成功，返回解压的数据
+					// 在别的线程解压成功，返回解压的数据
 					return block;
 				}
-				else
-				{
-					return nullptr;
-				}
+				return nullptr;
 			}
 		}
 		if (needDecompress)

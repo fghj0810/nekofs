@@ -13,6 +13,9 @@ namespace nekofs {
 	class NekodataFileSystem;
 	class NekodataFile;
 
+	/*
+	* nekodata读数据流。不包含分卷的头尾信息。
+	*/
 	class NekodataRawIStream final : public IStream, public std::enable_shared_from_this<NekodataRawIStream>
 	{
 		NekodataRawIStream(const NekodataRawIStream&) = delete;
@@ -33,13 +36,16 @@ namespace nekofs {
 
 	private:
 		std::shared_ptr<NekodataFileSystem> fs_;
-		std::shared_ptr<IStream> is_;
-		std::pair<int64_t, int64_t> voldataRange;
-		int64_t beginPos_ = 0;
-		int64_t length_ = 0;
-		int64_t position_ = 0;
+		std::shared_ptr<IStream> is_; // 分卷IStream
+		std::pair<int64_t, int64_t> voldataRange; // 分卷包含的数据区间
+		int64_t beginPos_ = 0;   // 数据流的起始位置
+		int64_t length_ = 0;     // 数据流的长度
+		int64_t position_ = 0;   // 相对数据流的起始位置的偏移
 	};
 
+	/*
+	* nekodata读数据流。解压后的数据。
+	*/
 	class NekodataIStream final : public IStream, public std::enable_shared_from_this<NekodataIStream>
 	{
 		NekodataIStream(const NekodataIStream&) = delete;

@@ -240,7 +240,7 @@ namespace nekofs {
 						std::unique_lock lock(mtx_taskList_);
 						while (!ftask && !hasError)
 						{
-							while (taskList_.empty())
+							while (taskList_.empty() || taskList_.front()->getStatus() == FileTask::Status::None)
 							{
 								cond_finishTask_.wait(lock);
 							}
