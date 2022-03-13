@@ -137,7 +137,7 @@ namespace nekofs {
 	bool NekodataNativeArchiver::archiveFiles()
 	{
 		const auto filesCount = archiveFileList_.size();
-		const size_t kThreadNum = 12;
+		const size_t kThreadNum = 6;
 		bool hasError = false;
 		std::vector<std::thread> t;
 		for (size_t i = 0; i < kThreadNum; i++)
