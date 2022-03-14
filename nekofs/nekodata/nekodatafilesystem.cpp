@@ -171,6 +171,24 @@ namespace nekofs {
 	{
 		return volumeSize_ - nekofs_kNekodata_VolumeFormatSize;
 	}
+	std::shared_ptr<IStream> NekodataFileSystem::openRawIStream(const std::string& filepath)
+	{
+		auto file = openFileInternal(filepath);
+		if (file)
+		{
+			return file->openRawIStream();
+		}
+		return nullptr;
+	}
+	std::optional<NekodataFileMeta> NekodataFileSystem::getFileMeta(const std::string& filepath) const
+	{
+		auto rit = rawFiles_.find(filepath);
+		if (rit != rawFiles_.end())
+		{
+			return rit->second.second;
+		}
+		return std::nullopt;
+	}
 	bool NekodataFileSystem::init()
 	{
 		if (v_is_.empty())

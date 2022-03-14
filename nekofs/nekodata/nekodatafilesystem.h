@@ -9,6 +9,7 @@
 #include <map>
 #include <vector>
 #include <mutex>
+#include <optional>
 
 namespace nekofs {
 	class NekodataFile;
@@ -39,6 +40,8 @@ namespace nekofs {
 		bool verify();
 		int64_t getVolumeSzie() const;
 		int64_t getVolumeDataSzie() const;
+		std::shared_ptr<IStream> openRawIStream(const std::string& filepath);
+		std::optional<NekodataFileMeta> getFileMeta(const std::string& filepath) const;
 
 	private:
 		bool init();

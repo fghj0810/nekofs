@@ -34,7 +34,7 @@ namespace nekofs {
 			None,
 			File,
 			Buffer,
-			RawStream,
+			RawNekodataStream,
 			Archiver
 		};
 		struct ArchiveInfo_File final
@@ -48,6 +48,11 @@ namespace nekofs {
 		{
 			const void* buffer;
 			int64_t length = 0;
+		};
+		struct ArchiveInfo_RawNekodataStream final
+		{
+			std::shared_ptr<IStream> is;
+			NekodataFileMeta meta;
 		};
 		class FileBlockTask final
 		{
@@ -88,7 +93,7 @@ namespace nekofs {
 		NekodataNativeArchiver(const std::string& archiveFilename, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize, bool streamMode = false);
 		void addFile(const std::string& filepath, std::shared_ptr<FileSystem> srcfs, const std::string& srcfilepath);
 		void addBuffer(const std::string& filepath, const void* buffer, uint32_t length);
-		void addRawFile(const std::string& filepath, std::shared_ptr<IStream> is);
+		void addRawFile(const std::string& filepath, std::shared_ptr<IStream> is, const NekodataFileMeta& meta);
 		std::shared_ptr<NekodataNativeArchiver> addArchive(const std::string& filepath);
 		bool archive();
 

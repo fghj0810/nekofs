@@ -98,9 +98,12 @@ namespace nekofs {
 		bufferInfo.length = length;
 		archiveFileList_[filepath] = std::make_pair(FileCategory::Buffer, bufferInfo);
 	}
-	void NekodataNativeArchiver::addRawFile(const std::string& filepath, std::shared_ptr<IStream> is)
+	void NekodataNativeArchiver::addRawFile(const std::string& filepath, std::shared_ptr<IStream> is, const NekodataFileMeta& meta)
 	{
-		archiveFileList_[filepath] = std::make_pair(FileCategory::RawStream, is);
+		ArchiveInfo_RawNekodataStream streamInfo;
+		streamInfo.is = is;
+		streamInfo.meta = meta;
+		archiveFileList_[filepath] = std::make_pair(FileCategory::RawNekodataStream, streamInfo);
 	}
 	std::shared_ptr<NekodataNativeArchiver> NekodataNativeArchiver::addArchive(const std::string& filepath)
 	{
@@ -303,45 +306,48 @@ namespace nekofs {
 			}
 			else if (task->first == FileCategory::Buffer)
 			{
+				const ArchiveInfo_Buffer& buffer = std::any_cast<const ArchiveInfo_Buffer&>(task->second);
 				sha256sum hash;
 				NekodataFileMeta meta;
 				meta.setBeginPos(os_->getPosition());
-				auto blockCompressBuffer = env::getInstance().newBufferCompressSize();
-				std::unique_ptr<LZ4_streamHC_t, std::function<void(LZ4_streamHC_t*)>> lz4Stream_body((LZ4_streamHC_t*)::malloc(sizeof(LZ4_streamHC_t)), [](LZ4_streamHC_t* p) {::free(p); });
-				const ArchiveInfo_Buffer& buffer = std::any_cast<const ArchiveInfo_Buffer&>(task->second);
-				meta.setOriginalSize(buffer.length);
-				int64_t remains = buffer.length;
-				const char* blockBuffer = (const char*)buffer.buffer;
-				while (remains > 0)
+				if (buffer.length > 0)
 				{
-					int blockSize = (int)std::min(remains, (int64_t)nekofs_kNekoData_LZ4_Buffer_Size);
-					remains -= blockSize;
-					LZ4_resetStreamHC(lz4Stream_body.get(), LZ4HC_CLEVEL_MAX);
-					const int cmpBytes = LZ4_compress_HC_continue(lz4Stream_body.get(), blockBuffer, (char*)&(*blockCompressBuffer)[0], blockSize, nekofs_kNekoData_LZ4_Compress_Buffer_Size);
-					if (cmpBytes <= 0)
+					auto blockCompressBuffer = env::getInstance().newBufferCompressSize();
+					std::unique_ptr<LZ4_streamHC_t, std::function<void(LZ4_streamHC_t*)>> lz4Stream_body((LZ4_streamHC_t*)::malloc(sizeof(LZ4_streamHC_t)), [](LZ4_streamHC_t* p) {::free(p); });
+					meta.setOriginalSize(buffer.length);
+					int64_t remains = buffer.length;
+					const char* blockBuffer = (const char*)buffer.buffer;
+					while (remains > 0)
 					{
-						// error
-						std::stringstream ss;
-						ss << u8"FileCategory::Buffer compress error. filepath = ";
-						ss << taskpath;
-						logerr(ss.str());
-						hasError = true;
-						break;
+						int blockSize = (int)std::min(remains, (int64_t)nekofs_kNekoData_LZ4_Buffer_Size);
+						remains -= blockSize;
+						LZ4_resetStreamHC(lz4Stream_body.get(), LZ4HC_CLEVEL_MAX);
+						const int cmpBytes = LZ4_compress_HC_continue(lz4Stream_body.get(), blockBuffer, (char*)&(*blockCompressBuffer)[0], blockSize, nekofs_kNekoData_LZ4_Compress_Buffer_Size);
+						if (cmpBytes <= 0)
+						{
+							// error
+							std::stringstream ss;
+							ss << u8"FileCategory::Buffer compress error. filepath = ";
+							ss << taskpath;
+							logerr(ss.str());
+							hasError = true;
+							break;
+						}
+						int32_t actualWrite = ostream_write(os_, blockCompressBuffer->data(), cmpBytes);
+						if (actualWrite != cmpBytes)
+						{
+							std::stringstream ss;
+							ss << u8"FileCategory::Buffer ostream_write error. filepath = ";
+							ss << taskpath;
+							ss << u8", cmpBytes = " << cmpBytes;
+							logerr(ss.str());
+							hasError = true;
+							break;
+						}
+						hash.update(blockCompressBuffer->data(), cmpBytes);
+						meta.addBlock(cmpBytes);
+						blockBuffer += blockSize;
 					}
-					int32_t actualWrite = ostream_write(os_, blockCompressBuffer->data(), cmpBytes);
-					if (actualWrite != cmpBytes)
-					{
-						std::stringstream ss;
-						ss << u8"FileCategory::Buffer ostream_write error. filepath = ";
-						ss << taskpath;
-						ss << u8", cmpBytes = " << cmpBytes;
-						logerr(ss.str());
-						hasError = true;
-						break;
-					}
-					hash.update(blockCompressBuffer->data(), cmpBytes);
-					meta.addBlock(cmpBytes);
-					blockBuffer += blockSize;
 				}
 				hash.final();
 				meta.setSHA256(hash.readHash());
@@ -350,40 +356,52 @@ namespace nekofs {
 				archiveFileList_.erase(archiveFileList_.cbegin());
 				cond_getTask_.notify_all();
 			}
-			else if (task->first == FileCategory::RawStream)
+			else if (task->first == FileCategory::RawNekodataStream)
 			{
-				sha256sum hash;
-				NekodataFileMeta meta;
-				meta.setBeginPos(os_->getPosition());
-				std::shared_ptr<IStream> rawis = std::any_cast<std::shared_ptr<IStream>>(task->second);
-				auto buffer = env::getInstance().newBuffer4M();
-				int32_t actualRead = 0;
-				int32_t actualWrite = 0;
-				do
+				ArchiveInfo_RawNekodataStream& streamInfo = std::any_cast<ArchiveInfo_RawNekodataStream&>(task->second);
+				streamInfo.meta.setBeginPos(os_->getPosition());
+				if (streamInfo.is->getLength() > 0 && (streamInfo.meta.getCompressedSize() == streamInfo.is->getLength() || streamInfo.meta.getOriginalSize() == streamInfo.is->getLength()))
 				{
-					actualWrite = 0;
-					actualRead = istream_read(rawis, &(*buffer)[0], static_cast<int32_t>(buffer->size()));
-					if (actualRead > 0)
+					auto buffer = env::getInstance().newBuffer4M();
+					int32_t actualRead = 0;
+					int32_t actualWrite = 0;
+					int64_t remains = streamInfo.is->getLength();
+					while (remains > 0)
 					{
-						actualWrite = ostream_write(os_, &(*buffer)[0], actualRead);
-						hash.update(&(*buffer)[0], actualRead);
+						int32_t readSize = static_cast<int32_t>(std::min(remains, static_cast<int64_t>(buffer->size())));
+						actualRead = istream_read(streamInfo.is, &(*buffer)[0], readSize);
+						actualWrite = 0;
+						if (actualRead > 0 && readSize == actualRead)
+						{
+							actualWrite = ostream_write(os_, &(*buffer)[0], actualRead);
+						}
+						if (actualWrite != actualRead)
+						{
+							break;
+						}
+						remains -= readSize;
 					}
-				} while (actualRead > 0 && actualRead == actualWrite);
-				if (actualRead != 0 || actualRead != actualWrite)
-				{
-					// error
-					hasError = true;
-					break;
+					if (remains != 0 || actualRead != actualWrite)
+					{
+						// error
+						logerr(u8"write raw NekodataStream error. filename = " + taskpath);
+						hasError = true;
+						break;
+					}
 				}
 				else
 				{
-					hash.final();
-					meta.setSHA256(hash.readHash());
-					meta.setOriginalSize(rawis->getLength());
-					files_[taskpath] = meta;
-					std::lock_guard lock(mtx_archiveFileList_);
-					archiveFileList_.erase(archiveFileList_.cbegin());
+					if (streamInfo.meta.getCompressedSize() != 0 || streamInfo.meta.getOriginalSize() != 0)
+					{
+						// error
+						logerr(u8"write raw NekodataStream error. invalid meta. filename = " + taskpath);
+						hasError = true;
+						break;
+					}
 				}
+				files_[taskpath] = streamInfo.meta;
+				std::lock_guard lock(mtx_archiveFileList_);
+				archiveFileList_.erase(archiveFileList_.cbegin());
 				cond_getTask_.notify_all();
 			}
 		}

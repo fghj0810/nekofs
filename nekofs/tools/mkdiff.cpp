@@ -116,7 +116,17 @@ namespace nekofs::tools {
 		const auto& files = lfm.getFiles();
 		for (const auto& item : files)
 		{
-			archiver->addFile(item.first, latestfs, item.first);
+			auto meta = latestfs->getFileMeta(item.first);
+			auto is = latestfs->openRawIStream(item.first);
+			if (meta.has_value() && is)
+			{
+				archiver->addRawFile(item.first, is, meta.value());
+			}
+			else
+			{
+				nekofs::logerr(u8"!get nekodata.filemeta failed! file = " + item.first);
+				return false;
+			}
 		}
 		const auto& nekodatas = lfm.getNekodatas();
 		for (const auto& item : nekodatas)
@@ -157,7 +167,17 @@ namespace nekofs::tools {
 		const auto& files = lfm.getFiles();
 		for (const auto& item : files)
 		{
-			archiver->addFile(item.first, latestfs, item.first);
+			auto meta = latestfs->getFileMeta(item.first);
+			auto is = latestfs->openRawIStream(item.first);
+			if (meta.has_value() && is)
+			{
+				archiver->addRawFile(item.first, is, meta.value());
+			}
+			else
+			{
+				nekofs::logerr(u8"diffLayer: get nekodata.filemeta failed! file = " + item.first);
+				return false;
+			}
 		}
 		const auto& nekodatas = lfm.getNekodatas();
 		for (const auto& item : nekodatas)
