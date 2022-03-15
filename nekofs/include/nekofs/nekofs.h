@@ -56,6 +56,8 @@ extern "C" {
 	NEKOFS_API NekoFSBool nekofs_tools_pack(const char* u8dirpath, const char* u8filepath, int64_t volumeSize);
 	NEKOFS_API NekoFSBool nekofs_tools_unpack(const char* u8filepath, const char* u8dirpath);
 	NEKOFS_API NekoFSBool nekofs_tools_mkldiff(const char* u8earlierfile, const char* u8latestfile, const char* u8filepath, int64_t volumeSize);
+	NEKOFS_API NekoFSBool nekofs_tools_mergeToNekodata(const char* u8outpath, int64_t volumeSize, const char** u8filepaths, int32_t filenum, NekoFSBool verify);
+	NEKOFS_API NekoFSBool nekofs_tools_mergeToDir(const char* u8outpath, int64_t volumeSize, const char** u8filepaths, int32_t filenum, NekoFSBool verify);
 #endif // NEKOFS_TOOLS
 
 #ifdef __cplusplus

@@ -88,6 +88,11 @@ set(NEKOFS_NEKODATA
     nekodata/nekodataistream.cpp
 )
 
+set(NEKOFS_UPDATE
+    update/merger.h
+    update/merger.cpp
+)
+
 set(NEKOFS_LZ4
     ../thirdparty/lz4/lib/lz4.h
     ../thirdparty/lz4/lib/lz4.c
@@ -111,6 +116,8 @@ if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
         tools/unpack.h
         tools/mkdiff.cpp
         tools/mkdiff.h
+        tools/merge.cpp
+        tools/merge.h
     )
     ADD_DEFINITIONS("-DNEKOFS_TOOLS")
 endif ()
@@ -119,6 +126,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_NATIVE})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_COMMON})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_LAYER})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_NEKODATA})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS_UPDATE})
 source_group(lz4 FILES ${NEKOFS_LZ4})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${NEKOFS})
 
@@ -128,6 +136,7 @@ if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
         ${NEKOFS_COMMON}
         ${NEKOFS_LAYER}
         ${NEKOFS_NEKODATA}
+        ${NEKOFS_UPDATE}
         ${NEKOFS_LZ4}
         ${NEKOFS}
     )
@@ -137,6 +146,7 @@ else ()
         ${NEKOFS_COMMON}
         ${NEKOFS_LAYER}
         ${NEKOFS_NEKODATA}
+        ${NEKOFS_UPDATE}
         ${NEKOFS_LZ4}
         ${NEKOFS}
     )

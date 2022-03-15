@@ -114,4 +114,6 @@ namespace nekofs {
 	}
 
 	bool verifySHA256(std::shared_ptr<IStream> is, const std::array<uint32_t, 8> sha256);
+
+	bool copyfile(std::shared_ptr<IStream> is, std::shared_ptr<OStream> os);
 }

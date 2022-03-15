@@ -91,7 +91,7 @@ namespace nekofs {
 		fileInfo.length = srcfs->getSize(srcfilepath);
 		archiveFileList_[filepath] = std::make_pair(FileCategory::File, fileInfo);
 	}
-	void NekodataNativeArchiver::addBuffer(const std::string& filepath, const void* buffer, uint32_t length)
+	void NekodataNativeArchiver::addBuffer(const std::string& filepath, const void* buffer, int64_t length)
 	{
 		ArchiveInfo_Buffer bufferInfo;
 		bufferInfo.buffer = buffer;
@@ -111,8 +111,9 @@ namespace nekofs {
 		archiveFileList_[filepath] = std::make_pair<FileCategory, std::any>(FileCategory::Archiver, newArchiver);
 		return newArchiver;
 	}
-	bool NekodataNativeArchiver::archive()
+	bool NekodataNativeArchiver::archive(std::function<void()> completeOneCallback)
 	{
+		completeOneCallback_ = completeOneCallback;
 		if (isStreamMode_)
 		{
 			logerr(u8"can not use stream mode on top-level call!");
@@ -121,16 +122,19 @@ namespace nekofs {
 		os_ = std::make_shared<NekodataOStream>(shared_from_this(), volumeSize_);
 		bool success = archiveFiles() && archiveCentralDirectory() && archiveFileFooters();
 		os_.reset();
+		completeOneCallback_ = nullptr;
 		return success;
 	}
-	bool NekodataNativeArchiver::archive(std::shared_ptr<OStream> os, const std::string& progressInfo)
+	bool NekodataNativeArchiver::archive(std::shared_ptr<OStream> os, const std::string& progressInfo, std::function<void()> completeOneCallback)
 	{
 		progressInfo_ = progressInfo;
+		completeOneCallback_ = completeOneCallback;
 		rawOS_ = os;
 		os_ = std::make_shared<NekodataOStream>(shared_from_this(), volumeSize_);
 		bool success = archiveFiles() && archiveCentralDirectory() && archiveFileFooters();
 		os_.reset();
 		rawOS_.reset();
+		completeOneCallback_ = nullptr;
 		return success;
 	}
 	bool NekodataNativeArchiver::archiveFileHeader(std::shared_ptr<OStream> os)
@@ -182,7 +186,7 @@ namespace nekofs {
 			{
 				std::shared_ptr<NekodataNativeArchiver> archiver = std::any_cast<std::shared_ptr<NekodataNativeArchiver>>(task->second);
 				int64_t beginPos = os_->getPosition();
-				if (archiver->archive(os_, pack_progress))
+				if (archiver->archive(os_, pack_progress, completeOneCallback_))
 				{
 					sha256sum hash;
 					NekodataFileMeta meta;
@@ -211,6 +215,10 @@ namespace nekofs {
 							files_[taskpath] = meta;
 							std::lock_guard lock(mtx_archiveFileList_);
 							archiveFileList_.erase(archiveFileList_.cbegin());
+							if (completeOneCallback_ != nullptr)
+							{
+								completeOneCallback_();
+							}
 						}
 						else
 						{
@@ -250,6 +258,10 @@ namespace nekofs {
 						files_[taskpath] = meta;
 						std::lock_guard lock(mtx_archiveFileList_);
 						archiveFileList_.erase(archiveFileList_.cbegin());
+						if (completeOneCallback_ != nullptr)
+						{
+							completeOneCallback_();
+						}
 						break;
 					}
 					// 写文件
@@ -299,6 +311,10 @@ namespace nekofs {
 							hash.final();
 							meta.setSHA256(hash.readHash());
 							files_[taskpath] = meta;
+							if (completeOneCallback_ != nullptr)
+							{
+								completeOneCallback_();
+							}
 							break;
 						}
 					}
@@ -354,6 +370,10 @@ namespace nekofs {
 				files_[taskpath] = meta;
 				std::lock_guard lock(mtx_archiveFileList_);
 				archiveFileList_.erase(archiveFileList_.cbegin());
+				if (completeOneCallback_ != nullptr)
+				{
+					completeOneCallback_();
+				}
 				cond_getTask_.notify_all();
 			}
 			else if (task->first == FileCategory::RawNekodataStream)
@@ -362,26 +382,7 @@ namespace nekofs {
 				streamInfo.meta.setBeginPos(os_->getPosition());
 				if (streamInfo.is->getLength() > 0 && (streamInfo.meta.getCompressedSize() == streamInfo.is->getLength() || streamInfo.meta.getOriginalSize() == streamInfo.is->getLength()))
 				{
-					auto buffer = env::getInstance().newBuffer4M();
-					int32_t actualRead = 0;
-					int32_t actualWrite = 0;
-					int64_t remains = streamInfo.is->getLength();
-					while (remains > 0)
-					{
-						int32_t readSize = static_cast<int32_t>(std::min(remains, static_cast<int64_t>(buffer->size())));
-						actualRead = istream_read(streamInfo.is, &(*buffer)[0], readSize);
-						actualWrite = 0;
-						if (actualRead > 0 && readSize == actualRead)
-						{
-							actualWrite = ostream_write(os_, &(*buffer)[0], actualRead);
-						}
-						if (actualWrite != actualRead)
-						{
-							break;
-						}
-						remains -= readSize;
-					}
-					if (remains != 0 || actualRead != actualWrite)
+					if (!copyfile(streamInfo.is, os_))
 					{
 						// error
 						logerr(u8"write raw NekodataStream error. filename = " + taskpath);
@@ -402,6 +403,10 @@ namespace nekofs {
 				files_[taskpath] = streamInfo.meta;
 				std::lock_guard lock(mtx_archiveFileList_);
 				archiveFileList_.erase(archiveFileList_.cbegin());
+				if (completeOneCallback_ != nullptr)
+				{
+					completeOneCallback_();
+				}
 				cond_getTask_.notify_all();
 			}
 		}
@@ -527,6 +532,7 @@ namespace nekofs {
 	void NekodataNativeArchiver::threadfunction()
 	{
 		bool needExit = false;
+		std::unique_ptr<LZ4_streamHC_t, std::function<void(LZ4_streamHC_t*)>> lz4Stream_body((LZ4_streamHC_t*)::malloc(sizeof(LZ4_streamHC_t)), [](LZ4_streamHC_t* p) {::free(p); });
 		while (!needExit)
 		{
 			std::shared_ptr<FileBlockTask> ftask;
@@ -602,8 +608,7 @@ namespace nekofs {
 			auto blockBuffer = env::getInstance().newBufferBlockSize();
 			auto blockCompressBuffer = env::getInstance().newBufferCompressSize();
 			ftask->setBuffer(blockCompressBuffer);
-			LZ4_streamHC_t lz4Stream_body;
-			LZ4_resetStreamHC(&lz4Stream_body, LZ4HC_CLEVEL_MAX);
+			LZ4_resetStreamHC(lz4Stream_body.get(), LZ4HC_CLEVEL_MAX);
 			auto range = ftask->getRange();
 			int blockSize = static_cast<int>(std::get<1>(range) - std::get<0>(range));
 			if (blockSize > 0)
@@ -645,7 +650,7 @@ namespace nekofs {
 					needExit = true;
 					continue;
 				}
-				const int cmpBytes = LZ4_compress_HC_continue(&lz4Stream_body, (const char*)&(*blockBuffer)[0], (char*)&(*blockCompressBuffer)[0], blockSize, nekofs_kNekoData_LZ4_Compress_Buffer_Size);
+				const int cmpBytes = LZ4_compress_HC_continue(lz4Stream_body.get(), (const char*)&(*blockBuffer)[0], (char*)&(*blockCompressBuffer)[0], blockSize, nekofs_kNekoData_LZ4_Compress_Buffer_Size);
 				if (cmpBytes <= 0)
 				{
 					// error

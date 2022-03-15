@@ -16,6 +16,7 @@
 #include <optional>
 #include <tuple>
 #include <atomic>
+#include <functional>
 
 namespace nekofs {
 	class NekodataOStream;
@@ -92,13 +93,13 @@ namespace nekofs {
 	public:
 		NekodataNativeArchiver(const std::string& archiveFilename, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize, bool streamMode = false);
 		void addFile(const std::string& filepath, std::shared_ptr<FileSystem> srcfs, const std::string& srcfilepath);
-		void addBuffer(const std::string& filepath, const void* buffer, uint32_t length);
+		void addBuffer(const std::string& filepath, const void* buffer, int64_t length);
 		void addRawFile(const std::string& filepath, std::shared_ptr<IStream> is, const NekodataFileMeta& meta);
 		std::shared_ptr<NekodataNativeArchiver> addArchive(const std::string& filepath);
-		bool archive();
+		bool archive(std::function<void()> completeOneCallback = nullptr);
 
 	private:
-		bool archive(std::shared_ptr<OStream> os, const std::string& progressInfo);
+		bool archive(std::shared_ptr<OStream> os, const std::string& progressInfo, std::function<void()> completeOneCallback = nullptr);
 		bool archiveFileHeader(std::shared_ptr<OStream> os);
 		bool archiveFiles();
 		bool archiveCentralDirectory();
@@ -116,6 +117,7 @@ namespace nekofs {
 		bool isStreamMode_ = false;
 		std::shared_ptr<OStream> rawOS_;
 		std::string progressInfo_;
+		std::function<void ()> completeOneCallback_ = nullptr;
 		std::shared_ptr<NekodataOStream> os_;
 		std::vector<std::tuple<std::string, std::shared_ptr<NekodataVolumeOStream>>> volumeOS_;
 		std::map<std::string, std::pair<FileCategory, std::any>> archiveFileList_;

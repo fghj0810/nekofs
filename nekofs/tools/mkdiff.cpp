@@ -111,8 +111,8 @@ namespace nekofs::tools {
 		d_lfm.Accept(jsonString_lfm);
 
 		auto archiver = std::make_shared<NekodataNativeArchiver>(filepath, volumeSize);
-		archiver->addBuffer(nekofs_kLayerVersion, jsonStrBuffer_lvm->GetString(), (uint32_t)jsonStrBuffer_lvm->GetSize());
-		archiver->addBuffer(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), (uint32_t)jsonStrBuffer_lfm->GetSize());
+		archiver->addBuffer(nekofs_kLayerVersion, jsonStrBuffer_lvm->GetString(), static_cast<int64_t>(jsonStrBuffer_lvm->GetSize()));
+		archiver->addBuffer(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), static_cast<int64_t>(jsonStrBuffer_lfm->GetSize()));
 		const auto& files = lfm.getFiles();
 		for (const auto& item : files)
 		{
@@ -162,7 +162,7 @@ namespace nekofs::tools {
 		lfm.save(&d_lfm, d_lfm.GetAllocator());
 		d_lfm.Accept(jsonString_lfm);
 
-		archiver->addBuffer(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), (uint32_t)jsonStrBuffer_lfm->GetSize());
+		archiver->addBuffer(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), static_cast<int64_t>(jsonStrBuffer_lfm->GetSize()));
 
 		const auto& files = lfm.getFiles();
 		for (const auto& item : files)

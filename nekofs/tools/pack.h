@@ -1,11 +1,9 @@
 ﻿#pragma once
 #include "../common/typedef.h"
-#include "../common/noncopyable.h"
-#include "../common/nonmovable.h"
 
 #include <cstdint>
 #include <memory>
-#include <map>
+
 namespace nekofs {
 	class NekodataNativeArchiver;
 }

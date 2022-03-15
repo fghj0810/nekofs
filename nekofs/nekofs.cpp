@@ -741,6 +741,7 @@ NEKOFS_API void nekofs_overlay_RefreshFileList(NekoFSHandle fsHandle)
 #include "tools/pack.h"
 #include "tools/unpack.h"
 #include "tools/mkdiff.h"
+#include "tools/merge.h"
 
 NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path, const char* u8versionpath, uint32_t offset)
 {
@@ -811,5 +812,59 @@ NEKOFS_API NekoFSBool nekofs_tools_mkldiff(const char* u8earlierfile, const char
 	}
 	nekofs::tools::MKDiff mkdiff;
 	return mkdiff.exec(earlierfile, latestfile, filepath, volumeSize) ? NEKOFS_TRUE : NEKOFS_FALSE;
+}
+NEKOFS_API NekoFSBool nekofs_tools_mergeToNekodata(const char* u8outpath, int64_t volumeSize, const char** u8filepaths, int32_t filenum, NekoFSBool verify)
+{
+	if (volumeSize > nekofs_kNekodata_MaxVolumeSize || volumeSize <= 1024)
+	{
+		return NEKOFS_FALSE;
+	}
+	auto outpath = __normalrootpath(u8outpath);
+	if (outpath.empty())
+	{
+		return NEKOFS_FALSE;
+	}
+	if (filenum <= 0)
+	{
+		return NEKOFS_FALSE;
+	}
+	std::vector<std::string> patchfiles;
+	for (int32_t i = 0; i < filenum; i++)
+	{
+		auto path = __normalrootpath(u8filepaths[i]);
+		if (path.empty())
+		{
+			return NEKOFS_FALSE;
+		}
+		patchfiles.push_back(path);
+	}
+	return nekofs::tools::Merge::execNekodata(outpath, volumeSize, patchfiles, verify == NEKOFS_TRUE) ? NEKOFS_TRUE : NEKOFS_FALSE;
+}
+NEKOFS_API NekoFSBool nekofs_tools_mergeToDir(const char* u8outpath, int64_t volumeSize, const char** u8filepaths, int32_t filenum, NekoFSBool verify)
+{
+	if (volumeSize > nekofs_kNekodata_MaxVolumeSize || volumeSize <= 1024)
+	{
+		return NEKOFS_FALSE;
+	}
+	auto outpath = __normalrootpath(u8outpath);
+	if (outpath.empty())
+	{
+		return NEKOFS_FALSE;
+	}
+	if (filenum <= 0)
+	{
+		return NEKOFS_FALSE;
+	}
+	std::vector<std::string> patchfiles;
+	for (int32_t i = 0; i < filenum; i++)
+	{
+		auto path = __normalrootpath(u8filepaths[i]);
+		if (path.empty())
+		{
+			return NEKOFS_FALSE;
+		}
+		patchfiles.push_back(path);
+	}
+	return nekofs::tools::Merge::execDir(outpath, volumeSize, patchfiles, verify == NEKOFS_TRUE) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
 #endif

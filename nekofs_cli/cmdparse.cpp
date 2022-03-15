@@ -39,6 +39,10 @@ namespace cmd {
 					{
 						throw HelpException();
 					}
+					if (*arg == ArgType::Bool)
+					{
+						throw ParseException();
+					}
 					if (*arg != ArgType::None)
 					{
 						if (!setValue(name, item.substr(pos + 1)))
@@ -58,6 +62,14 @@ namespace cmd {
 					if (*arg == ArgType::Help)
 					{
 						throw HelpException();
+					}
+					if (*arg == ArgType::Bool)
+					{
+						if (!setValue(name, "true"))
+						{
+							throw ParseException();
+						}
+						continue;
 					}
 					if (*arg != ArgType::None)
 					{
@@ -81,6 +93,14 @@ namespace cmd {
 					if (*arg == ArgType::Help)
 					{
 						throw HelpException();
+					}
+					if (*arg == ArgType::Bool)
+					{
+						if (!setValue(item[1], "true"))
+						{
+							throw ParseException();
+						}
+						continue;
 					}
 					if (*arg != ArgType::None)
 					{
@@ -126,6 +146,18 @@ namespace cmd {
 			std::exit(-1);
 		}
 		args_.push_back(std::tuple<std::string, char, std::string, bool, ArgType, ArgValue>(name, shortName, desc, require, ArgType::Int, defaultValue));
+	}
+	void parser::addBool(const std::string& name, const char& shortName, const std::string& desc)
+	{
+		if (shortName != '\0' && hasName(shortName))
+		{
+			std::exit(-1);
+		}
+		if (name.empty() || hasName(name))
+		{
+			std::exit(-1);
+		}
+		args_.push_back(std::tuple<std::string, char, std::string, bool, ArgType, ArgValue>(name, shortName, desc, false, ArgType::Bool, false));
 	}
 	void parser::addPos(const std::string& name, bool require)
 	{
@@ -176,6 +208,23 @@ namespace cmd {
 			return std::get<int>(std::get<5>(*it2));
 		}
 		return 0;
+	}
+	bool parser::getBool(const std::string& name) const
+	{
+		auto it2 = std::find_if(args_.begin(), args_.end(), [name](const auto& rhs)-> bool {
+			return name == std::get<0>(rhs);
+			}
+		);
+		if (it2 != args_.end() && std::get<4>(*it2) == ArgType::Bool)
+		{
+			auto it1 = parse_options_value.find(name);
+			if (it1 != parse_options_value.end())
+			{
+				return std::get<bool>(it1->second);
+			}
+			return std::get<bool>(std::get<5>(*it2));
+		}
+		return false;
 	}
 	std::string parser::getPos(const size_t& index) const
 	{
@@ -253,7 +302,7 @@ namespace cmd {
 				ss << ' ';
 			}
 			ss << std::get<2>(item);
-			if (std::get<4>(item) != ArgType::None && std::get<4>(item) != ArgType::Help)
+			if (std::get<4>(item) != ArgType::None && std::get<4>(item) != ArgType::Help && std::get<4>(item) != ArgType::Bool)
 			{
 				ss << "(";
 				switch (std::get<4>(item))
@@ -358,6 +407,10 @@ namespace cmd {
 					return false;
 				}
 				parse_options_value[name] = ivalue;
+				break;
+			case ArgType::Bool:
+				// 默认是false，所以只可能打开，不可能关闭
+				parse_options_value[name] = true;
 				break;
 			default:
 				break;

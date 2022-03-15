@@ -27,17 +27,20 @@ namespace cmd {
 			None,
 			Help,
 			String,
-			Int
+			Int,
+			Bool
 		};
-		typedef std::variant<int, std::string> ArgValue;
+		typedef std::variant<int, std::string, bool> ArgValue;
 	public:
 		void parse(const std::vector<std::string>& args);
 		void addString(const std::string& name, const char& shortName, const std::string& desc, bool require, const std::string& defaultValue = "");
 		void addInt(const std::string& name, const char& shortName, const std::string& desc, bool require, const int& defaultValue = 0);
+		void addBool(const std::string& name, const char& shortName, const std::string& desc);
 		void addPos(const std::string& name, bool require);
 		void addHelp(const std::string& name = "help", const char& shortName = 'h');
 		std::string getString(const std::string& name) const;
 		int getInt(const std::string& name) const;
+		bool getBool(const std::string& name) const;
 		std::string getPos(const size_t& index) const;
 		std::string useage() const;
 

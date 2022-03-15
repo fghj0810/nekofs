@@ -3,6 +3,7 @@
 #include "pack.h"
 #include "unpack.h"
 #include "mkdiff.h"
+#include "merge.h"
 
 #include <nekofs/nekofs.h>
 #ifdef _WIN32
@@ -19,6 +20,7 @@ constexpr const char* helpmsg = "\n"
 "    pack\n"
 "    unpack\n"
 "    mkdiff\n"
+"    merge\n"
 "    help\n"
 "\n";
 
@@ -69,6 +71,16 @@ int main(int argc, char** argv)
 			args[i - 1] = argv[i];
 		}
 		return nekofs_tool::mkldiff(args);
+	}
+	if (::strcmp("merge", argv[1]) == 0)
+	{
+		std::vector<std::string> args(argc - 1);
+		args[0] = std::string(argv[0]) + " " + std::string(argv[1]);
+		for (int i = 2; i < argc; i++)
+		{
+			args[i - 1] = argv[i];
+		}
+		return nekofs_tool::merge(args);
 	}
 	if (::strcmp("help", argv[1]) == 0)
 	{

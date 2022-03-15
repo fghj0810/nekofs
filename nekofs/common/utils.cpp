@@ -132,5 +132,30 @@ namespace nekofs {
 		}
 		return false;
 	}
+	bool copyfile(std::shared_ptr<IStream> is, std::shared_ptr<OStream> os)
+	{
+		if (is == nullptr || os == nullptr)
+		{
+			return false;
+		}
+		auto buffer = env::getInstance().newBuffer4M();
+		int32_t actualRead = 0;
+		int32_t actualWrite = 0;
+		int32_t buffer_size = static_cast<int32_t>(buffer->size());
+		do
+		{
+			actualWrite = 0;
+			actualRead = istream_read(is, buffer->data(), buffer_size);
+			if (actualRead > 0)
+			{
+				actualWrite = ostream_write(os, buffer->data(), actualRead);
+			}
+		} while (actualRead > 0 && actualRead == buffer_size && actualRead == actualWrite);
+		if (actualRead < 0 || actualRead != actualWrite)
+		{
+			return false;
+		}
+		return true;
+	}
 }
 
