@@ -22,13 +22,13 @@ namespace nekofs {
 	class NekodataOStream;
 	class NekodataVolumeOStream;
 
-	class NekodataNativeArchiver final : public std::enable_shared_from_this<NekodataNativeArchiver>
+	class NekodataArchiver final : public std::enable_shared_from_this<NekodataArchiver>
 	{
 		friend class NekodataOStream;
-		NekodataNativeArchiver(const NekodataNativeArchiver&) = delete;
-		NekodataNativeArchiver(NekodataNativeArchiver&&) = delete;
-		NekodataNativeArchiver& operator=(const NekodataNativeArchiver&) = delete;
-		NekodataNativeArchiver& operator=(NekodataNativeArchiver&&) = delete;
+		NekodataArchiver(const NekodataArchiver&) = delete;
+		NekodataArchiver(NekodataArchiver&&) = delete;
+		NekodataArchiver& operator=(const NekodataArchiver&) = delete;
+		NekodataArchiver& operator=(NekodataArchiver&&) = delete;
 	public:
 		enum class FileCategory
 		{
@@ -91,11 +91,11 @@ namespace nekofs {
 			std::mutex mtx_;
 		};
 	public:
-		NekodataNativeArchiver(const std::string& archiveFilename, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize, bool streamMode = false);
+		NekodataArchiver(const std::string& archiveFilename, int64_t volumeSize = nekofs_kNekodata_DefalutVolumeSize, bool streamMode = false);
 		void addFile(const std::string& filepath, std::shared_ptr<FileSystem> srcfs, const std::string& srcfilepath);
 		void addBuffer(const std::string& filepath, const void* buffer, int64_t length);
 		void addRawFile(const std::string& filepath, std::shared_ptr<IStream> is, const NekodataFileMeta& meta);
-		std::shared_ptr<NekodataNativeArchiver> addArchive(const std::string& filepath);
+		std::shared_ptr<NekodataArchiver> addArchive(const std::string& filepath);
 		bool archive(std::function<void()> completeOneCallback = nullptr);
 
 	private:

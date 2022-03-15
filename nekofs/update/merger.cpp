@@ -107,7 +107,7 @@ namespace nekofs {
 		const auto& allnekodatas = lfm->getNekodatas();
 		for (const auto& nekodata : allnekodatas)
 		{
-			auto archiver = std::make_shared<NekodataNativeArchiver>(outdir + nekofs_PathSeparator + nekodata, volumeSize);
+			auto archiver = std::make_shared<NekodataArchiver>(outdir + nekofs_PathSeparator + nekodata, volumeSize);
 			std::vector<std::shared_ptr<FileSystem>> fslist_nekodata;
 			for (auto fs : fslist)
 			{
@@ -136,7 +136,7 @@ namespace nekofs {
 		addComplete();
 		return true;
 	}
-	bool Merger::exec(std::shared_ptr<NekodataNativeArchiver> archiver)
+	bool Merger::exec(std::shared_ptr<NekodataArchiver> archiver)
 	{
 		std::vector<std::shared_ptr<FileSystem>> fslist;
 		for (auto& item : patchfs_)
@@ -206,7 +206,7 @@ namespace nekofs {
 		}
 		return true;
 	}
-	void Merger::exec(std::shared_ptr<NekodataNativeArchiver> archiver, const std::vector<std::shared_ptr<FileSystem>>& fslist)
+	void Merger::exec(std::shared_ptr<NekodataArchiver> archiver, const std::vector<std::shared_ptr<FileSystem>>& fslist)
 	{
 		auto lfm = getLayerFilesMeta(fslist);
 		const auto& allfiles = lfm->getFiles();

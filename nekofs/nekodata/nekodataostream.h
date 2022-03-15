@@ -8,7 +8,7 @@
 #include <map>
 
 namespace nekofs {
-	class NekodataNativeArchiver;
+	class NekodataArchiver;
 
 	class NekodataVolumeOStream final : public OStream, public std::enable_shared_from_this<NekodataVolumeOStream>
 	{
@@ -48,7 +48,7 @@ namespace nekofs {
 		NekodataOStream(NekodataOStream&&) = delete;
 		NekodataOStream& operator=(NekodataOStream&&) = delete;
 	public:
-		NekodataOStream(std::shared_ptr<NekodataNativeArchiver> archiver, int64_t volumeSize);
+		NekodataOStream(std::shared_ptr<NekodataArchiver> archiver, int64_t volumeSize);
 
 	public:
 		int32_t read(void* buf, int32_t size) override;
@@ -61,7 +61,7 @@ namespace nekofs {
 		std::shared_ptr<NekodataVolumeOStream> prepareVolumeOStream();
 
 	private:
-		std::shared_ptr<NekodataNativeArchiver> archiver_;
+		std::shared_ptr<NekodataArchiver> archiver_;
 		int64_t volumeSize_ = nekofs_kNekodata_MaxVolumeSize;
 		int64_t position_ = 0;
 		int64_t length_ = 0;

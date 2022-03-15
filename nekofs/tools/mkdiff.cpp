@@ -110,7 +110,7 @@ namespace nekofs::tools {
 		lfm.save(&d_lfm, d_lfm.GetAllocator());
 		d_lfm.Accept(jsonString_lfm);
 
-		auto archiver = std::make_shared<NekodataNativeArchiver>(filepath, volumeSize);
+		auto archiver = std::make_shared<NekodataArchiver>(filepath, volumeSize);
 		archiver->addBuffer(nekofs_kLayerVersion, jsonStrBuffer_lvm->GetString(), static_cast<int64_t>(jsonStrBuffer_lvm->GetSize()));
 		archiver->addBuffer(nekofs_kLayerFiles, jsonStrBuffer_lfm->GetString(), static_cast<int64_t>(jsonStrBuffer_lfm->GetSize()));
 		const auto& files = lfm.getFiles();
@@ -143,7 +143,7 @@ namespace nekofs::tools {
 
 		return archiver->archive();
 	}
-	bool MKDiff::diffLayer(std::shared_ptr<NekodataNativeArchiver> archiver, std::shared_ptr<NekodataFileSystem> earlierfs, std::shared_ptr<NekodataFileSystem> latestfs, uint32_t latestVersion)
+	bool MKDiff::diffLayer(std::shared_ptr<NekodataArchiver> archiver, std::shared_ptr<NekodataFileSystem> earlierfs, std::shared_ptr<NekodataFileSystem> latestfs, uint32_t latestVersion)
 	{
 		auto fm_earlier = earlierfs ? nekofs::LayerFilesMeta::load(earlierfs->openIStream(nekofs_kLayerFiles)) : std::nullopt;
 		auto fm_latest = latestfs ? nekofs::LayerFilesMeta::load(latestfs->openIStream(nekofs_kLayerFiles)) : std::nullopt;

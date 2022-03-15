@@ -5,7 +5,7 @@
 #include <memory>
 
 namespace nekofs {
-	class NekodataNativeArchiver;
+	class NekodataArchiver;
 }
 
 namespace nekofs::tools {
@@ -15,7 +15,7 @@ namespace nekofs::tools {
 		static bool exec(const std::string& dirpath, const std::string& outpath, int64_t volumeSize);
 
 	private:
-		static bool packDir(std::shared_ptr<nekofs::NekodataNativeArchiver> archiver, const std::string& dirpath);
+		static bool packDir(std::shared_ptr<nekofs::NekodataArchiver> archiver, const std::string& dirpath);
 	};
 }
 

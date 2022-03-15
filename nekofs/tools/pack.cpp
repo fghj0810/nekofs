@@ -37,7 +37,7 @@ namespace nekofs::tools {
 			nekofs::logerr(u8"open " + dirpath + nekofs_PathSeparator + nekofs_kLayerFiles + u8" failed!");
 			return false;
 		}
-		auto archiver = std::make_shared<NekodataNativeArchiver>(outpath, volumeSize);
+		auto archiver = std::make_shared<NekodataArchiver>(outpath, volumeSize);
 		archiver->addFile(nekofs_kLayerVersion, nativefs, dirpath + nekofs_PathSeparator + nekofs_kLayerVersion);
 		archiver->addFile(nekofs_kLayerFiles, nativefs, dirpath + nekofs_PathSeparator + nekofs_kLayerFiles);
 		auto allfiles = lfm->getFiles();
@@ -56,7 +56,7 @@ namespace nekofs::tools {
 		return archiver->archive();
 	}
 
-	bool Pack::packDir(std::shared_ptr<nekofs::NekodataNativeArchiver> archiver, const std::string& dirpath)
+	bool Pack::packDir(std::shared_ptr<nekofs::NekodataArchiver> archiver, const std::string& dirpath)
 	{
 		auto nativefs = env::getInstance().getNativeFileSystem();
 		auto lfm = nekofs::LayerFilesMeta::load(nativefs->openIStream(dirpath + nekofs_PathSeparator + nekofs_kLayerFiles));

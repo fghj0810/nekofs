@@ -5,7 +5,7 @@
 #include <sstream>
 
 namespace nekofs {
-	NekodataOStream::NekodataOStream(std::shared_ptr<NekodataNativeArchiver> archiver, int64_t volumeSize)
+	NekodataOStream::NekodataOStream(std::shared_ptr<NekodataArchiver> archiver, int64_t volumeSize)
 	{
 		archiver_ = archiver;
 		volumeSize_ = volumeSize;

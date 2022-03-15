@@ -78,7 +78,7 @@ namespace nekofs::tools {
 		auto merger = prepare(patchfiles, verify);
 		if (merger)
 		{
-			auto archiver = std::make_shared<NekodataNativeArchiver>(outfilepath, volumeSize);
+			auto archiver = std::make_shared<NekodataArchiver>(outfilepath, volumeSize);
 			return merger->exec(archiver);
 		}
 		return false;

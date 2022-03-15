@@ -12,7 +12,7 @@
 #include <optional>
 
 namespace nekofs {
-	class NekodataNativeArchiver;
+	class NekodataArchiver;
 	class LayerVersionMeta;
 
 	class Merger final
@@ -33,12 +33,12 @@ namespace nekofs {
 		Merger(const std::string& resName, uint32_t baseVersion = 0);
 		bool addPatch(std::shared_ptr<FileSystem> fs);
 		bool exec(const std::string& outdir, int64_t volumeSize);
-		bool exec(std::shared_ptr<NekodataNativeArchiver> archiver);
+		bool exec(std::shared_ptr<NekodataArchiver> archiver);
 		bool getProgress(int64_t& complete, int64_t& total);
 
 	private:
 		bool prepare(int64_t& total, const std::vector<std::shared_ptr<FileSystem>>& fslist);
-		void exec(std::shared_ptr<NekodataNativeArchiver> archiver, const std::vector<std::shared_ptr<FileSystem>>& fslist);
+		void exec(std::shared_ptr<NekodataArchiver> archiver, const std::vector<std::shared_ptr<FileSystem>>& fslist);
 		std::optional<LayerFilesMeta> getLayerFilesMeta(const std::vector<std::shared_ptr<FileSystem>>& fslist);
 		std::shared_ptr<IStream> getIStream(const std::vector<std::shared_ptr<FileSystem>>& fslist, const std::string& filepath);
 		RawStreamInfo tryGetIStream(const std::vector<std::shared_ptr<FileSystem>>& fslist, const std::string& filepath);
