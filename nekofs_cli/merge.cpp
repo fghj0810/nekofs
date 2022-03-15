@@ -11,7 +11,7 @@ namespace nekofs_tool {
 	{
 		cmd::parser cp;
 		cp.addString("volumesize", '\0', "volume size (max:3PB)", false, "1MB");
-		cp.addBool("noverify", '\0', "verify nekodata");
+		cp.addBool("noverify", '\0', "do not verify nekodata");
 		cp.addBool("dir", 'd', "output is dir");
 		cp.addPos("filename(.nekodata)", true);
 		cp.addPos("patchfiles...(.nekodata)", true);
