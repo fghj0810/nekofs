@@ -21,7 +21,7 @@ namespace nekofs {
 	public:
 		static std::optional<LayerFilesMeta> load(std::shared_ptr<IStream> is);
 		static std::optional<LayerFilesMeta> load(const JSONValue* jsondoc);
-		static LayerFilesMeta merge(const std::vector<LayerFilesMeta>& lfms);
+		static LayerFilesMeta merge(const std::vector<LayerFilesMeta>& lfms, uint32_t baseVersion);
 		static LayerFilesMeta makediff(const LayerFilesMeta& lfms_earlier, const LayerFilesMeta& lfms_latest, const uint32_t latestVersion);
 		bool save(std::shared_ptr<OStream> os) const;
 		bool save(JSONValue* jsondoc, JSONDocument::AllocatorType& allocator) const;

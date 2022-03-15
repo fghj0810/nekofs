@@ -94,7 +94,7 @@ namespace nekofs {
 		}
 		return lfmeta;
 	}
-	LayerFilesMeta LayerFilesMeta::merge(const std::vector<LayerFilesMeta>& lfms)
+	LayerFilesMeta LayerFilesMeta::merge(const std::vector<LayerFilesMeta>& lfms, uint32_t baseVersion)
 	{
 		LayerFilesMeta lfm;
 		if (!lfms.empty())
@@ -114,6 +114,28 @@ namespace nekofs {
 				{
 					lfm.addNekodata(item);
 				}
+			}
+		}
+		for (auto it = lfm.files_.cbegin(); it != lfm.files_.cend();)
+		{
+			if (it->second.getVersion() < baseVersion)
+			{
+				it = lfm.files_.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+		}
+		for (auto it = lfm.deletes_.cbegin(); it != lfm.deletes_.cend();)
+		{
+			if (it->second < baseVersion)
+			{
+				it = lfm.deletes_.erase(it);
+			}
+			else
+			{
+				it++;
 			}
 		}
 		return lfm;

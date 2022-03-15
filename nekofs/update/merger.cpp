@@ -260,7 +260,7 @@ namespace nekofs {
 				return std::nullopt;
 			}
 		}
-		return LayerFilesMeta::merge(lfms);
+		return LayerFilesMeta::merge(lfms, baseVersion_);
 	}
 	std::shared_ptr<IStream> Merger::getIStream(const std::vector<std::shared_ptr<FileSystem>>& fslist, const std::string& filepath)
 	{
