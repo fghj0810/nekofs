@@ -63,20 +63,16 @@ extern "C" {
 			std::wstring u16str(size_needed, 0);
 			MultiByteToWideChar(CP_UTF8, 0, u8str, strLen, &u16str[0], size_needed);
 
-			size_needed = WideCharToMultiByte(CP_ACP, 0, &u16str[0], (int)u16str.size(), NULL, 0, NULL, NULL);
-			std::string astr(size_needed, 0);
-			WideCharToMultiByte(CP_ACP, 0, &u16str[0], (int)u16str.size(), &astr[0], size_needed, NULL, NULL);
-
 			switch (level)
 			{
 			case NEKOFS_LOGINFO:
-				std::cout << "[INFO]  " << astr << std::endl;
+				std::wcout << L"[INFO]  " << u16str << std::endl;
 				break;
 			case NEKOFS_LOGWARN:
-				std::cout << "\033[33m" << "[WARN]" << "\033[0m" << "  " << astr << std::endl;
+				std::wcout << L"\033[33m" << L"[WARN]" << L"\033[0m" << L"  " << u16str << std::endl;
 				break;
 			case NEKOFS_LOGERR:
-				std::cerr << "\033[31m" << "[ERRO]" << "\033[0m" << "  " << astr << std::endl;
+				std::wcerr << L"\033[31m" << L"[ERRO]" << L"\033[0m" << L"  " << u16str << std::endl;
 				break;
 			default:
 				break;
