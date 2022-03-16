@@ -33,6 +33,7 @@ namespace nekofs {
 		void setDeleteVersion(const std::string& filename, const uint32_t& version);
 		std::optional<uint32_t> getDeleteVersion(const std::string& filename) const;
 		const std::map<std::string, uint32_t>& getDeletes() const;
+		void purgeFile(const std::string& filename);
 
 	private:
 		std::map<std::string, LayerFilesMeta::FileMeta> files_;

@@ -46,10 +46,12 @@ extern "C" {
 	NEKOFS_API int32_t nekofs_filesystem_GetAllFiles(NekoFSHandle fsHandle, const char* u8dirpath, char** u8jsonPtr);
 
 	NEKOFS_API NekoFSHandle nekofs_overlay_Create();
-	NEKOFS_API int32_t nekofs_overlay_GetVersion(NekoFSHandle fsHandle, char** u8jsonPtr);
-	NEKOFS_API int32_t nekofs_overlay_GetFileURI(NekoFSHandle fsHandle, const char* u8filepath, char** u8pathPtr);
-	NEKOFS_API NekoFSBool nekofs_overlay_AddNaitvelayer(NekoFSHandle fsHandle, const char* u8dirpath);
-	NEKOFS_API void nekofs_overlay_RefreshFileList(NekoFSHandle fsHandle);
+	NEKOFS_API int32_t nekofs_overlay_GetLayerVersion(NekoFSHandle olfsHandle, char** u8jsonPtr);
+	NEKOFS_API int32_t nekofs_overlay_GetLayerFiles(NekoFSHandle olfsHandle, char** u8jsonPtr);
+	NEKOFS_API int32_t nekofs_overlay_GetFileURI(NekoFSHandle olfsHandle, const char* u8filepath, char** u8pathPtr);
+	NEKOFS_API NekoFSBool nekofs_overlay_AddNaitveLayer(NekoFSHandle olfsHandle, const char* u8dirpath);
+	NEKOFS_API NekoFSBool nekofs_overlay_AddLayer(NekoFSHandle olfsHandle, NekoFSHandle fsHandle, const char* u8dirpath);
+	NEKOFS_API NekoFSBool nekofs_overlay_RefreshFileList(NekoFSHandle olfsHandle);
 
 #ifdef NEKOFS_TOOLS
 	NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path, const char* u8versionpath, uint32_t offset);

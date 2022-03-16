@@ -2,7 +2,6 @@
 #include "../common/env.h"
 #include "../common/utils.h"
 #include "../common/sha256.h"
-#include "../layer/layerfilesystem.h"
 #include "../layer/layerfilesmeta.h"
 #include "../layer/layerversionmeta.h"
 #ifdef _WIN32

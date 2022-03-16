@@ -16,9 +16,11 @@ namespace nekofs {
 	class LayerFileSystem;
 	class LayerVersionMeta;
 	class LayerFilesMeta;
+	class NekodataFileSystem;
 
 	class OverlayFileSystem final : public FileSystem, private noncopyable, private nonmovable, public std::enable_shared_from_this<OverlayFileSystem>
 	{
+		typedef std::map<std::string, std::pair<std::shared_ptr<FileSystem>, std::string>> FileMap;
 	public:
 		std::string getCurrentPath() const override;
 		std::vector<std::string> getAllFiles(const std::string& dirpath) const override;
@@ -29,15 +31,17 @@ namespace nekofs {
 		FileSystemType getFSType() const override;
 
 	public:
-		bool addNativeLayer(const std::string& dirpath);
-		bool addNativeLayer(std::shared_ptr<LayerFileSystem> fs);
-		void refreshFileList();
+		bool addLayer(std::shared_ptr<FileSystem> fs, const std::string& dirpath = "");
+		bool refreshFileList();
+		bool refreshFileList(FileMap& tmp_files, LayerFilesMeta& tmp_lfm, std::shared_ptr<NekodataFileSystem> fs, const std::string& prefixPath);
 		std::optional<LayerVersionMeta> getVersion() const;
-		LayerFilesMeta getFiles() const;
+		std::optional<LayerFilesMeta> getFiles() const;
 		std::string getFileURI(const std::string& filepath) const;
 
 	private:
-		std::vector<std::tuple<std::shared_ptr<LayerFileSystem>, LayerVersionMeta, LayerFilesMeta>> layers_;
-		std::map<std::string, std::pair<size_t, std::string>> files_;
+		std::vector<std::tuple<std::shared_ptr<FileSystem>, LayerVersionMeta, LayerFilesMeta, std::string>> layers_;
+		FileMap files_;
+		std::optional<LayerVersionMeta> lvm_;
+		std::optional<LayerFilesMeta> lfm_;
 	};
 }

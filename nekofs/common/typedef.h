@@ -72,6 +72,7 @@ namespace nekofs {
 
 constexpr const char* nekofs_PathSeparator = u8"/";
 constexpr const char* nekofs_kURIPrefix_Native = u8"Native:";
+constexpr const char* nekofs_kURIPrefix_Nekodata = u8"Nekodata:";
 
 constexpr int32_t nekofs_MapBlockSizeBitOffset = 25;
 constexpr int32_t nekofs_MapBlockSize = 1 << nekofs_MapBlockSizeBitOffset;

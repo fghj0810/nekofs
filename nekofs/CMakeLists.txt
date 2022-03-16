@@ -64,8 +64,6 @@ set(NEKOFS_COMMON
 set(NEKOFS_LAYER
     layer/overlayfilesystem.h
     layer/overlayfilesystem.cpp
-    layer/layerfilesystem.h
-    layer/layerfilesystem.cpp
     layer/layerfilesmeta.h
     layer/layerfilesmeta.cpp
     layer/layerversionmeta.h

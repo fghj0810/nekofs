@@ -622,13 +622,13 @@ NEKOFS_API NekoFSHandle nekofs_overlay_Create()
 	return handle;
 }
 
-NEKOFS_API int32_t nekofs_overlay_GetVersion(NekoFSHandle fsHandle, char** u8jsonPtr)
+NEKOFS_API int32_t nekofs_overlay_GetLayerVersion(NekoFSHandle olfsHandle, char** u8jsonPtr)
 {
 	*u8jsonPtr = nullptr;
 	std::shared_ptr<const nekofs::OverlayFileSystem> fs;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_fs_);
-		auto it = g_filesystems_.find(fsHandle);
+		auto it = g_filesystems_.find(olfsHandle);
 		if (it != g_filesystems_.end())
 		{
 			if (fs->getFSType() == nekofs::FileSystemType::Overlay)
@@ -639,8 +639,8 @@ NEKOFS_API int32_t nekofs_overlay_GetVersion(NekoFSHandle fsHandle, char** u8jso
 	}
 	if (fs)
 	{
-		auto version = fs->getVersion();
-		if (!version)
+		auto lvm = fs->getVersion();
+		if (!lvm)
 		{
 			return 0;
 		}
@@ -648,7 +648,7 @@ NEKOFS_API int32_t nekofs_overlay_GetVersion(NekoFSHandle fsHandle, char** u8jso
 		nekofs::JSONStringWriter writer(jsonStrBuffer);
 		nekofs::JSONDocument d(nekofs::rapidjson::kObjectType);
 
-		version->save(&d, d.GetAllocator());
+		lvm->save(&d, d.GetAllocator());
 
 		if (d.Accept(writer))
 		{
@@ -658,7 +658,43 @@ NEKOFS_API int32_t nekofs_overlay_GetVersion(NekoFSHandle fsHandle, char** u8jso
 	return 0;
 }
 
-NEKOFS_API int32_t nekofs_overlay_GetFileURI(NekoFSHandle fsHandle, const char* u8filepath, char** u8pathPtr)
+NEKOFS_API int32_t nekofs_overlay_GetLayerFiles(NekoFSHandle olfsHandle, char** u8jsonPtr)
+{
+	*u8jsonPtr = nullptr;
+	std::shared_ptr<const nekofs::OverlayFileSystem> fs;
+	{
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
+		auto it = g_filesystems_.find(olfsHandle);
+		if (it != g_filesystems_.end())
+		{
+			if (fs->getFSType() == nekofs::FileSystemType::Overlay)
+			{
+				fs = std::static_pointer_cast<nekofs::OverlayFileSystem>(it->second);
+			}
+		}
+	}
+	if (fs)
+	{
+		auto lfm = fs->getFiles();
+		if (!lfm)
+		{
+			return 0;
+		}
+		nekofs::JSONStringBuffer jsonStrBuffer;
+		nekofs::JSONStringWriter writer(jsonStrBuffer);
+		nekofs::JSONDocument d(nekofs::rapidjson::kObjectType);
+
+		lfm->save(&d, d.GetAllocator());
+
+		if (d.Accept(writer))
+		{
+			return copy_and_newString(jsonStrBuffer.GetString(), jsonStrBuffer.GetSize(), u8jsonPtr);
+		}
+	}
+	return 0;
+}
+
+NEKOFS_API int32_t nekofs_overlay_GetFileURI(NekoFSHandle olfsHandle, const char* u8filepath, char** u8pathPtr)
 {
 	*u8pathPtr = nullptr;
 	auto path = __normalpath(u8filepath);
@@ -669,7 +705,7 @@ NEKOFS_API int32_t nekofs_overlay_GetFileURI(NekoFSHandle fsHandle, const char* 
 	std::shared_ptr<const nekofs::OverlayFileSystem> fs;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_fs_);
-		auto it = g_filesystems_.find(fsHandle);
+		auto it = g_filesystems_.find(olfsHandle);
 		if (it != g_filesystems_.end())
 		{
 			if (fs->getFSType() == nekofs::FileSystemType::Overlay)
@@ -690,7 +726,7 @@ NEKOFS_API int32_t nekofs_overlay_GetFileURI(NekoFSHandle fsHandle, const char* 
 	return 0;
 }
 
-NEKOFS_API NekoFSBool nekofs_overlay_AddNaitvelayer(NekoFSHandle fsHandle, const char* u8dirpath)
+NEKOFS_API NekoFSBool nekofs_overlay_AddNaitveLayer(NekoFSHandle olfsHandle, const char* u8dirpath)
 {
 	auto path = __normalrootpath(u8dirpath);
 	if (path.empty())
@@ -700,7 +736,7 @@ NEKOFS_API NekoFSBool nekofs_overlay_AddNaitvelayer(NekoFSHandle fsHandle, const
 	std::shared_ptr<nekofs::OverlayFileSystem> fs;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_fs_);
-		auto it = g_filesystems_.find(fsHandle);
+		auto it = g_filesystems_.find(olfsHandle);
 		if (it != g_filesystems_.end())
 		{
 			if (fs->getFSType() == nekofs::FileSystemType::Overlay)
@@ -711,17 +747,45 @@ NEKOFS_API NekoFSBool nekofs_overlay_AddNaitvelayer(NekoFSHandle fsHandle, const
 	}
 	if (fs)
 	{
-		return fs->addNativeLayer(path) ? NEKOFS_TRUE : NEKOFS_FALSE;
+		return fs->addLayer(nekofs::env::getInstance().getNativeFileSystem(), path) ? NEKOFS_TRUE : NEKOFS_FALSE;
 	}
 	return NEKOFS_FALSE;
 }
 
-NEKOFS_API void nekofs_overlay_RefreshFileList(NekoFSHandle fsHandle)
+NEKOFS_API NekoFSBool nekofs_overlay_AddLayer(NekoFSHandle olfsHandle, NekoFSHandle fsHandle, const char* u8dirpath)
+{
+	auto path = __normalpath(u8dirpath);
+	std::shared_ptr<nekofs::OverlayFileSystem> olfs;
+	std::shared_ptr<nekofs::FileSystem> fs;
+	{
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
+		auto olit = g_filesystems_.find(olfsHandle);
+		if (olit != g_filesystems_.end())
+		{
+			if (olfs->getFSType() == nekofs::FileSystemType::Overlay)
+			{
+				olfs = std::static_pointer_cast<nekofs::OverlayFileSystem>(olit->second);
+			}
+		}
+		auto it = g_filesystems_.find(fsHandle);
+		if (it != g_filesystems_.end())
+		{
+			fs = it->second;
+		}
+	}
+	if (olfs && fs)
+	{
+		return olfs->addLayer(fs, path) ? NEKOFS_TRUE : NEKOFS_FALSE;
+	}
+	return NEKOFS_FALSE;
+}
+
+NEKOFS_API NekoFSBool nekofs_overlay_RefreshFileList(NekoFSHandle olfsHandle)
 {
 	std::shared_ptr<nekofs::OverlayFileSystem> fs;
 	{
 		std::lock_guard<std::mutex> lock(g_mtx_fs_);
-		auto it = g_filesystems_.find(fsHandle);
+		auto it = g_filesystems_.find(olfsHandle);
 		if (it != g_filesystems_.end())
 		{
 			if (fs->getFSType() == nekofs::FileSystemType::Overlay)
@@ -732,8 +796,9 @@ NEKOFS_API void nekofs_overlay_RefreshFileList(NekoFSHandle fsHandle)
 	}
 	if (fs)
 	{
-		return fs->refreshFileList();
+		return fs->refreshFileList() ? NEKOFS_TRUE : NEKOFS_FALSE;
 	}
+	return NEKOFS_FALSE;
 }
 
 #ifdef NEKOFS_TOOLS

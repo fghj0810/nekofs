@@ -118,7 +118,7 @@ namespace nekofs {
 		}
 		for (auto it = lfm.files_.cbegin(); it != lfm.files_.cend();)
 		{
-			if (it->second.getVersion() < baseVersion)
+			if (it->second.getVersion() <= baseVersion)
 			{
 				it = lfm.files_.erase(it);
 			}
@@ -129,7 +129,7 @@ namespace nekofs {
 		}
 		for (auto it = lfm.deletes_.cbegin(); it != lfm.deletes_.cend();)
 		{
-			if (it->second < baseVersion)
+			if (it->second <= baseVersion)
 			{
 				it = lfm.deletes_.erase(it);
 			}
@@ -277,11 +277,7 @@ namespace nekofs {
 		{
 			files_.erase(it);
 		}
-		// 设置version为0 代表删除
-		if (version > 0)
-		{
-			deletes_[filename] = version;
-		}
+		deletes_[filename] = version;
 	}
 	std::optional<uint32_t> LayerFilesMeta::getDeleteVersion(const std::string& filename) const
 	{
@@ -295,6 +291,24 @@ namespace nekofs {
 	const std::map<std::string, uint32_t>& LayerFilesMeta::getDeletes() const
 	{
 		return deletes_;
+	}
+	void LayerFilesMeta::purgeFile(const std::string& filename)
+	{
+		auto it = files_.find(filename);
+		if (it != files_.end())
+		{
+			files_.erase(it);
+		}
+		auto dit = deletes_.find(filename);
+		if (dit != deletes_.end())
+		{
+			deletes_.erase(dit);
+		}
+		auto nit = nekodatas_.find(filename);
+		if (nit != nekodatas_.end())
+		{
+			nekodatas_.erase(nit);
+		}
 	}
 
 

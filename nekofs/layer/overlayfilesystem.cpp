@@ -1,5 +1,4 @@
 ﻿#include "overlayfilesystem.h"
-#include "layerfilesystem.h"
 #include "../common/env.h"
 #include "../common/utils.h"
 #ifdef _WIN32
@@ -7,6 +6,7 @@
 #else
 #include "../native_posix/nativefilesystem.h"
 #endif
+#include "../nekodata/nekodatafilesystem.h"
 
 #include <sstream>
 
@@ -31,7 +31,7 @@ namespace nekofs {
 		auto it = files_.find(filepath);
 		if (it != files_.end())
 		{
-			return  std::get<0>(layers_[it->second.first])->getFileHandle(it->second.second);
+			return  it->second.first->getFileHandle(it->second.second);
 		}
 		return nullptr;
 	}
@@ -40,7 +40,7 @@ namespace nekofs {
 		auto it = files_.find(filepath);
 		if (it != files_.end())
 		{
-			return  std::get<0>(layers_[it->second.first])->openIStream(it->second.second);
+			return  it->second.first->openIStream(it->second.second);
 		}
 		return nullptr;
 	}
@@ -58,7 +58,7 @@ namespace nekofs {
 		auto it = files_.find(filepath);
 		if (it != files_.end())
 		{
-			return  std::get<0>(layers_[it->second.first])->getSize(it->second.second);
+			return  it->second.first->getSize(it->second.second);
 		}
 		return -1;
 	}
@@ -67,38 +67,39 @@ namespace nekofs {
 		return FileSystemType::Overlay;
 	}
 
-	bool OverlayFileSystem::addNativeLayer(const std::string& dirpath)
+	bool OverlayFileSystem::addLayer(std::shared_ptr<FileSystem> fs, const std::string& dirpath)
 	{
-		auto fs = LayerFileSystem::createNativeLayer(dirpath);
-		return addNativeLayer(fs);
-	}
-	bool OverlayFileSystem::addNativeLayer(std::shared_ptr<LayerFileSystem> fs)
-	{
-		auto version = LayerVersionMeta::load(fs->openIStream(nekofs_kLayerVersion));
-		auto files = LayerFilesMeta::load(fs->openIStream(nekofs_kLayerFiles));
+		std::string parentDir = "";
+		if (!dirpath.empty())
+		{
+			parentDir = dirpath + nekofs_PathSeparator;
+		}
+		auto version = LayerVersionMeta::load(fs->openIStream(parentDir + nekofs_kLayerVersion));
+		auto files = LayerFilesMeta::load(fs->openIStream(parentDir + nekofs_kLayerFiles));
 		if (!version)
 		{
 			std::stringstream ss;
-			ss << u8"OverlayFileSystem::addNativeLayer can not open ";
-			ss << fs->getFullPath(nekofs_kLayerVersion);
+			ss << u8"OverlayFileSystem::addLayer can not open ";
+			ss << parentDir + nekofs_kLayerVersion;
 			logerr(ss.str());
 			return false;
 		}
 		if (!files)
 		{
 			std::stringstream ss;
-			ss << u8"OverlayFileSystem::addNativeLayer can not open ";
-			ss << fs->getFullPath(nekofs_kLayerFiles);
+			ss << u8"OverlayFileSystem::addLayer can not open ";
+			ss << parentDir + nekofs_kLayerFiles;
 			logerr(ss.str());
 			return false;
 		}
 		if (!layers_.empty())
 		{
+			// 版本要连续
 			const auto& lastver = std::get<1>(layers_.back());
 			if (version->getFromVersion() > lastver.getVersion() || version->getVersion() <= lastver.getVersion())
 			{
 				std::stringstream ss;
-				ss << u8"OverlayFileSystem::addNativeLayer error due to (fromVersion > lastVer || version <= lastVer). lastVer = ";
+				ss << u8"OverlayFileSystem::addLayer error due to (fromVersion > lastVer || version <= lastVer). lastVer = ";
 				ss << lastver.getVersion();
 				ss << u8", new fromVersion = ";
 				ss << version->getFromVersion();
@@ -108,56 +109,142 @@ namespace nekofs {
 				return false;
 			}
 		}
-		layers_.push_back(std::make_tuple(fs, version.value(), files.value()));
+		else
+		{
+			// 版本必须从0开始
+			if (version->getFromVersion() != 0)
+			{
+				std::stringstream ss;
+				ss << u8"OverlayFileSystem::addLayer error due to version->getFromVersion() != 0). ";
+				ss << u8"fromVersion = ";
+				ss << version->getFromVersion();
+				logerr(ss.str());
+				return false;
+			}
+		}
+		layers_.push_back(std::make_tuple(fs, version.value(), files.value(), parentDir));
 		return true;
 	}
-	void OverlayFileSystem::refreshFileList()
+	bool OverlayFileSystem::refreshFileList()
 	{
+		lvm_.reset();
+		lfm_.reset();
 		files_.clear();
+		LayerFilesMeta tmp_lfm;
+		std::map<std::string, std::pair<std::shared_ptr<FileSystem>, std::string>> tmp_files;
 		if (layers_.empty())
 		{
-			return;
+			return false;
 		}
-		std::vector<LayerFilesMeta> lfms(layers_.size());
 		for (size_t i = 0; i < layers_.size(); i++)
 		{
+			auto& fs = std::get<0>(layers_[i]);
 			const LayerFilesMeta& lfm = std::get<2>(layers_[i]);
-			for (const auto& f : lfm.getFiles())
+			const std::string& parentDir = std::get<3>(layers_[i]);
+			const auto& files = lfm.getFiles();
+			for (const auto& f : files)
 			{
-				files_[f.first] = std::make_pair(i, f.first);
+				tmp_files[f.first] = std::make_pair(fs, parentDir + f.first);
+				tmp_lfm.setFileMeta(f.first, lfm.getFileMeta(f.first).value());
 			}
-			for (const auto& f : lfm.getDeletes())
+			const auto& deletes = lfm.getDeletes();
+			for (const auto& f : deletes)
 			{
-				files_.erase(f.first);
+				auto meta = tmp_lfm.getFileMeta(f.first);
+				if (meta.has_value() && f.second > meta->getVersion())
+				{
+					// version相等不做删除，可能是在散文件和nekodata中挪动
+					tmp_files.erase(f.first);
+					tmp_lfm.purgeFile(f.first);
+				}
+			}
+			const auto& nekodatas = lfm.getNekodatas();
+			for (const auto& nekodata : nekodatas)
+			{
+				auto nekodatafs = NekodataFileSystem::create(fs, parentDir + nekodata);
+				if (!nekodatafs)
+				{
+					return false;
+				}
+				auto prefixPath = nekodata.substr(0, nekodata.size() - nekofs_kNekodata_FileExtension.size()) + nekofs_PathSeparator;
+				if (!refreshFileList(tmp_files, tmp_lfm, nekodatafs, prefixPath))
+				{
+					return false;
+				}
 			}
 		}
+		files_ = tmp_files;
+		lvm_ = std::get<1>(layers_.back());
+		lvm_->setFromVersion(std::get<1>(layers_.back()).getFromVersion());
+		lfm_ = tmp_lfm;
+		return true;
+	}
+	bool OverlayFileSystem::refreshFileList(FileMap& tmp_files, LayerFilesMeta& tmp_lfm, std::shared_ptr<NekodataFileSystem> fs, const std::string& prefixPath)
+	{
+		auto lfm = LayerFilesMeta::load(fs->openIStream(nekofs_kLayerFiles));
+		if (!lfm.has_value())
+		{
+			std::stringstream ss;
+			ss << u8"OverlayFileSystem::refreshFileList can not open ";
+			ss << prefixPath + nekofs_kLayerFiles;
+			logerr(ss.str());
+			return false;
+		}
+		const auto& files = lfm->getFiles();
+		for (const auto& f : files)
+		{
+			tmp_files[prefixPath + f.first] = std::make_pair(fs, f.first);
+			tmp_lfm.setFileMeta(prefixPath + f.first, lfm->getFileMeta(f.first).value());
+		}
+		const auto& deletes = lfm->getDeletes();
+		for (const auto& f : deletes)
+		{
+			auto meta = tmp_lfm.getFileMeta(prefixPath + f.first);
+			if (meta.has_value() && f.second > meta->getVersion())
+			{
+				// version相等不做删除，可能是在散文件和nekodata中挪动
+				tmp_files.erase(prefixPath + f.first);
+				tmp_lfm.purgeFile(prefixPath + f.first);
+			}
+		}
+		const auto& nekodatas = lfm->getNekodatas();
+		for (const auto& nekodata : nekodatas)
+		{
+			auto nekodatafs = NekodataFileSystem::create(fs, nekodata);
+			if (!nekodatafs)
+			{
+				return false;
+			}
+			auto tmp_prefixPath = nekodata.substr(0, nekodata.size() - nekofs_kNekodata_FileExtension.size()) + nekofs_PathSeparator;
+			if (!refreshFileList(tmp_files, tmp_lfm, nekodatafs, prefixPath + tmp_prefixPath))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 	std::optional<LayerVersionMeta> OverlayFileSystem::getVersion() const
 	{
-		if (layers_.empty())
-		{
-			return std::nullopt;
-		}
-		LayerVersionMeta lvm;
-		lvm = std::get<1>(layers_.back());
-		lvm.setFromVersion(std::get<1>(layers_.front()).getFromVersion());
-		return lvm;
+		return lvm_;
 	}
-	LayerFilesMeta OverlayFileSystem::getFiles() const
+	std::optional<LayerFilesMeta> OverlayFileSystem::getFiles() const
 	{
-		LayerFilesMeta lvf;
-		for (const auto& item : files_)
-		{
-			lvf.setFileMeta(item.first, std::get<2>(layers_[item.second.first]).getFileMeta(item.second.second).value());
-		}
-		return lvf;
+		return lfm_;
 	}
 	std::string OverlayFileSystem::getFileURI(const std::string& filepath) const
 	{
 		auto it = files_.find(filepath);
 		if (it != files_.end())
 		{
-			return std::get<0>(layers_[it->second.first])->getFileURI(it->second.second);
+			switch (it->second.first->getFSType())
+			{
+			case FileSystemType::Native:
+				return nekofs_kURIPrefix_Native + it->second.second;
+			case FileSystemType::Nekodata:
+				return nekofs_kURIPrefix_Nekodata + it->second.second;
+			default:
+				break;
+			}
 		}
 		return std::string();
 	}
