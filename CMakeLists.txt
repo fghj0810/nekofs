@@ -10,11 +10,11 @@ option(NEKOFS_TEST "This is a option for test" OFF)
 
 # 包含子项目。
 add_subdirectory("nekofs")
-if (NEKOFS_MAKE_TOOLS_LIB STREQUAL "ON")
+if (NEKOFS_MAKE_TOOLS_LIB)
     add_subdirectory("nekofs_cli")
 endif ()
 
-if (NEKOFS_TEST STREQUAL "ON")
+if (NEKOFS_TEST)
     add_subdirectory("test/test_read")
     add_subdirectory("test/test_write")
     add_subdirectory("test/test_sha256")
