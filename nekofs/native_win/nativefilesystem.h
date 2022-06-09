@@ -1,9 +1,6 @@
 ﻿#pragma once
 
 #include "../common/typedef.h"
-#include "../common/noncopyable.h"
-#include "../common/nonmovable.h"
-
 #include <Windows.h>
 #include <cstdint>
 #include <memory>
@@ -15,8 +12,14 @@ namespace nekofs {
 	class NativeOStream;
 	class NativeFile;
 
-	class NativeFileSystem final : public FileSystem, private noncopyable, private nonmovable, public std::enable_shared_from_this<NativeFileSystem>
+	class NativeFileSystem final : public FileSystem, public std::enable_shared_from_this<NativeFileSystem>
 	{
+	private:
+		NativeFileSystem(const NativeFileSystem&) = delete;
+		NativeFileSystem(const NativeFileSystem&&) = delete;
+		NativeFileSystem& operator=(const NativeFileSystem&) = delete;
+		NativeFileSystem& operator=(const NativeFileSystem&&) = delete;
+
 	public:
 		std::string getCurrentPath() const override;
 		std::vector<std::string> getAllFiles(const std::string& dirpath) const override;
@@ -27,6 +30,7 @@ namespace nekofs {
 		FileSystemType getFSType() const override;
 
 	public:
+		NativeFileSystem() = default;
 		std::vector<std::string> getFiles(const std::string& dirpath) const;
 		std::vector<std::string> getDirs(const std::string& dirpath) const;
 		bool createDirectories(const std::string& dirpath);

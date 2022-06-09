@@ -1,9 +1,6 @@
 ﻿#pragma once
 
 #include "../common/typedef.h"
-#include "../common/noncopyable.h"
-#include "../common/nonmovable.h"
-
 #include <cstdint>
 #include <memory>
 #include <map>
@@ -11,8 +8,14 @@
 namespace nekofs {
 	class NativeFile;
 
-	class NativeFileHandle final: public FileHandle, private noncopyable, private nonmovable
+	class NativeFileHandle final: public FileHandle
 	{
+	private:
+		NativeFileHandle(const NativeFileHandle&) = delete;
+		NativeFileHandle(const NativeFileHandle&&) = delete;
+		NativeFileHandle& operator=(const NativeFileHandle&) = delete;
+		NativeFileHandle& operator=(const NativeFileHandle&&) = delete;
+
 	public:
 		NativeFileHandle(std::shared_ptr<NativeFile> fPtr);
 

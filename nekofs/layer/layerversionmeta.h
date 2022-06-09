@@ -1,8 +1,8 @@
 ﻿#pragma once
 
 #include "../common/typedef.h"
-#include "../common/noncopyable.h"
-#include "../common/nonmovable.h"
+
+
 #include "../common/rapidjson.h"
 
 #include <cstdint>
