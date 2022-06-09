@@ -1,8 +1,6 @@
 ﻿#pragma once
 
 #include "../common/typedef.h"
-#include "../common/noncopyable.h"
-#include "../common/nonmovable.h"
 #include "layerversionmeta.h"
 #include "layerfilesmeta.h"
 
@@ -18,9 +16,16 @@ namespace nekofs {
 	class LayerFilesMeta;
 	class NekodataFileSystem;
 
-	class OverlayFileSystem final : public FileSystem, private noncopyable, private nonmovable, public std::enable_shared_from_this<OverlayFileSystem>
+	class OverlayFileSystem final : public FileSystem, public std::enable_shared_from_this<OverlayFileSystem>
 	{
 		typedef std::map<std::string, std::pair<std::shared_ptr<FileSystem>, std::string>> FileMap;
+
+	private:
+		OverlayFileSystem(const OverlayFileSystem&) = delete;
+		OverlayFileSystem(const OverlayFileSystem&&) = delete;
+		OverlayFileSystem& operator=(const OverlayFileSystem&) = delete;
+		OverlayFileSystem& operator=(const OverlayFileSystem&&) = delete;
+
 	public:
 		std::string getCurrentPath() const override;
 		std::vector<std::string> getAllFiles(const std::string& dirpath) const override;
@@ -31,6 +36,7 @@ namespace nekofs {
 		FileSystemType getFSType() const override;
 
 	public:
+		OverlayFileSystem() = default;
 		bool addLayer(std::shared_ptr<FileSystem> fs, const std::string& dirpath = "");
 		bool refreshFileList();
 		bool refreshFileList(FileMap& tmp_files, LayerFilesMeta& tmp_lfm, std::shared_ptr<NekodataFileSystem> fs, const std::string& prefixPath);

@@ -1,7 +1,4 @@
 ﻿#pragma once
-#include "noncopyable.h"
-#include "nonmovable.h"
-
 #include <cstdint>
 #include <cstddef>
 #include <array>
@@ -10,8 +7,14 @@
 namespace nekofs {
 	class NativeFileSystem;
 
-	class sha256sum final : private noncopyable, private nonmovable
+	class sha256sum final
 	{
+	private:
+		sha256sum(const sha256sum&) = delete;
+		sha256sum(const sha256sum&&) = delete;
+		sha256sum& operator=(const sha256sum&) = delete;
+		sha256sum& operator=(const sha256sum&&) = delete;
+
 	public:
 		sha256sum();
 		void update(const void* data, size_t count);

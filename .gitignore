@@ -1,3 +1,8 @@
-.DS_Store
+﻿.DS_Store
 build/[Bb]uild*/
 build/plugin_unity/
+
+/.vs/
+/out/
+
+/CMakeSettings.json

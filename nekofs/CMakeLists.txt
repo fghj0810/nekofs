@@ -46,8 +46,6 @@ endif ()
 
 set(NEKOFS_COMMON
     common/typedef.h
-    common/noncopyable.h
-    common/nonmovable.h
     common/utils.h
     common/utils.cpp
     common/env.h

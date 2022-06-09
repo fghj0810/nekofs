@@ -1,9 +1,6 @@
 ﻿#pragma once
 
 #include "../common/typedef.h"
-#include "../common/noncopyable.h"
-#include "../common/nonmovable.h"
-
 #include <sys/mman.h>
 #include <cstdint>
 #include <memory>
@@ -11,8 +8,14 @@
 namespace nekofs {
 	class NativeFile;
 
-	class NativeFileBlock final: private noncopyable, private nonmovable
+	class NativeFileBlock final
 	{
+	private:
+		NativeFileBlock(const NativeFileBlock&) = delete;
+		NativeFileBlock(const NativeFileBlock&&) = delete;
+		NativeFileBlock& operator=(const NativeFileBlock&) = delete;
+		NativeFileBlock& operator=(const NativeFileBlock&&) = delete;
+
 	public:
 		NativeFileBlock(std::shared_ptr<NativeFile> file, int fd, int64_t offset, int32_t size);
 		int32_t read(int64_t pos, void* buffer, int32_t count);

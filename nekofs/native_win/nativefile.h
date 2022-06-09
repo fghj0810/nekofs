@@ -1,9 +1,6 @@
 ﻿#pragma once
 
 #include "../common/typedef.h"
-#include "../common/noncopyable.h"
-#include "../common/nonmovable.h"
-
 #include <Windows.h>
 #include <cstdint>
 #include <memory>
@@ -15,8 +12,14 @@ namespace nekofs {
 	class NativeOStream;
 	class NativeFileBlock;
 
-	class NativeFile final: private noncopyable, private nonmovable, public std::enable_shared_from_this<NativeFile>
+	class NativeFile final: public std::enable_shared_from_this<NativeFile>
 	{
+	private:
+		NativeFile(const NativeFile&) = delete;
+		NativeFile(const NativeFile&&) = delete;
+		NativeFile& operator=(const NativeFile&) = delete;
+		NativeFile& operator=(const NativeFile&&) = delete;
+
 	public:
 		NativeFile(const std::string& filepath);
 		const std::string& getFilePath() const;
