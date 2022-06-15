@@ -44,6 +44,19 @@ else ()
     )
 endif ()
 
+if (ANDROID)
+    list(APPEND NEKOFS_NATIVE
+        assetmanager/assetmanagerfile.h
+        assetmanager/assetmanagerfile.cpp
+        assetmanager/assetmanagerfilehandle.h
+        assetmanager/assetmanagerfilehandle.cpp
+        assetmanager/assetmanagerfileistream.h
+        assetmanager/assetmanagerfileistream.cpp
+        assetmanager/assetmanagerfilesystem.h
+        assetmanager/assetmanagerfilesystem.cpp
+    )
+endif ()
+
 set(NEKOFS_COMMON
     common/typedef.h
     common/utils.h
@@ -155,3 +168,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC include)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads)
+if (ANDROID)
+    find_library(android-lib android)
+    find_library(android-log log)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${android-lib})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${android-log})
+endif ()

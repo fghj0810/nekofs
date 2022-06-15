@@ -45,8 +45,8 @@ namespace nekofs::tools {
 			nekofs::logerr(ss.str());
 			return false;
 		}
-		auto earlierfs = NekodataFileSystem::createFromNative(earlierfile);
-		auto latestfs = NekodataFileSystem::createFromNative(latestfile);
+		auto earlierfs = NekodataFileSystem::create(nativefs, earlierfile);
+		auto latestfs = NekodataFileSystem::create(nativefs, latestfile);
 		nekofs::loginfo(u8"verify " + earlierfile + u8" ...");
 		if (!earlierfs || !earlierfs->verify())
 		{

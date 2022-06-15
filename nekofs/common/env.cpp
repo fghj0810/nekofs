@@ -7,17 +7,37 @@
 
 #include <functional>
 
+#ifdef ANDROID
+#include "../assetmanager/assetmanagerfilesystem.h"
+
+#include <jni.h>
+#include <android/asset_manager_jni.h>
+
+static AAssetManager* _assetManagerPtr = nullptr;
+
+JNIEXPORT void JNICALL Java_com_pixelneko_FileSystem_initAssetManager2(JNIEnv *env, jclass cls, jobject assetManager)
+{
+	_assetManagerPtr = ::AAssetManager_fromJava(env, assetManager);
+}
+#endif
+
 namespace nekofs {
 	env env::instance_;
 
 	env::env()
 	{
 		nativefilesystem_ = std::make_shared<NativeFileSystem>();
+#ifdef ANDROID
+		assetmanagerfilesystem_ = std::make_shared<AssetManagerFileSystem>();
+#endif
 	}
 
 	env::~env()
 	{
 		nativefilesystem_.reset();
+#ifdef ANDROID
+		assetmanagerfilesystem_.reset();
+#endif
 	}
 
 	env& env::getInstance()
@@ -148,4 +168,16 @@ namespace nekofs {
 		}
 		delete buffer;
 	}
+
+
+#ifdef ANDROID
+	AAssetManager* env::getAssetManagerPtr()
+	{
+		return _assetManagerPtr;
+	}
+	std::shared_ptr<AssetManagerFileSystem> env::getAssetManagerFileSystem() const
+	{
+		return assetmanagerfilesystem_;
+	}
+#endif
 }

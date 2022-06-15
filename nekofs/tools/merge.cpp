@@ -18,8 +18,9 @@
 namespace nekofs::tools {
 	static inline std::shared_ptr<Merger> prepare(const std::vector<std::string> patchfiles, bool verify)
 	{
+		auto nativefs = env::getInstance().getNativeFileSystem();
 		// 对第一个包特殊处理，因为要读取resName和baseVersion
-		auto fs_firstPatchPath = nekofs::NekodataFileSystem::createFromNative(patchfiles[0]);
+		auto fs_firstPatchPath = nekofs::NekodataFileSystem::create(nativefs, patchfiles[0]);
 		if (!fs_firstPatchPath)
 		{
 			nekofs::logerr(u8"open " + patchfiles[0] + u8" ... failed!");
@@ -48,7 +49,7 @@ namespace nekofs::tools {
 
 		for (size_t i = 1; i < patchfiles.size(); i++)
 		{
-			auto fs = nekofs::NekodataFileSystem::createFromNative(patchfiles[i]);
+			auto fs = nekofs::NekodataFileSystem::create(nativefs, patchfiles[i]);
 			if (!fs)
 			{
 				nekofs::logerr(u8"open " + patchfiles[i] + u8" ... failed!");

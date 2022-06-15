@@ -26,7 +26,7 @@ namespace nekofs::tools {
 			nekofs::logerr(u8"outpath already exist!");
 			return false;
 		}
-		auto fs = NekodataFileSystem::createFromNative(filepath);
+		auto fs = NekodataFileSystem::create(nativefs, filepath);
 		nekofs::loginfo(u8"verify " + filepath + u8" ...");
 		if (!fs || !fs->verify())
 		{

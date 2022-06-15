@@ -2,6 +2,9 @@
 #include "typedef.h"
 #include "lz4.h"
 
+#ifdef ANDROID
+#include <android/asset_manager.h>
+#endif
 #include <atomic>
 #include <queue>
 #include <memory>
@@ -11,6 +14,9 @@
 
 namespace nekofs {
 	class NativeFileSystem;
+#ifdef ANDROID
+	class AssetManagerFileSystem;
+#endif
 
 	class env final
 	{
@@ -50,5 +56,15 @@ namespace nekofs {
 		std::queue<std::array<uint8_t, nekofs_kNekoData_LZ4_Compress_Buffer_Size>*> buffer_CompressSize_;
 		std::mutex mutex_Buffer_4M_;
 		std::queue<std::array<uint8_t, 4 * 1024 * 1024>*> buffer_4M_;
+
+
+#ifdef ANDROID
+	public:
+		static AAssetManager* getAssetManagerPtr();
+		std::shared_ptr<AssetManagerFileSystem> getAssetManagerFileSystem() const;
+
+	private:
+		std::shared_ptr<AssetManagerFileSystem> assetmanagerfilesystem_;
+#endif
 	};
 }

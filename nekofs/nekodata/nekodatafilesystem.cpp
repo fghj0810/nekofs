@@ -68,17 +68,16 @@ namespace nekofs {
 	{
 		return FileSystemType::Nekodata;
 	}
-	std::shared_ptr<NekodataFileSystem> NekodataFileSystem::createFromNative(const std::string& filepath)
+	std::shared_ptr<NekodataFileSystem> NekodataFileSystem::create(std::shared_ptr<FileSystem> fs, const std::string& filepath)
 	{
 		if (filepath.size() < nekofs_kNekodata_FileExtension.size() + 1)
 		{
+			std::stringstream ss;
+			ss << "NekodataFileSystem::create filepath error due to not end with ";
+			ss << nekofs_kNekodata_FileExtension;
+			logerr(ss.str());
 			return nullptr;
 		}
-		auto nativefs = env::getInstance().getNativeFileSystem();
-		return create(nativefs, filepath);
-	}
-	std::shared_ptr<NekodataFileSystem> NekodataFileSystem::create(std::shared_ptr<FileSystem> fs, const std::string& filepath)
-	{
 		auto is = fs->openIStream(filepath);
 		if (!is || is->getLength() <= 8 + nekofs_kNekodata_VolumeFormatSize || is->seek(-nekofs_kNekodata_FileFooterSize, SeekOrigin::End) != is->getLength() - nekofs_kNekodata_FileFooterSize)
 		{

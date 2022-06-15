@@ -19,6 +19,7 @@ namespace nekofs {
 		Overlay,
 		Layer,
 		Native,
+		AssetManager,
 		Nekodata,
 	};
 	enum class FileType : int32_t

@@ -8,6 +8,9 @@
 #else
 #include "native_posix/nativefilesystem.h"
 #endif
+#ifdef ANDROID
+#include "assetmanager/assetmanagerfilesystem.h"
+#endif
 #include "layer/overlayfilesystem.h"
 #include "nekodata/nekodatafilesystem.h"
 
@@ -475,7 +478,7 @@ NEKOFS_API NekoFSHandle nekofs_nekodata_CreateFromNative(const char* u8filepath)
 	{
 		return INVALID_NEKOFSHANDLE;
 	}
-	auto nekodatafs = nekofs::NekodataFileSystem::createFromNative(path);
+	auto nekodatafs = nekofs::NekodataFileSystem::create(nekofs::env::getInstance().getNativeFileSystem(), path);
 	if (nekodatafs)
 	{
 		auto handle = nekofs::env::getInstance().genId();
@@ -726,7 +729,7 @@ NEKOFS_API int32_t nekofs_overlay_GetFileURI(NekoFSHandle olfsHandle, const char
 	return 0;
 }
 
-NEKOFS_API NekoFSBool nekofs_overlay_AddNaitveLayer(NekoFSHandle olfsHandle, const char* u8dirpath)
+NEKOFS_API NekoFSBool nekofs_overlay_AddLayerFromNaitve(NekoFSHandle olfsHandle, const char* u8dirpath)
 {
 	auto path = __normalrootpath(u8dirpath);
 	if (path.empty())
@@ -800,6 +803,70 @@ NEKOFS_API NekoFSBool nekofs_overlay_RefreshFileList(NekoFSHandle olfsHandle)
 	}
 	return NEKOFS_FALSE;
 }
+
+#ifdef ANDROID
+NEKOFS_API NekoFSHandle nekofs_assetmanager_OpenIStream(const char* u8filepath)
+{
+	auto path = __normalpath(u8filepath);
+	if (path.empty())
+	{
+		return INVALID_NEKOFSHANDLE;
+	}
+	NekoFSHandle handle = INVALID_NEKOFSHANDLE;
+	auto stream = nekofs::env::getInstance().getAssetManagerFileSystem()->openIStream(path);
+	if (stream)
+	{
+		handle = nekofs::env::getInstance().genId();
+		std::lock_guard<std::mutex> lock(g_mtx_istreams_);
+		g_istreams_[handle] = stream;
+	}
+	return handle;
+}
+
+NEKOFS_API NekoFSHandle nekofs_nekodata_CreateFromAssetManager(const char* u8filepath)
+{
+	auto path = __normalrootpath(u8filepath);
+	if (path.empty())
+	{
+		return INVALID_NEKOFSHANDLE;
+	}
+	auto nekodatafs = nekofs::NekodataFileSystem::create(nekofs::env::getInstance().getAssetManagerFileSystem(), path);
+	if (nekodatafs)
+	{
+		auto handle = nekofs::env::getInstance().genId();
+		std::lock_guard lock(g_mtx_fs_);
+		g_filesystems_[handle] = nekodatafs;
+		return handle;
+	}
+	return INVALID_NEKOFSHANDLE;
+}
+
+NEKOFS_API NekoFSBool nekofs_overlay_AddLayerFromAssetManager(NekoFSHandle olfsHandle, const char* u8dirpath)
+{
+	auto path = __normalrootpath(u8dirpath);
+	if (path.empty())
+	{
+		return NEKOFS_FALSE;
+	}
+	std::shared_ptr<nekofs::OverlayFileSystem> fs;
+	{
+		std::lock_guard<std::mutex> lock(g_mtx_fs_);
+		auto it = g_filesystems_.find(olfsHandle);
+		if (it != g_filesystems_.end())
+		{
+			if (fs->getFSType() == nekofs::FileSystemType::Overlay)
+			{
+				fs = std::static_pointer_cast<nekofs::OverlayFileSystem>(it->second);
+			}
+		}
+	}
+	if (fs)
+	{
+		return fs->addLayer(nekofs::env::getInstance().getAssetManagerFileSystem(), path) ? NEKOFS_TRUE : NEKOFS_FALSE;
+	}
+	return NEKOFS_FALSE;
+}
+#endif // ANDROID
 
 #ifdef NEKOFS_TOOLS
 #include "tools/prepare.h"
@@ -932,4 +999,4 @@ NEKOFS_API NekoFSBool nekofs_tools_mergeToDir(const char* u8outpath, int64_t vol
 	}
 	return nekofs::tools::Merge::execDir(outpath, volumeSize, patchfiles, verify == NEKOFS_TRUE) ? NEKOFS_TRUE : NEKOFS_FALSE;
 }
-#endif
+#endif // NEKOFS_TOOLS

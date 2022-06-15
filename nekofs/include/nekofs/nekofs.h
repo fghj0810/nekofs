@@ -49,9 +49,15 @@ extern "C" {
 	NEKOFS_API int32_t nekofs_overlay_GetLayerVersion(NekoFSHandle olfsHandle, char** u8jsonPtr);
 	NEKOFS_API int32_t nekofs_overlay_GetLayerFiles(NekoFSHandle olfsHandle, char** u8jsonPtr);
 	NEKOFS_API int32_t nekofs_overlay_GetFileURI(NekoFSHandle olfsHandle, const char* u8filepath, char** u8pathPtr);
-	NEKOFS_API NekoFSBool nekofs_overlay_AddNaitveLayer(NekoFSHandle olfsHandle, const char* u8dirpath);
+	NEKOFS_API NekoFSBool nekofs_overlay_AddLayerFromNaitve(NekoFSHandle olfsHandle, const char* u8dirpath);
 	NEKOFS_API NekoFSBool nekofs_overlay_AddLayer(NekoFSHandle olfsHandle, NekoFSHandle fsHandle, const char* u8dirpath);
 	NEKOFS_API NekoFSBool nekofs_overlay_RefreshFileList(NekoFSHandle olfsHandle);
+
+#ifdef ANDROID
+	NEKOFS_API NekoFSHandle nekofs_assetmanager_OpenIStream(const char* u8filepath);
+	NEKOFS_API NekoFSHandle nekofs_nekodata_CreateFromAssetManager(const char* u8filepath);
+	NEKOFS_API NekoFSBool nekofs_overlay_AddLayerFromAssetManager(NekoFSHandle olfsHandle, const char* u8dirpath);
+#endif
 
 #ifdef NEKOFS_TOOLS
 	NEKOFS_API NekoFSBool nekofs_tools_prepare(const char* u8path, const char* u8versionpath, uint32_t offset);
