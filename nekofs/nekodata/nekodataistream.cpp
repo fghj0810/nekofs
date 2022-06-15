@@ -173,7 +173,6 @@ namespace nekofs {
 	{
 		bool success = true;
 		int64_t length = getLength();
-		int64_t lastPos = position_;
 		switch (origin)
 		{
 		case SeekOrigin::Begin:

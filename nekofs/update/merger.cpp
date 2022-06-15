@@ -225,7 +225,6 @@ namespace nekofs {
 		for (const auto& nekodata : allnekodatas)
 		{
 			auto archiver_tmp = archiver->addArchive(nekodata);
-			auto func = std::bind(&Merger::addComplete, this);
 			std::vector<std::shared_ptr<FileSystem>> fslist_nekodata;
 			for (auto fs : fslist)
 			{

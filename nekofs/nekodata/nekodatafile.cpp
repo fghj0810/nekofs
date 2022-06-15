@@ -13,7 +13,6 @@ namespace nekofs {
 		fs_ = fs;
 		filepath_ = filepath;
 		meta_ = meta;
-		auto size = meta_->getBlocks().size();
 		std::vector<std::pair<BlockStatus, std::weak_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Buffer_Size>>>> tmp(meta_->getBlocks().size(), std::pair<BlockStatus, std::weak_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Buffer_Size>>>(BlockStatus::None, std::weak_ptr<std::array<uint8_t, nekofs_kNekoData_LZ4_Buffer_Size>>()));
 		blocks_.swap(tmp);
 	}

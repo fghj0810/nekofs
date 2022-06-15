@@ -248,7 +248,6 @@ namespace nekofs {
 		const int OtherType = 0;
 		const int FileType = 1;
 		const int DirType = 2;
-		struct stat info{};
 		std::vector<std::pair<std::string, int>> result;
 		std::queue<std::string> dirs;
 		dirs.push(dirpath);
@@ -360,7 +359,6 @@ namespace nekofs {
 			logerr(ss.str());
 			return false;
 		}
-		struct stat info{};
 		std::vector<std::pair<std::string, int>> result;
 		std::queue<std::string> dirs;
 		dirs.push(dirpath);
