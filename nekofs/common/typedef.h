@@ -82,11 +82,13 @@ constexpr const char* nekofs_kLayerVersion = u8"version.json";
 constexpr const char* nekofs_kLayerVersion_Name = u8"name";
 constexpr const char* nekofs_kLayerVersion_FromVersion = u8"fromVersion";
 constexpr const char* nekofs_kLayerVersion_Version = u8"version";
+constexpr const char* nekofs_kLayerVersion_Branch = u8"branch";
 constexpr const char* nekofs_kLayerVersion_VersionServers = u8"versionServers";
 constexpr const char* nekofs_kLayerVersion_DownloadServers = u8"downloadServers";
 constexpr const char* nekofs_kLayerVersion_SubResources = u8"subResources";
 constexpr const char* nekofs_kLayerVersion_Relocate = u8"relocate";
 constexpr const char* nekofs_kLayerVersion_Require = u8"require";
+constexpr const char* nekofs_kLayerVersion_Depends = u8"depends";
 
 constexpr const char* nekofs_kLayerFiles = u8"files.json";
 constexpr const char* nekofs_kLayerFiles_Files = u8"files";

@@ -65,13 +65,32 @@ namespace nekofs {
 			}
 		}
 		{
+			// branch
+			auto branchIt = jsondoc->FindMember(nekofs_kLayerVersion_Branch);
+			if (branchIt != jsondoc->MemberEnd() && branchIt->value.IsString())
+			{
+				lvm.branch_ = branchIt->value.GetString();
+			}
+			else
+			{
+				return std::nullopt;
+			}
+		}
+		{
 			// versionServers
 			auto versionServersIt = jsondoc->FindMember(nekofs_kLayerVersion_VersionServers);
 			if (versionServersIt != jsondoc->MemberEnd() && versionServersIt->value.IsArray())
 			{
 				for (auto it = versionServersIt->value.Begin(); it != versionServersIt->value.End(); it++)
 				{
-					lvm.addVersionServer(std::string(it->GetString(), it->GetStringLength()));
+					if (it->IsString())
+					{
+						lvm.addVersionServer(std::string(it->GetString(), it->GetStringLength()));
+					}
+					else
+					{
+						return std::nullopt;
+					}
 				}
 			}
 			else
@@ -86,7 +105,14 @@ namespace nekofs {
 			{
 				for (auto it = downloadServersIt->value.Begin(); it != downloadServersIt->value.End(); it++)
 				{
-					lvm.addDownloadServer(std::string(it->GetString(), it->GetStringLength()));
+					if (it->IsString())
+					{
+						lvm.addDownloadServer(std::string(it->GetString(), it->GetStringLength()));
+					}
+					else
+					{
+						return std::nullopt;
+					}
 				}
 			}
 			else
@@ -116,12 +142,9 @@ namespace nekofs {
 		{
 			// relocate
 			auto relocateIt = jsondoc->FindMember(nekofs_kLayerVersion_Relocate);
-			if (relocateIt != jsondoc->MemberEnd() && relocateIt->value.IsArray())
+			if (relocateIt != jsondoc->MemberEnd() && relocateIt->value.IsString())
 			{
-				for (auto it = relocateIt->value.Begin(); it != relocateIt->value.End(); it++)
-				{
-					lvm.addRelocateServer(std::string(it->GetString(), it->GetStringLength()));
-				}
+				lvm.branch_ = relocateIt->value.GetString();
 			}
 		}
 		return lvm;
@@ -171,6 +194,10 @@ namespace nekofs {
 			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerVersion_Version), version, allocator);
 		}
 		{
+			// branch
+			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerVersion_Branch), rapidjson::StringRef(this->branch_), allocator);
+		}
+		{
 			// versionServers
 			JSONValue versionServers(rapidjson::kArrayType);
 			for (const auto& item : this->versionServers_)
@@ -204,15 +231,7 @@ namespace nekofs {
 		}
 		{
 			// relocate
-			if (!this->relocate_.empty())
-			{
-				JSONValue relocate(rapidjson::kArrayType);
-				for (const auto& item : this->relocate_)
-				{
-					relocate.PushBack(rapidjson::StringRef(item), allocator);
-				}
-				jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerVersion_Relocate), relocate, allocator);
-			}
+			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerVersion_Relocate), rapidjson::StringRef(this->relocate_), allocator);
 		}
 		return true;
 	}
@@ -241,6 +260,14 @@ namespace nekofs {
 	{
 		return version_;
 	}
+	void LayerVersionMeta::setBranch(const std::string& branch)
+	{
+		branch_ = branch;
+	}
+	const std::string& LayerVersionMeta::getBranch() const
+	{
+		return branch_;
+	}
 	void LayerVersionMeta::addVersionServer(const std::string& server)
 	{
 		versionServers_.push_back(server);
@@ -265,15 +292,11 @@ namespace nekofs {
 	{
 		return downloadServers_;
 	}
-	void LayerVersionMeta::addRelocateServer(const std::string& server)
+	void LayerVersionMeta::setRelocate(const std::string& relocate)
 	{
-		relocate_.push_back(server);
+		relocate_ = relocate;
 	}
-	void LayerVersionMeta::cleanRelocateServers()
-	{
-		relocate_.clear();
-	}
-	const std::vector<std::string>& LayerVersionMeta::getRelocateServers() const
+	const std::string& LayerVersionMeta::getRelocate() const
 	{
 		return relocate_;
 	}
@@ -322,20 +345,27 @@ namespace nekofs {
 			{
 				lvsrm.require_ = relocateIt->value.GetBool();
 			}
+			else
+			{
+				lvsrm.require_ = false;
+			}
 		}
 		{
 			// versionServers
-			auto versionServersIt = jsondoc->FindMember(nekofs_kLayerVersion_VersionServers);
-			if (versionServersIt != jsondoc->MemberEnd() && versionServersIt->value.IsArray())
+			auto dependsIt = jsondoc->FindMember(nekofs_kLayerVersion_Depends);
+			if (dependsIt != jsondoc->MemberEnd() && dependsIt->value.IsArray())
 			{
-				for (auto it = versionServersIt->value.Begin(); it != versionServersIt->value.End(); it++)
+				for (auto it = dependsIt->value.Begin(); it != dependsIt->value.End(); it++)
 				{
-					lvsrm.addVersionServer(std::string(it->GetString(), it->GetStringLength()));
+					if (it->IsString())
+					{
+						lvsrm.addDepend(std::string(it->GetString(), it->GetStringLength()));
+					}
+					else
+					{
+						return std::nullopt;
+					}
 				}
-			}
-			else
-			{
-				return std::nullopt;
 			}
 		}
 		return lvsrm;
@@ -348,13 +378,13 @@ namespace nekofs {
 			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerVersion_Require), version, allocator);
 		}
 		{
-			// versionServers
-			JSONValue versionServers(rapidjson::kArrayType);
-			for (const auto& item : this->versionServers_)
+			// depends
+			JSONValue depends(rapidjson::kArrayType);
+			for (const auto& item : this->depends_)
 			{
-				versionServers.PushBack(rapidjson::StringRef(item), allocator);
+				depends.PushBack(rapidjson::StringRef(item), allocator);
 			}
-			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerVersion_VersionServers), versionServers, allocator);
+			jsondoc->AddMember(rapidjson::StringRef(nekofs_kLayerVersion_Depends), depends, allocator);
 		}
 		return true;
 	}
@@ -366,16 +396,16 @@ namespace nekofs {
 	{
 		return require_;
 	}
-	void LayerVersionMeta::SubResourceMeta::addVersionServer(const std::string& server)
+	void LayerVersionMeta::SubResourceMeta::addDepend(const std::string& branchName)
 	{
-		versionServers_.push_back(server);
+		depends_.push_back(branchName);
 	}
-	void LayerVersionMeta::SubResourceMeta::cleanVersionServers()
+	void LayerVersionMeta::SubResourceMeta::cleanDepends()
 	{
-		versionServers_.clear();
+		depends_.clear();
 	}
-	const std::vector<std::string>& LayerVersionMeta::SubResourceMeta::getVersionServers() const
+	const std::vector<std::string>& LayerVersionMeta::SubResourceMeta::getDepends() const
 	{
-		return versionServers_;
+		return depends_;
 	}
 }
