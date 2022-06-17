@@ -144,7 +144,7 @@ namespace nekofs {
 			auto relocateIt = jsondoc->FindMember(nekofs_kLayerVersion_Relocate);
 			if (relocateIt != jsondoc->MemberEnd() && relocateIt->value.IsString())
 			{
-				lvm.branch_ = relocateIt->value.GetString();
+				lvm.relocate_ = relocateIt->value.GetString();
 			}
 		}
 		return lvm;
