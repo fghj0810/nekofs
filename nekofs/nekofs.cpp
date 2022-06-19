@@ -825,7 +825,7 @@ NEKOFS_API NekoFSHandle nekofs_assetmanager_OpenIStream(const char* u8filepath)
 
 NEKOFS_API NekoFSHandle nekofs_nekodata_CreateFromAssetManager(const char* u8filepath)
 {
-	auto path = __normalrootpath(u8filepath);
+	auto path = __normalpath(u8filepath);
 	if (path.empty())
 	{
 		return INVALID_NEKOFSHANDLE;
@@ -843,7 +843,7 @@ NEKOFS_API NekoFSHandle nekofs_nekodata_CreateFromAssetManager(const char* u8fil
 
 NEKOFS_API NekoFSBool nekofs_overlay_AddLayerFromAssetManager(NekoFSHandle olfsHandle, const char* u8dirpath)
 {
-	auto path = __normalrootpath(u8dirpath);
+	auto path = __normalpath(u8dirpath);
 	if (path.empty())
 	{
 		return NEKOFS_FALSE;

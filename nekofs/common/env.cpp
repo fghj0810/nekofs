@@ -15,9 +15,11 @@
 
 static AAssetManager* _assetManagerPtr = nullptr;
 
-JNIEXPORT void JNICALL Java_com_pixelneko_FileSystem_initAssetManager2(JNIEnv *env, jclass cls, jobject assetManager)
-{
-	_assetManagerPtr = ::AAssetManager_fromJava(env, assetManager);
+extern "C" {
+	JNIEXPORT void JNICALL Java_com_pixelneko_FileSystem_initAssetManager(JNIEnv *env, jclass cls, jobject assetManager)
+	{
+		_assetManagerPtr = ::AAssetManager_fromJava(env, assetManager);
+	}
 }
 #endif
 
