@@ -31,6 +31,7 @@ extern "C" {
 	NEKOFS_API int64_t nekofs_istream_GetLength(NekoFSHandle isHandle);
 
 	NEKOFS_API void nekofs_ostream_Close(NekoFSHandle oshandle);
+	NEKOFS_API int32_t nekofs_ostream_Read(NekoFSHandle osHandle, void* buffer, int32_t size);
 	NEKOFS_API int32_t nekofs_ostream_Write(NekoFSHandle oshandle, const void* buffer, int32_t size);
 	NEKOFS_API int64_t nekofs_ostream_Seek(NekoFSHandle oshandle, int64_t offset, NekoFSOrigin origin);
 	NEKOFS_API int64_t nekofs_ostream_GetPosition(NekoFSHandle oshandle);

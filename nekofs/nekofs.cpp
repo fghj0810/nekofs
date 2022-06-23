@@ -338,6 +338,28 @@ NEKOFS_API void nekofs_ostream_Close(NekoFSHandle oshandle)
 	}
 }
 
+NEKOFS_API int32_t nekofs_ostream_Read(NekoFSHandle osHandle, void* buffer, int32_t size)
+{
+	if (INVALID_NEKOFSHANDLE == osHandle)
+	{
+		return -1;
+	}
+	std::shared_ptr<nekofs::OStream> stream;
+	{
+		std::lock_guard<std::mutex> lock(g_mtx_ostreams_);
+		auto it = g_ostreams_.find(osHandle);
+		if (it != g_ostreams_.end())
+		{
+			stream = it->second;
+		}
+	}
+	if (stream)
+	{
+		return nekofs::ostream_read(stream, buffer, size);
+	}
+	return -1;
+}
+
 NEKOFS_API int32_t nekofs_ostream_Write(NekoFSHandle oshandle, const void* buffer, int32_t size)
 {
 	if (INVALID_NEKOFSHANDLE == oshandle)
