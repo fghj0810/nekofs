@@ -11,9 +11,9 @@ namespace nekofs {
 	{
 	private:
 		NativeOStream(const NativeOStream&) = delete;
-		NativeOStream(const NativeOStream&&) = delete;
+		NativeOStream(NativeOStream&&) = delete;
 		NativeOStream& operator=(const NativeOStream&) = delete;
-		NativeOStream& operator=(const NativeOStream&&) = delete;
+		NativeOStream& operator=(NativeOStream&&) = delete;
 
 	public:
 		NativeOStream(std::shared_ptr<NativeFile> file, int fd);

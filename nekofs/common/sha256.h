@@ -11,9 +11,9 @@ namespace nekofs {
 	{
 	private:
 		sha256sum(const sha256sum&) = delete;
-		sha256sum(const sha256sum&&) = delete;
+		sha256sum(sha256sum&&) = delete;
 		sha256sum& operator=(const sha256sum&) = delete;
-		sha256sum& operator=(const sha256sum&&) = delete;
+		sha256sum& operator=(sha256sum&&) = delete;
 
 	public:
 		sha256sum();

@@ -14,9 +14,9 @@ namespace nekofs {
 	{
 	private:
 		AssetManagerFileSystem(const AssetManagerFileSystem&) = delete;
-		AssetManagerFileSystem(const AssetManagerFileSystem&&) = delete;
+		AssetManagerFileSystem(AssetManagerFileSystem&&) = delete;
 		AssetManagerFileSystem& operator=(const AssetManagerFileSystem&) = delete;
-		AssetManagerFileSystem& operator=(const AssetManagerFileSystem&&) = delete;
+		AssetManagerFileSystem& operator=(AssetManagerFileSystem&&) = delete;
 
 	public:
 		std::string getCurrentPath() const override;

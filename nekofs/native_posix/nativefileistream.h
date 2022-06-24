@@ -12,9 +12,9 @@ namespace nekofs {
 	{
 	private:
 		NativeIStream(const NativeIStream&) = delete;
-		NativeIStream(const NativeIStream&&) = delete;
+		NativeIStream(NativeIStream&&) = delete;
 		NativeIStream& operator=(const NativeIStream&) = delete;
-		NativeIStream& operator=(const NativeIStream&&) = delete;
+		NativeIStream& operator=(NativeIStream&&) = delete;
 
 	public:
 		NativeIStream(std::shared_ptr<NativeFile> file, int64_t fileSize);
