@@ -22,9 +22,9 @@ namespace nekofs {
 
 	private:
 		OverlayFileSystem(const OverlayFileSystem&) = delete;
-		OverlayFileSystem(const OverlayFileSystem&&) = delete;
+		OverlayFileSystem(OverlayFileSystem&&) = delete;
 		OverlayFileSystem& operator=(const OverlayFileSystem&) = delete;
-		OverlayFileSystem& operator=(const OverlayFileSystem&&) = delete;
+		OverlayFileSystem& operator=(OverlayFileSystem&&) = delete;
 
 	public:
 		std::string getCurrentPath() const override;

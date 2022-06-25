@@ -16,9 +16,9 @@ namespace nekofs {
 	{
 	private:
 		NativeFile(const NativeFile&) = delete;
-		NativeFile(const NativeFile&&) = delete;
+		NativeFile(NativeFile&&) = delete;
 		NativeFile& operator=(const NativeFile&) = delete;
-		NativeFile& operator=(const NativeFile&&) = delete;
+		NativeFile& operator=(NativeFile&&) = delete;
 
 	public:
 		NativeFile(const std::string& filepath);

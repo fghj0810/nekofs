@@ -12,9 +12,9 @@ namespace nekofs {
 	{
 	private:
 		AssetManagerFileHandle(const AssetManagerFileHandle&) = delete;
-		AssetManagerFileHandle(const AssetManagerFileHandle&&) = delete;
+		AssetManagerFileHandle(AssetManagerFileHandle&&) = delete;
 		AssetManagerFileHandle& operator=(const AssetManagerFileHandle&) = delete;
-		AssetManagerFileHandle& operator=(const AssetManagerFileHandle&&) = delete;
+		AssetManagerFileHandle& operator=(AssetManagerFileHandle&&) = delete;
 
 	public:
 		AssetManagerFileHandle(std::shared_ptr<AssetManagerFile> fPtr);

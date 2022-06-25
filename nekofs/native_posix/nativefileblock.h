@@ -12,9 +12,9 @@ namespace nekofs {
 	{
 	private:
 		NativeFileBlock(const NativeFileBlock&) = delete;
-		NativeFileBlock(const NativeFileBlock&&) = delete;
+		NativeFileBlock(NativeFileBlock&&) = delete;
 		NativeFileBlock& operator=(const NativeFileBlock&) = delete;
-		NativeFileBlock& operator=(const NativeFileBlock&&) = delete;
+		NativeFileBlock& operator=(NativeFileBlock&&) = delete;
 
 	public:
 		NativeFileBlock(std::shared_ptr<NativeFile> file, int fd, int64_t offset, int32_t size);

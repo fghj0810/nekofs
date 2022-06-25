@@ -180,7 +180,7 @@ namespace nekofs {
 					if (readFileSize_ > 0)
 					{
 						readMapFd_ = CreateFileMapping(readFd_, NULL, PAGE_READONLY, 0, 0, NULL);
-						if (NULL == readFd_)
+						if (NULL == readMapFd_)
 						{
 							{
 								auto errmsg = getSysErrMsg();

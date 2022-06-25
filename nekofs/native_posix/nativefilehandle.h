@@ -12,9 +12,9 @@ namespace nekofs {
 	{
 	private:
 		NativeFileHandle(const NativeFileHandle&) = delete;
-		NativeFileHandle(const NativeFileHandle&&) = delete;
+		NativeFileHandle(NativeFileHandle&&) = delete;
 		NativeFileHandle& operator=(const NativeFileHandle&) = delete;
-		NativeFileHandle& operator=(const NativeFileHandle&&) = delete;
+		NativeFileHandle& operator=(NativeFileHandle&&) = delete;
 
 	public:
 		NativeFileHandle(std::shared_ptr<NativeFile> fPtr);

@@ -11,9 +11,9 @@ namespace nekofs {
 	{
 	private:
 		AssetManagerIStream(const AssetManagerIStream&) = delete;
-		AssetManagerIStream(const AssetManagerIStream&&) = delete;
+		AssetManagerIStream(AssetManagerIStream&&) = delete;
 		AssetManagerIStream& operator=(const AssetManagerIStream&) = delete;
-		AssetManagerIStream& operator=(const AssetManagerIStream&&) = delete;
+		AssetManagerIStream& operator=(AssetManagerIStream&&) = delete;
 
 	public:
 		AssetManagerIStream(std::shared_ptr<AssetManagerFile> file, int64_t fileSize);

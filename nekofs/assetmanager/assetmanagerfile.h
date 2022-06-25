@@ -15,9 +15,9 @@ namespace nekofs {
 	{
 	private:
 		AssetManagerFile(const AssetManagerFile&) = delete;
-		AssetManagerFile(const AssetManagerFile&&) = delete;
+		AssetManagerFile(AssetManagerFile&&) = delete;
 		AssetManagerFile& operator=(const AssetManagerFile&) = delete;
-		AssetManagerFile& operator=(const AssetManagerFile&&) = delete;
+		AssetManagerFile& operator=(AssetManagerFile&&) = delete;
 
 	public:
 		AssetManagerFile(const std::string& filepath);

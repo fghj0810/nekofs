@@ -16,9 +16,9 @@ namespace nekofs {
 	{
 	private:
 		NativeFileSystem(const NativeFileSystem&) = delete;
-		NativeFileSystem(const NativeFileSystem&&) = delete;
+		NativeFileSystem(NativeFileSystem&&) = delete;
 		NativeFileSystem& operator=(const NativeFileSystem&) = delete;
-		NativeFileSystem& operator=(const NativeFileSystem&&) = delete;
+		NativeFileSystem& operator=(NativeFileSystem&&) = delete;
 
 	public:
 		std::string getCurrentPath() const override;
